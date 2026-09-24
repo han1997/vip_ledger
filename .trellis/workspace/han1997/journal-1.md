@@ -71,3 +71,36 @@ Room 12 表 + 12 DAO + 导出 schema；仓库接口/实现与 Hilt 装配；分�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: M2 记账主干
+
+**Date**: 2026-09-24
+**Task**: M2 记账主干
+**Branch**: `master`
+
+### Summary
+
+打通可用记账主干：领域层新增账本/账户/两级分类/标签用例与首页概览，数据层用 DataStore 记当前账本并完成 Hilt 装配，designsystem 出金额/空态/顶栏/确认框/表单组件，feature:ledger 落地首页、明细、记账编辑与四类管理页。模拟器走查中修掉三个缺陷：首页最近账目未解析名称、切转账未预选转入账户导致保存必然失败（补 TxnEditUiStateTest）、管理页失败丢失领域原因。验证：gradlew test assembleDebug 全绿（164 JVM 单测 0 失败）+ 模拟器手工验收；PRD 第 7 节与 PLAN 进度看板已更新。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dcd7228` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
