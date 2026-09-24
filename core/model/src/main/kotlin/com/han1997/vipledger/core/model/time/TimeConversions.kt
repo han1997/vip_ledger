@@ -6,6 +6,7 @@ import kotlin.time.ExperimentalTime
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
@@ -23,6 +24,10 @@ fun LocalDate.startOfDayEpochMillis(zone: TimeZone): Long = atStartOfDayIn(zone)
 
 fun Long.toLocalDate(zone: TimeZone): LocalDate =
     Instant.fromEpochMilliseconds(this).toLocalDateTime(zone).date
+
+/** 时刻 → 设备时区的本地日期时间（导出 CSV 的「日期 / 时间」两列用）。 */
+fun Long.toLocalDateTime(zone: TimeZone): LocalDateTime =
+    Instant.fromEpochMilliseconds(this).toLocalDateTime(zone)
 
 /** 日期列（`*_date`）的存取：固定按 UTC 零点，避免时区漂移。 */
 fun LocalDate.toDateColumnEpochMillis(): Long =

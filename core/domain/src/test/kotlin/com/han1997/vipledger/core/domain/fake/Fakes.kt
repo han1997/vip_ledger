@@ -303,6 +303,8 @@ class FakeTxnRepository(
         if (filter.accountIds.isNotEmpty() && txn.accountId !in filter.accountIds && txn.toAccountId !in filter.accountIds) return false
         if (filter.categoryIds.isNotEmpty() && txn.categoryId !in filter.categoryIds) return false
         if (filter.tagIds.isNotEmpty() && txn.tagIds.none { it in filter.tagIds }) return false
+        if (filter.minAmount != null && txn.amount.abs() < filter.minAmount) return false
+        if (filter.maxAmount != null && txn.amount.abs() > filter.maxAmount) return false
         if (filter.range != null && txn.occurredAt.toLocalDate(zone) !in filter.range) return false
         val keyword = filter.keyword
         if (!keyword.isNullOrBlank() && !txn.title.contains(keyword) && !txn.remark.contains(keyword)) return false
