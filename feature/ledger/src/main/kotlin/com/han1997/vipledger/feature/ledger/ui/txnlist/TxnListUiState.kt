@@ -1,16 +1,8 @@
 package com.han1997.vipledger.feature.ledger.ui.txnlist
 
 import com.han1997.vipledger.core.domain.model.Txn
+import com.han1997.vipledger.core.domain.model.TxnDayGroup
 import com.han1997.vipledger.core.model.money.Money
-import kotlinx.datetime.LocalDate
-
-/** 明细列表按天分组；当天合计只算参与收支统计的账目。 */
-data class TxnDayGroup(
-    val date: LocalDate,
-    val txns: List<Txn>,
-    val income: Money,
-    val expense: Money,
-)
 
 data class TxnListUiState(
     val isLoading: Boolean = true,

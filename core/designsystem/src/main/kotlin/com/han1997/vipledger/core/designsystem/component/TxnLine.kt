@@ -1,4 +1,4 @@
-package com.han1997.vipledger.feature.ledger.ui.common
+package com.han1997.vipledger.core.designsystem.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -15,16 +15,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.han1997.vipledger.core.designsystem.component.SignedAmountText
+import com.han1997.vipledger.core.designsystem.R
+import com.han1997.vipledger.core.designsystem.format.timeLabel
 import com.han1997.vipledger.core.domain.model.Txn
-import com.han1997.vipledger.feature.ledger.R
 import kotlinx.datetime.TimeZone
 
 /**
- * 账目行（首页最近账目与明细列表共用）。
+ * 账目行（首页最近账目、明细列表、搜索结果与统计下钻共用）。
  *
  * 主标题优先用备注标题，没有标题就退回分类名，再退回「未分类」；副标题是
  * 「分类 · 账户 · 标签」的拼接，全部是数据不是文案，所以不占资源。
+ * 因为 `feature:ledger` 与 `feature:stats` 都要用，按架构规范放在 designsystem。
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -39,7 +40,7 @@ fun TxnLine(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
-    val uncategorized = stringResource(R.string.txn_list_uncategorized)
+    val uncategorized = stringResource(R.string.common_uncategorized)
     val headline = txn.title.ifBlank { categoryName ?: uncategorized }
     val subtitle = buildList {
         categoryName?.let { add(it) }

@@ -2,6 +2,9 @@ package com.han1997.vipledger.feature.ledger.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.han1997.vipledger.core.designsystem.format.accountNameMap
+import com.han1997.vipledger.core.designsystem.format.categoryNameMap
+import com.han1997.vipledger.core.designsystem.format.tagNameMap
 import com.han1997.vipledger.core.domain.usecase.account.ObserveAccountsUseCase
 import com.han1997.vipledger.core.domain.usecase.category.ObserveCategoryTreeUseCase
 import com.han1997.vipledger.core.domain.usecase.home.ObserveHomeOverviewUseCase
@@ -9,9 +12,6 @@ import com.han1997.vipledger.core.domain.usecase.ledger.ObserveCurrentLedgerUseC
 import com.han1997.vipledger.core.domain.usecase.ledger.ObserveLedgersUseCase
 import com.han1997.vipledger.core.domain.usecase.ledger.SelectLedgerUseCase
 import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
-import com.han1997.vipledger.feature.ledger.ui.common.accountNameMap
-import com.han1997.vipledger.feature.ledger.ui.common.categoryNameMap
-import com.han1997.vipledger.feature.ledger.ui.common.tagNameMap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi

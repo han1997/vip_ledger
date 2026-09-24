@@ -36,14 +36,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.TxnLine
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
+import com.han1997.vipledger.core.designsystem.format.dayHeaderLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.core.domain.model.Txn
+import com.han1997.vipledger.core.domain.model.TxnDayGroup
 import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.money.Money
 import com.han1997.vipledger.feature.ledger.R
-import com.han1997.vipledger.feature.ledger.ui.common.TxnLine
-import com.han1997.vipledger.feature.ledger.ui.common.dayHeaderLabel
 import kotlinx.datetime.LocalDate
 
 /** 明细列表：按天分组、长按删除。 */

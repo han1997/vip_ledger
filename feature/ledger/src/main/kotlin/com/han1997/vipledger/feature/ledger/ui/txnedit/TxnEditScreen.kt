@@ -42,20 +42,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
+import com.han1997.vipledger.core.designsystem.format.accountTypeLabel
+import com.han1997.vipledger.core.designsystem.format.fromPickerUtcMillis
+import com.han1997.vipledger.core.designsystem.format.fullDateLabel
+import com.han1997.vipledger.core.designsystem.format.toPickerUtcMillis
+import com.han1997.vipledger.core.designsystem.format.transactionTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.core.domain.model.Account
-import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.domain.model.Category
+import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.model.AccountType
-import com.han1997.vipledger.core.model.time.toLocalDate
 import com.han1997.vipledger.core.model.CategoryKind
 import com.han1997.vipledger.core.model.TransactionType
+import com.han1997.vipledger.core.model.time.toLocalDate
 import com.han1997.vipledger.feature.ledger.R
-import com.han1997.vipledger.feature.ledger.ui.common.accountTypeLabel
-import com.han1997.vipledger.feature.ledger.ui.common.fromPickerUtcMillis
-import com.han1997.vipledger.feature.ledger.ui.common.fullDateLabel
-import com.han1997.vipledger.feature.ledger.ui.common.toPickerUtcMillis
-import com.han1997.vipledger.feature.ledger.ui.common.transactionTypeLabel
 import kotlinx.datetime.TimeZone
 
 /** 记账编辑：支出 / 收入 / 转账 / 还款 / 调整共用一个表单。 */

@@ -41,12 +41,12 @@ import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
+import com.han1997.vipledger.core.designsystem.format.categoryKindLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.core.domain.model.Category
 import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.model.CategoryKind
 import com.han1997.vipledger.feature.ledger.R
-import com.han1997.vipledger.feature.ledger.ui.common.categoryKindLabel
 import com.han1997.vipledger.feature.ledger.ui.common.manageNoticeMessage
 
 /** 分类管理页：三个方向各自一棵两级树。 */

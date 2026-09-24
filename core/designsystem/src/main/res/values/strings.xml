@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      共用组件文案：feature:ledger 与 feature:stats 都要用，按架构规范下沉到 designsystem，
+      避免两个 feature 模块互相依赖（见 .trellis/spec/android/architecture.md）。
+    -->
+
+    <!-- 日期与星期 -->
+    <string name="date_month_day">%1$d月%2$d日</string>
+    <string name="date_year_month_day">%1$d-%2$02d-%3$02d</string>
+    <string name="date_time_hm">%1$02d:%2$02d</string>
+    <string name="weekday_mon">周一</string>
+    <string name="weekday_tue">周二</string>
+    <string name="weekday_wed">周三</string>
+    <string name="weekday_thu">周四</string>
+    <string name="weekday_fri">周五</string>
+    <string name="weekday_sat">周六</string>
+    <string name="weekday_sun">周日</string>
+    <string name="date_range_span">%1$s ~ %2$s</string>
+
+    <!-- 时间段预设 -->
+    <string name="range_preset_all">不限时间</string>
+    <string name="range_preset_this_week">本周</string>
+    <string name="range_preset_last_week">上周</string>
+    <string name="range_preset_this_month">本月</string>
+    <string name="range_preset_last_month">上月</string>
+    <string name="range_preset_last_7_days">近 7 天</string>
+    <string name="range_preset_last_30_days">近 30 天</string>
+    <string name="range_preset_this_quarter">本季度</string>
+    <string name="range_preset_last_quarter">上季度</string>
+    <string name="range_preset_this_year">今年</string>
+    <string name="range_preset_last_year">去年</string>
+    <string name="range_preset_custom">自定义</string>
+
+    <!-- 账目类型 -->
+    <string name="txn_type_expense">支出</string>
+    <string name="txn_type_income">收入</string>
+    <string name="txn_type_transfer">转账</string>
+    <string name="txn_type_repay">还款</string>
+    <string name="txn_type_adjust">调整</string>
+
+    <!-- 账户类型 -->
+    <string name="account_type_cash">现金</string>
+    <string name="account_type_bank_debit">储蓄卡</string>
+    <string name="account_type_credit_card">信用卡</string>
+    <string name="account_type_virtual">虚拟账户</string>
+    <string name="account_type_receivable">应收</string>
+    <string name="account_type_payable">应付</string>
+    <string name="account_type_loan">贷款</string>
+    <string name="account_type_investment">投资</string>
+
+    <!-- 分类收支方向 -->
+    <string name="category_kind_expense">支出</string>
+    <string name="category_kind_income">收入</string>
+    <string name="category_kind_transfer">转账</string>
+
+    <!-- 图表 -->
+    <string name="chart_empty">还没有可统计的数据</string>
+    <string name="chart_income">收入</string>
+    <string name="chart_expense">支出</string>
+
+    <!-- 通用 -->
+    <string name="common_uncategorized">未分类</string>
+</resources>

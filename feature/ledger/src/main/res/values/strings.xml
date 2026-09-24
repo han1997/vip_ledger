@@ -33,16 +33,6 @@
     <string name="tag_manage_edit_title">编辑标签</string>
 
     <!-- 日期与星期 -->
-    <string name="date_month_day">%1$d月%2$d日</string>
-    <string name="date_year_month_day">%1$d-%2$02d-%3$02d</string>
-    <string name="date_time_hm">%1$02d:%2$02d</string>
-    <string name="weekday_mon">周一</string>
-    <string name="weekday_tue">周二</string>
-    <string name="weekday_wed">周三</string>
-    <string name="weekday_thu">周四</string>
-    <string name="weekday_fri">周五</string>
-    <string name="weekday_sat">周六</string>
-    <string name="weekday_sun">周日</string>
 
     <!-- 首页 -->
     <string name="home_title">概览</string>
@@ -58,6 +48,7 @@
     <string name="home_see_all">查看全部</string>
     <string name="home_add_txn">记一笔</string>
     <string name="home_manage">管理</string>
+    <string name="home_stats">统计</string>
     <string name="home_switch_ledger">切换账本</string>
     <string name="home_no_ledger">还没有账本</string>
 
@@ -65,7 +56,6 @@
     <string name="txn_list_title">明细</string>
     <string name="txn_list_empty">还没有账目</string>
     <string name="txn_list_day_total">收 %1$s / 支 %2$s</string>
-    <string name="txn_list_uncategorized">未分类</string>
     <string name="txn_list_count">共 %1$d 笔</string>
     <string name="txn_delete_title">删除这笔账目？</string>
     <string name="txn_delete_message">删除后账户余额会同步重算。</string>
@@ -79,11 +69,6 @@
     <string name="txn_edit_amount_placeholder">0.00</string>
     <string name="txn_edit_amount_invalid">请输入有效金额</string>
     <string name="txn_edit_type">类型</string>
-    <string name="txn_edit_type_expense">支出</string>
-    <string name="txn_edit_type_income">收入</string>
-    <string name="txn_edit_type_transfer">转账</string>
-    <string name="txn_edit_type_repay">还款</string>
-    <string name="txn_edit_type_adjust">调整</string>
     <string name="txn_edit_account">账户</string>
     <string name="txn_edit_account_to">转入账户</string>
     <string name="txn_edit_account_target">目标负债账户</string>
@@ -139,9 +124,6 @@
     <string name="category_manage_name">分类名</string>
     <string name="category_manage_kind">收支方向</string>
     <string name="category_manage_parent">父分类</string>
-    <string name="category_manage_kind_expense">支出</string>
-    <string name="category_manage_kind_income">收入</string>
-    <string name="category_manage_kind_transfer">转账</string>
     <string name="category_manage_delete_title">删除分类？</string>
     <string name="category_manage_delete_message">一级分类会连带删除其子分类；被账目使用的分类不能删除。</string>
     <string name="category_manage_child_count">%1$d 个子分类</string>
@@ -152,12 +134,4 @@
     <string name="tag_manage_name">标签名</string>
 
     <!-- 账户类型 -->
-    <string name="account_type_cash">现金</string>
-    <string name="account_type_bank_debit">储蓄卡</string>
-    <string name="account_type_credit_card">信用卡</string>
-    <string name="account_type_virtual">虚拟账户</string>
-    <string name="account_type_receivable">应收</string>
-    <string name="account_type_payable">应付</string>
-    <string name="account_type_loan">贷款</string>
-    <string name="account_type_investment">投资</string>
 </resources>

@@ -49,13 +49,13 @@ import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
+import com.han1997.vipledger.core.designsystem.format.accountTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.money.Money
 import com.han1997.vipledger.feature.ledger.R
-import com.han1997.vipledger.feature.ledger.ui.common.accountTypeLabel
 import com.han1997.vipledger.feature.ledger.ui.common.manageNoticeMessage
 
 /** 账户管理页。 */

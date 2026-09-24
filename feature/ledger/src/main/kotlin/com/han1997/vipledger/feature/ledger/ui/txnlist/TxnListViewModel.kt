@@ -5,8 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.han1997.vipledger.core.common.result.isSuccess
 import com.han1997.vipledger.core.common.time.TimeProvider
-import com.han1997.vipledger.core.domain.calculator.StatsCalculator
-import com.han1997.vipledger.core.domain.model.Txn
+import com.han1997.vipledger.core.designsystem.format.accountNameMap
+import com.han1997.vipledger.core.designsystem.format.categoryNameMap
+import com.han1997.vipledger.core.designsystem.format.tagNameMap
+import com.han1997.vipledger.core.domain.calculator.TxnDayGrouper
+import com.han1997.vipledger.core.domain.model.TxnDayGroup
 import com.han1997.vipledger.core.domain.model.TxnFilter
 import com.han1997.vipledger.core.domain.usecase.account.ObserveAccountsUseCase
 import com.han1997.vipledger.core.domain.usecase.category.ObserveCategoryTreeUseCase
@@ -14,13 +17,7 @@ import com.han1997.vipledger.core.domain.usecase.ledger.ObserveLedgersUseCase
 import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.DeleteTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.ObserveTxnListUseCase
-import com.han1997.vipledger.core.model.TransactionType
-import com.han1997.vipledger.core.model.money.Money
-import com.han1997.vipledger.core.model.time.toLocalDate
 import com.han1997.vipledger.feature.ledger.navigation.LedgerRoutes
-import com.han1997.vipledger.feature.ledger.ui.common.accountNameMap
-import com.han1997.vipledger.feature.ledger.ui.common.categoryNameMap
-import com.han1997.vipledger.feature.ledger.ui.common.tagNameMap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +55,7 @@ class TxnListViewModel @Inject constructor(
     ) { txns, accounts, nodes, tags, ledgers ->
         TxnListContent(
             ledgerName = ledgers.firstOrNull { it.id == ledgerId }?.name.orEmpty(),
-            groups = groupByDay(txns),
+            groups = TxnDayGrouper.group(txns, timeProvider.zone),
             accountNames = accounts.accountNameMap(),
             categoryNames = nodes.categoryNameMap(),
             tagNames = tags.tagNameMap(),
@@ -81,18 +78,6 @@ class TxnListViewModel @Inject constructor(
             TxnListAction.ConsumeNotice -> notice.update { null }
         }
     }
-
-    private fun groupByDay(txns: List<Txn>): List<TxnDayGroup> {
-        val zone = timeProvider.zone
-        return txns.groupBy { it.occurredAt.toLocalDate(zone) }
-            .toSortedMap(compareByDescending { it })
-            .map { (date, list) -> TxnDayGroup(date = date, txns = list, income = sumOf(list, TransactionType.INCOME), expense = sumOf(list, TransactionType.EXPENSE)) }
-    }
-
-    private fun sumOf(txns: List<Txn>, type: TransactionType): Money =
-        Money.sum(
-            txns.filter { StatsCalculator.isCounted(it) && it.type == type }.map { it.amount },
-        )
 
     /** 中间结构：只承载数据，一次性提示单独合并，避免每次删除都重建整棵列表流。 */
     private data class TxnListContent(

@@ -42,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.TxnLine
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
 import com.han1997.vipledger.core.designsystem.theme.IncomeGreen
@@ -52,13 +53,13 @@ import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.money.Money
 import com.han1997.vipledger.feature.ledger.R
-import com.han1997.vipledger.feature.ledger.ui.common.TxnLine
 
 /** 首页概览：净资产 / 本月收支 / 今日支出 / 最近账目。 */
 @Composable
 fun HomeScreen(
     onAddTxn: (String) -> Unit,
     onOpenTxns: (String) -> Unit,
+    onOpenStats: (String) -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
     onOpenCategories: (String) -> Unit,
@@ -72,6 +73,7 @@ fun HomeScreen(
         onAction = viewModel::onAction,
         onAddTxn = onAddTxn,
         onOpenTxns = onOpenTxns,
+        onOpenStats = onOpenStats,
         onOpenLedgers = onOpenLedgers,
         onOpenAccounts = onOpenAccounts,
         onOpenCategories = onOpenCategories,
@@ -86,6 +88,7 @@ internal fun HomeContent(
     onAction: (HomeAction) -> Unit,
     onAddTxn: (String) -> Unit,
     onOpenTxns: (String) -> Unit,
+    onOpenStats: (String) -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
     onOpenCategories: (String) -> Unit,
@@ -104,6 +107,12 @@ internal fun HomeContent(
                         onAction = onAction,
                         onOpenLedgers = onOpenLedgers,
                     )
+                    TextButton(
+                        onClick = { ledgerId?.let(onOpenStats) },
+                        enabled = ledgerId != null,
+                    ) {
+                        Text(text = stringResource(R.string.home_stats))
+                    }
                     ManageMenu(
                         enabled = ledgerId != null,
                         onOpenAccounts = { ledgerId?.let(onOpenAccounts) },
@@ -419,6 +428,7 @@ private fun HomeContentPreview() {
             onAction = {},
             onAddTxn = {},
             onOpenTxns = {},
+            onOpenStats = {},
             onOpenLedgers = {},
             onOpenAccounts = {},
             onOpenCategories = {},

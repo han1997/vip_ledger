@@ -43,11 +43,15 @@ object LedgerRoutes {
     fun tagManage(ledgerId: String): String = "ledger/manage/tags/$ledgerId"
 }
 
-fun NavGraphBuilder.ledgerGraph(navController: NavHostController) {
+fun NavGraphBuilder.ledgerGraph(
+    navController: NavHostController,
+    onOpenStats: (String) -> Unit,
+) {
     composable(LedgerRoutes.HOME) {
         HomeScreen(
             onAddTxn = { ledgerId -> navController.navigate(LedgerRoutes.txnEdit(ledgerId)) },
             onOpenTxns = { ledgerId -> navController.navigate(LedgerRoutes.txnList(ledgerId)) },
+            onOpenStats = onOpenStats,
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
             onOpenAccounts = { ledgerId -> navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
             onOpenCategories = { ledgerId -> navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
