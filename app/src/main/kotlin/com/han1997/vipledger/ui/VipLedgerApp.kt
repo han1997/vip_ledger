@@ -6,12 +6,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.han1997.vipledger.feature.ledger.navigation.LedgerRoutes
 import com.han1997.vipledger.feature.ledger.navigation.ledgerGraph
+import com.han1997.vipledger.feature.stats.navigation.StatsRoutes
+import com.han1997.vipledger.feature.stats.navigation.statsGraph
 
 /**
  * 应用的导航根。
  *
- * 各 feature 模块自带 graph（`ledgerGraph` / 后续的 stats、sync），`:app` 只负责把它们拼起来，
- * 不关心页面内部结构，也不做业务逻辑。
+ * 各 feature 模块自带 graph（`ledgerGraph` / `statsGraph`），`:app` 只负责把它们拼起来：
+ * 首页顶栏的「统计」入口、统计页里点账目回「编辑账目」，都靠这里的回调接线，
+ * 两个 feature 之间不互相依赖。
  */
 @Composable
 fun VipLedgerApp(modifier: Modifier = Modifier) {
@@ -21,6 +24,13 @@ fun VipLedgerApp(modifier: Modifier = Modifier) {
         startDestination = LedgerRoutes.HOME,
         modifier = modifier,
     ) {
-        ledgerGraph(navController)
+        ledgerGraph(
+            navController = navController,
+            onOpenStats = { ledgerId -> navController.navigate(StatsRoutes.stats(ledgerId)) },
+        )
+        statsGraph(
+            navController = navController,
+            onEditTxn = { ledgerId, txnId -> navController.navigate(LedgerRoutes.txnEdit(ledgerId, txnId)) },
+        )
     }
 }

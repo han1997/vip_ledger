@@ -4,6 +4,7 @@ import com.han1997.vipledger.core.domain.repository.AccountRepository
 import com.han1997.vipledger.core.domain.repository.CategoryRepository
 import com.han1997.vipledger.core.domain.repository.InstallmentRepository
 import com.han1997.vipledger.core.domain.repository.LedgerRepository
+import com.han1997.vipledger.core.domain.repository.TagRepository
 import com.han1997.vipledger.core.domain.repository.TxnRepository
 import com.han1997.vipledger.core.domain.support.AccountBalanceSyncer
 import com.han1997.vipledger.core.domain.support.BuiltinCategorySource
@@ -12,6 +13,9 @@ import com.han1997.vipledger.core.domain.support.TransactionRunner
 import com.han1997.vipledger.core.domain.usecase.EnsureInitialDataUseCase
 import com.han1997.vipledger.core.domain.usecase.account.RecomputeAccountBalancesUseCase
 import com.han1997.vipledger.core.domain.usecase.loan.SaveInstallmentPlanUseCase
+import com.han1997.vipledger.core.domain.usecase.search.SearchTxnsUseCase
+import com.han1997.vipledger.core.domain.usecase.stats.BuildTxnCsvUseCase
+import com.han1997.vipledger.core.domain.usecase.stats.ObserveStatsReportUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.CreateTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.DeleteTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.GetTxnUseCase
@@ -126,6 +130,35 @@ object UseCaseModule {
         timeProvider = timeProvider,
     )
 
+    @Provides
+    @Singleton
+    fun provideSearchTxnsUseCase(
+        txnRepository: TxnRepository,
+        categoryRepository: CategoryRepository,
+        timeProvider: TimeProvider,
+    ) = SearchTxnsUseCase(
+        txnRepository = txnRepository,
+        categoryRepository = categoryRepository,
+        timeProvider = timeProvider,
+    )
+
+    @Provides
+    @Singleton
+    fun provideObserveStatsReportUseCase(
+        txnRepository: TxnRepository,
+        categoryRepository: CategoryRepository,
+        tagRepository: TagRepository,
+        timeProvider: TimeProvider,
+    ) = ObserveStatsReportUseCase(
+        txnRepository = txnRepository,
+        categoryRepository = categoryRepository,
+        tagRepository = tagRepository,
+        timeProvider = timeProvider,
+    )
+
+    @Provides
+    @Singleton
+    fun provideBuildTxnCsvUseCase(timeProvider: TimeProvider) = BuildTxnCsvUseCase(timeProvider)
     @Provides
     @Singleton
     fun provideSaveInstallmentPlanUseCase(

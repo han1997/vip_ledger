@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      统计（搜索 / 统计 / 下钻）模块文案。
+      与 feature:ledger 重名的条目一律加 `stats_` / `search_` / `drill_` 前缀，
+      避免两个 library 模块合并资源时撞名（共用文案已下沉到 designsystem）。
+    -->
+
+    <!-- 搜索页 -->
+    <string name="search_title">搜索</string>
+    <string name="search_open">搜索</string>
+    <string name="search_clear">清空条件</string>
+    <string name="search_keyword_label">关键词</string>
+    <string name="search_keyword_hint">搜索标题或备注</string>
+    <string name="search_time_label">时间</string>
+    <string name="search_time_custom">自定义区间</string>
+    <string name="search_category_label">分类</string>
+    <string name="search_tag_label">标签</string>
+    <string name="search_account_label">账户</string>
+    <string name="search_type_label">类型</string>
+    <string name="search_amount_label">金额区间</string>
+    <string name="search_amount_min">最低</string>
+    <string name="search_amount_max">最高</string>
+    <string name="search_amount_invalid">最低金额不能大于最高金额</string>
+    <string name="search_include_drafts">包含待确认草稿</string>
+    <string name="search_result_count">命中 %1$d 笔</string>
+    <string name="search_result_total">收 %1$s / 支 %2$s</string>
+    <string name="search_export">导出 CSV</string>
+    <string name="search_empty">没有符合条件的账目</string>
+    <string name="search_empty_initial">设置条件后开始搜索</string>
+    <string name="search_delete_title">删除这笔账目？</string>
+    <string name="search_delete_message">删除后不再计入统计，并且无法在列表里找回。</string>
+    <string name="search_deleted">已删除</string>
+    <string name="search_delete_failed">删除失败</string>
+    <string name="search_exported">CSV 已导出</string>
+    <string name="search_export_failed">导出失败，请重试</string>
+
+    <!-- 统计页 -->
+    <string name="stats_title">统计</string>
+    <string name="stats_time_label">时间段</string>
+    <string name="stats_granularity_label">粒度</string>
+    <string name="stats_granularity_day">日</string>
+    <string name="stats_granularity_week">周</string>
+    <string name="stats_granularity_month">月</string>
+    <string name="stats_dimension_label">分组</string>
+    <string name="stats_dimension_category">分类</string>
+    <string name="stats_dimension_tag">标签</string>
+    <string name="stats_dimension_account">账户</string>
+    <string name="stats_dimension_time">时间</string>
+    <string name="stats_summary_income">收入</string>
+    <string name="stats_summary_expense">支出</string>
+    <string name="stats_summary_balance">结余</string>
+    <string name="stats_summary_count">%1$d 笔</string>
+    <string name="stats_total">合计</string>
+    <string name="stats_rank_count">%1$d 笔</string>
+    <string name="stats_empty">这个时间段没有可统计的账目</string>
+    <string name="stats_tag_share_note">一笔账有多个标签时，每个标签各计一次全额</string>
+    <string name="stats_drill_hint">点击进入明细</string>
+    <string name="stats_export">导出</string>
+    <string name="stats_export_image">导出图片</string>
+    <string name="stats_export_csv">导出 CSV</string>
+    <string name="stats_exported">已导出</string>
+    <string name="stats_export_failed">导出失败，可改用导出 CSV</string>
+    <string name="stats_time_all">不限时间</string>
+    <string name="stats_uncategorized">未分类</string>
+
+    <!-- 下钻明细页 -->
+    <string name="drill_title">统计明细</string>
+    <string name="drill_count">共 %1$d 笔</string>
+    <string name="drill_total">收 %1$s / 支 %2$s</string>
+    <string name="drill_empty">没有符合条件的账目</string>
+    <string name="drill_export">导出 CSV</string>
+    <string name="drill_exported">CSV 已导出</string>
+    <string name="drill_export_failed">导出失败，请重试</string>
+
+    <!-- 图表横轴 -->
+    <string name="stats_period_day_label">%1$d/%2$d</string>
+    <string name="stats_period_week_label">%1$d/%2$d</string>
+    <string name="stats_period_month_label">%1$d月</string>
+    <string name="stats_period_year_month_label">%1$d/%2$d</string>
+
+    <!-- 通用动作 -->
+    <string name="stats_action_cancel">取消</string>
+    <string name="stats_action_confirm">确定</string>
+    <string name="stats_action_delete">删除</string>
+</resources>
