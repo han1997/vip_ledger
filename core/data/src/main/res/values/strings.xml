@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 内置分类名：新建账本时写入数据库（见 core/data/.../builtin/ResourceBuiltinCategorySource.kt） -->
+    <string name="builtin_category_food">餐饮</string>
+    <string name="builtin_category_food_breakfast">早餐</string>
+    <string name="builtin_category_food_lunch">午餐</string>
+    <string name="builtin_category_food_dinner">晚餐</string>
+    <string name="builtin_category_food_takeout">外卖</string>
+    <string name="builtin_category_food_snack">零食</string>
+
+    <string name="builtin_category_transport">交通</string>
+    <string name="builtin_category_transport_public">公交地铁</string>
+    <string name="builtin_category_transport_taxi">打车</string>
+    <string name="builtin_category_transport_fuel">加油</string>
+    <string name="builtin_category_transport_parking">停车</string>
+    <string name="builtin_category_transport_travel">火车飞机</string>
+
+    <string name="builtin_category_shopping">购物</string>
+    <string name="builtin_category_shopping_daily">日用品</string>
+    <string name="builtin_category_shopping_clothes">服饰</string>
+    <string name="builtin_category_shopping_digital">数码</string>
+    <string name="builtin_category_shopping_beauty">美妆</string>
+
+    <string name="builtin_category_housing">居住</string>
+    <string name="builtin_category_housing_rent">房租</string>
+    <string name="builtin_category_housing_mortgage">房贷</string>
+    <string name="builtin_category_housing_utilities">水电燃气</string>
+    <string name="builtin_category_housing_management">物业</string>
+    <string name="builtin_category_housing_internet">宽带</string>
+
+    <string name="builtin_category_entertainment">娱乐</string>
+    <string name="builtin_category_entertainment_movie">电影</string>
+    <string name="builtin_category_entertainment_game">游戏</string>
+    <string name="builtin_category_entertainment_trip">旅行</string>
+    <string name="builtin_category_entertainment_sports">运动</string>
+
+    <string name="builtin_category_medical">医疗</string>
+    <string name="builtin_category_medical_clinic">门诊</string>
+    <string name="builtin_category_medical_medicine">药品</string>
+    <string name="builtin_category_medical_checkup">体检</string>
+
+    <string name="builtin_category_education">教育</string>
+    <string name="builtin_category_education_tuition">学费</string>
+    <string name="builtin_category_education_books">书籍</string>
+    <string name="builtin_category_education_course">课程</string>
+
+    <string name="builtin_category_social">人情</string>
+    <string name="builtin_category_social_redpacket">红包</string>
+    <string name="builtin_category_social_treat">请客</string>
+    <string name="builtin_category_social_gift">礼物</string>
+
+    <string name="builtin_category_communication">通讯</string>
+    <string name="builtin_category_communication_phone">话费</string>
+    <string name="builtin_category_communication_data">流量</string>
+
+    <string name="builtin_category_other_expense">其他支出</string>
+
+    <string name="builtin_category_salary">工资</string>
+    <string name="builtin_category_bonus">奖金</string>
+    <string name="builtin_category_investment">投资收益</string>
+    <string name="builtin_category_income_redpacket">红包收入</string>
+    <string name="builtin_category_reimburse">报销</string>
+    <string name="builtin_category_other_income">其他收入</string>
+</resources>

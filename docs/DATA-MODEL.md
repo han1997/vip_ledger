@@ -14,6 +14,13 @@
 - 账本隔离：除 `app` 级配置外，所有业务表都带 `ledger_id`，查询必须带该条件。
 - 排序：列表类数据用显式 `sort_order INTEGER`，同值回退 `created_at`。
 - 枚举：以 `TEXT` 存储 Kotlin 枚举名（如 `CREDIT_CARD`），禁止存序号。
+- 日期列约定（按列名区分，实现见 `core/model/.../time/TimeConversions.kt`）：
+  `*_date` 列存「某天」，用 **UTC 零点**的 epoch millis（`toDateColumnEpochMillis()`）；
+  `*_at` 列存「时刻」，用 UTC epoch millis，按设备时区归属到 `LocalDate`。
+- 金额方向的唯一例外：`ADJUST`（余额调整）允许 `amount_cents` 为负表示「调减」，
+  否则无法表达把余额改小；其余类型恒为正（方向由 `type` 决定）。
+- 余额口径：`account.current_balance_cents` 只累计 `draft_status = CONFIRMED` 且未软删的流水；
+  草稿确认/丢弃后必须重算受影响账户的余额（`AccountBalanceSyncer`）。
 
 ## 2. 表清单
 
@@ -27,7 +34,7 @@
 | `recurring_rule` | 周期记账规则 | M1（引擎在 M4） |
 | `installment_plan` / `installment_period` | 分期计划与每期 | M1（逻辑在 M4） |
 | `merchant_rule` | 商户/关键字 → 分类规则 | M1（界面在 M6） |
-| `attachment` | 交易附件（图片凭证） | M2 |
+| `attachment` | 交易附件（图片凭证）；表结构随 v1 落地，界面在 M2 | M1（表）/ M2（界面） |
 | `ml_training_sample` | 端侧训练样本 | M1（训练在 M7） |
 | `budget` | 预算（v2 预留，v1 不建业务逻辑） | v2 |
 
@@ -104,7 +111,7 @@
 | `id` | TEXT PK | |
 | `ledger_id` | TEXT FK | |
 | `type` | TEXT | `EXPENSE` / `INCOME` / `TRANSFER` / `DEBT_REPAY` / `ADJUST` |
-| `amount_cents` | INTEGER | 恒 > 0 |
+| `amount_cents` | INTEGER | 恒 > 0；唯 `ADJUST` 允许负值表示调减（见第 1 节） |
 | `account_id` | TEXT FK → account | 支出/收入的账户；转账的转出账户 |
 | `to_account_id` | TEXT NULL FK → account | 转账转入账户；`DEBT_REPAY` 的还款目标账户 |
 | `category_id` | TEXT NULL FK → category | 转账与调整可为空 |

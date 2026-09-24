@@ -1,7 +1,7 @@
 # 开发环境与工具链注意事项
 
 > 记录本机（Windows 11 + PowerShell 5.1）与依赖版本上踩过的坑。改构建配置前先读这里。
-> 最后更新：2026-09-24（M0）
+> 最后更新：2026-09-24（M1）
 
 ## 1. 工具链版本（已锁定，改动需同步本文与根 `gradle/libs.versions.toml`）
 
@@ -34,6 +34,14 @@
    （构建停在 `hiltJavaCompileDebug`，报 `checkMetadataVersionForRead`），而 Hilt 2.58 及以上
    又要求 AGP 不低于 9.0.0。两头夹击的结果就是：Kotlin 卡在 2.2.10，Hilt 卡在 2.57.2。
    升级 Kotlin 前先确认 Hilt 是否支持，否则整个 DI 层会崩。
+
+4. **kotlinx-datetime 0.7 起 `Instant` 换成了 `kotlin.time.Instant`**，在 Kotlin 2.2.10 上仍是实验 API：
+   用到 `atStartOfDayIn` / `Instant.fromEpochMilliseconds` 的文件必须在文件头加
+   `@file:OptIn(ExperimentalTime::class)`（见 `core/model/.../time/TimeConversions.kt`），
+   否则编译报 "This declaration needs opt-in"。`LocalDate` 本身不受影响。
+5. **Room 2.8 的自定义 schema 目录**：`ksp { arg("room.schemaLocation", "$projectDir/schemas") }`，
+   导出的 `1.json` 必须提交进版本库，否则迁移测试读不到 assets。改表不升 `version` 会被
+   `MigrationTest` 的身份哈希断言直接拦下。
 
 ## 4. Gradle wrapper 生成方式
 
@@ -80,3 +88,19 @@ py -3 ./.trellis/scripts/task.py list        # Trellis 任务（用 py -3 走 Py
 ```
 
 模拟器：AVD `nordic-ui-api34`（API 34）；本机在线设备用 `adb devices` 查看。
+
+## 7. 测试环境（Robolectric / Room）
+
+- Android 库模块的单测用 **Robolectric**：`testOptions { unitTests.isIncludeAndroidResources = true }`，
+  并在 `src/test/resources/robolectric.properties` 里写 `sdk=34`。
+  **必须显式写 34**：本机 `~/.m2/repository/org/robolectric/android-all-instrumented/`
+  只缓存了 API 34 的 jar，默认跟随 `targetSdk`（36）会尝试联网下载并失败。
+- `:core:database` 的迁移测试要把 `schemas/` 挂成 test assets：
+  `sourceSets.getByName("test").assets.srcDir("$projectDir/schemas")`。
+- Room 2.8 的 `MigrationTestHelper` 在 Robolectric 下用 SupportSQLite 驱动会报
+  `This driver is configured to open a database named ... but ... was requested`，
+  所以 M1 用「导出 schema 身份哈希 vs 运行时 `room_master_table`」+「迁移链完整性」两条断言替代；
+  真有迁移可测时改用 `createDatabase(version)` / `runMigrationsAndValidate(version, migrations)`
+  这组基于 `SQLiteConnection` 的 API。
+- 单模块跑测试：`.\gradlew.bat :core:database:test`、`.\gradlew.bat :core:domain:test`。
+  注意 `test` 任务会同时跑 debug 与 release 变体，统计条数时不要重复算。

@@ -3,7 +3,7 @@
 > 本文件是本项目的**权威规划入口**。会话中断后：先读本文第 6 节「进度看板」，再读
 > `.trellis/tasks/` 下当前任务与 `.trellis/workspace/han1997/` 的 journal，即可恢复上下文。
 >
-> 最后更新：2026-09-24（M0 建库）
+> 最后更新：2026-09-24（M1 数据层完成）
 
 ## 1. 目标
 
@@ -94,7 +94,13 @@
 - [x] M0-e Compose 空壳首页可在模拟器（AVD nordic-ui-api34）运行
 - [x] M0-f `.trellis/spec/android/*` 规范填充（10 个文件）
 - [x] M0-g `docs/DEV-NOTES.md` 记录环境与版本矩阵坑位
-- [ ] M1 数据层与领域模型
+- [x] M1 数据层与领域模型（2026-09-24 完成：12 张表 + 98 个 JVM 单测全绿）
+- [x] M1-a Room 实体/DAO/TypeConverter 与导出 schema（`core/database/schemas/…/1.json` 已提交）
+- [x] M1-b 迁移骨架：`MigrationTest` 用「导出 schema 身份哈希 vs 运行时库」守住漂移，版本缺口必须有迁移
+- [x] M1-c 领域模型、仓库接口、用例（记账增删改与回收站、余额重算、分期计划、初始数据）
+- [x] M1-d 纯逻辑：分期计息四种方式、余额与净资产、统计口径、两级分类校验
+- [x] M1-e `:core:data` 仓库实现与 Hilt 装配（含 `TransactionRunner`、余额同步器）
+- [x] M1-f 内置两级分类（走资源文件）与默认账本/账户初始化
 - [ ] M2 记账主干
 - [ ] M3 搜索与统计
 - [ ] M4 周期记账与借贷分期
