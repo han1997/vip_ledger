@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 通用 -->
+    <string name="common_cancel">取消</string>
+    <string name="common_confirm">确定</string>
+    <string name="common_save">保存</string>
+    <string name="common_delete">删除</string>
+    <string name="common_edit">编辑</string>
+    <string name="common_error_unknown">操作失败，请重试</string>
+    <string name="common_empty_dash">—</string>
+    <string name="common_add">新建</string>
+    <string name="notice_saved">已保存</string>
+    <string name="notice_deleted">已删除</string>
+    <string name="notice_archived">已归档</string>
+    <string name="notice_unarchived">已解除归档</string>
+    <string name="notice_default_set">已设为默认账本</string>
+    <string name="notice_switched">已切换账本</string>
+    <string name="notice_failed">操作失败</string>
+    <string name="manage_delete_ledger_title">删除账本？</string>
+    <string name="manage_delete_ledger_message">「%1$s」下不能有账目，删除后该账本的账户、分类、标签会一并移除。</string>
+    <string name="manage_delete_asset_title">删除资金账户？</string>
+    <string name="manage_delete_asset_message">「%1$s」下有流水时不能删除，可以改为归档。</string>
+    <string name="manage_delete_category_title">删除分类？</string>
+    <string name="manage_delete_category_top_message">「%1$s」及其子分类都会被删除；被账目使用过的分类不能删除。</string>
+    <string name="manage_delete_category_leaf_message">「%1$s」被账目使用过时不能删除。</string>
+    <string name="manage_delete_tag_title">删除标签？</string>
+    <string name="manage_delete_tag_message">已记账目上的该标签会保留在历史统计里。</string>
+    <string name="account_manage_open_editor">账户信息</string>
+    <string name="empty_accounts">还没有账户，先新建一个资金账户</string>
+    <string name="empty_categories">还没有分类</string>
+    <string name="empty_tags">还没有标签</string>
+    <string name="category_manage_edit_title">编辑分类</string>
+    <string name="tag_manage_edit_title">编辑标签</string>
+
+    <!-- 日期与星期 -->
+    <string name="date_month_day">%1$d月%2$d日</string>
+    <string name="date_year_month_day">%1$d-%2$02d-%3$02d</string>
+    <string name="date_time_hm">%1$02d:%2$02d</string>
+    <string name="weekday_mon">周一</string>
+    <string name="weekday_tue">周二</string>
+    <string name="weekday_wed">周三</string>
+    <string name="weekday_thu">周四</string>
+    <string name="weekday_fri">周五</string>
+    <string name="weekday_sat">周六</string>
+    <string name="weekday_sun">周日</string>
+
+    <!-- 首页 -->
+    <string name="home_title">概览</string>
+    <string name="home_net_worth">净资产</string>
+    <string name="home_total_debt">负债合计</string>
+    <string name="home_month_income">本月收入</string>
+    <string name="home_month_expense">本月支出</string>
+    <string name="home_month_balance">本月结余</string>
+    <string name="home_today_expense">今日支出</string>
+    <string name="home_account_count">%1$d 个账户</string>
+    <string name="home_recent_title">最近账目</string>
+    <string name="home_recent_empty">还没有账目，点右下角记第一笔</string>
+    <string name="home_see_all">查看全部</string>
+    <string name="home_add_txn">记一笔</string>
+    <string name="home_manage">管理</string>
+    <string name="home_switch_ledger">切换账本</string>
+    <string name="home_no_ledger">还没有账本</string>
+
+    <!-- 明细列表 -->
+    <string name="txn_list_title">明细</string>
+    <string name="txn_list_empty">还没有账目</string>
+    <string name="txn_list_day_total">收 %1$s / 支 %2$s</string>
+    <string name="txn_list_uncategorized">未分类</string>
+    <string name="txn_list_count">共 %1$d 笔</string>
+    <string name="txn_delete_title">删除这笔账目？</string>
+    <string name="txn_delete_message">删除后账户余额会同步重算。</string>
+    <string name="txn_deleted">已删除</string>
+    <string name="txn_delete_failed">删除失败</string>
+
+    <!-- 记账编辑 -->
+    <string name="txn_edit_title_new">记一笔</string>
+    <string name="txn_edit_title_edit">编辑账目</string>
+    <string name="txn_edit_amount">金额</string>
+    <string name="txn_edit_amount_placeholder">0.00</string>
+    <string name="txn_edit_amount_invalid">请输入有效金额</string>
+    <string name="txn_edit_type">类型</string>
+    <string name="txn_edit_type_expense">支出</string>
+    <string name="txn_edit_type_income">收入</string>
+    <string name="txn_edit_type_transfer">转账</string>
+    <string name="txn_edit_type_repay">还款</string>
+    <string name="txn_edit_type_adjust">调整</string>
+    <string name="txn_edit_account">账户</string>
+    <string name="txn_edit_account_to">转入账户</string>
+    <string name="txn_edit_account_target">目标负债账户</string>
+    <string name="txn_edit_account_none">未选择</string>
+    <string name="txn_edit_category">分类</string>
+    <string name="txn_edit_category_second">二级分类</string>
+    <string name="txn_edit_category_none">不选分类</string>
+    <string name="txn_edit_tags">标签</string>
+    <string name="txn_edit_tags_none">没有标签，去「管理 - 标签」新建</string>
+    <string name="txn_edit_date">日期</string>
+    <string name="txn_edit_date_quick_today">今天</string>
+    <string name="txn_edit_date_quick_yesterday">昨天</string>
+    <string name="txn_edit_date_pick">选择日期</string>
+    <string name="txn_edit_field_title">标题</string>
+    <string name="txn_edit_field_title_placeholder">如：午餐</string>
+    <string name="txn_edit_field_remark">备注</string>
+    <string name="txn_edit_exclude_stats">不计入收支统计</string>
+    <string name="txn_edit_saved">已保存</string>
+    <string name="txn_edit_pick_account">选择账户</string>
+    <string name="txn_edit_pick_category">选择分类</string>
+
+    <!-- 管理：账本 -->
+    <string name="ledger_manage_title">账本管理</string>
+    <string name="ledger_manage_add">新建账本</string>
+    <string name="ledger_manage_name">账本名</string>
+    <string name="ledger_manage_default_badge">默认</string>
+    <string name="ledger_manage_archived_badge">已归档</string>
+    <string name="ledger_manage_set_default">设为默认</string>
+    <string name="ledger_manage_archive">归档</string>
+    <string name="ledger_manage_unarchive">解除归档</string>
+    <string name="ledger_manage_current">当前使用</string>
+
+    <!-- 管理：账户 -->
+    <string name="account_manage_title">账户管理</string>
+    <string name="account_manage_add">新建账户</string>
+    <string name="account_manage_name">账户名</string>
+    <string name="account_manage_type">账户类型</string>
+    <string name="account_manage_initial_balance">期初余额</string>
+    <string name="account_manage_credit_limit">信用额度</string>
+    <string name="account_manage_billing_day">账单日</string>
+    <string name="account_manage_due_day">还款日</string>
+    <string name="account_manage_include_net_worth">计入净资产</string>
+    <string name="account_manage_show_archived">显示已归档账户</string>
+    <string name="account_manage_balance">余额</string>
+    <string name="account_manage_debt">欠款</string>
+    <string name="account_manage_delete_title">删除账户？</string>
+    <string name="account_manage_delete_message">只有当账户下没有任何流水时才能删除，否则请改为归档。</string>
+
+    <!-- 管理：分类 -->
+    <string name="category_manage_title">分类管理</string>
+    <string name="category_manage_add_top">新建一级分类</string>
+    <string name="category_manage_add_child">新建子分类</string>
+    <string name="category_manage_name">分类名</string>
+    <string name="category_manage_kind">收支方向</string>
+    <string name="category_manage_parent">父分类</string>
+    <string name="category_manage_kind_expense">支出</string>
+    <string name="category_manage_kind_income">收入</string>
+    <string name="category_manage_kind_transfer">转账</string>
+    <string name="category_manage_delete_title">删除分类？</string>
+    <string name="category_manage_delete_message">一级分类会连带删除其子分类；被账目使用的分类不能删除。</string>
+    <string name="category_manage_child_count">%1$d 个子分类</string>
+
+    <!-- 管理：标签 -->
+    <string name="tag_manage_title">标签管理</string>
+    <string name="tag_manage_add">新建标签</string>
+    <string name="tag_manage_name">标签名</string>
+
+    <!-- 账户类型 -->
+    <string name="account_type_cash">现金</string>
+    <string name="account_type_bank_debit">储蓄卡</string>
+    <string name="account_type_credit_card">信用卡</string>
+    <string name="account_type_virtual">虚拟账户</string>
+    <string name="account_type_receivable">应收</string>
+    <string name="account_type_payable">应付</string>
+    <string name="account_type_loan">贷款</string>
+    <string name="account_type_investment">投资</string>
+</resources>

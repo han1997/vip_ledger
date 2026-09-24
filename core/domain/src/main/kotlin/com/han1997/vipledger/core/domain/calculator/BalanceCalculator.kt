@@ -55,4 +55,19 @@ object BalanceCalculator {
             .filter { it.isNegative }
             .map { -it },
     )
-}
+
+    /**
+     * 首页用的净资产：直接累加账户余额缓存（[Account.currentBalance]），不重放全部流水。
+     * 缓存由记账用例在同一事务内维护，见 docs/DATA-MODEL.md 第 6 节。
+     */
+    fun netWorthFromCache(accounts: List<Account>): Money = Money.sum(
+        accounts.filter { it.includeInNetWorth && it.isUsable }.map { it.currentBalance },
+    )
+
+    /** 负债合计（正数），同样基于余额缓存。 */
+    fun totalDebtFromCache(accounts: List<Account>): Money = Money.sum(
+        accounts.filter { it.isDebt && it.isUsable }
+            .map { it.currentBalance }
+            .filter { it.isNegative }
+            .map { -it },
+    )}

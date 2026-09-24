@@ -1,7 +1,7 @@
 # 开发环境与工具链注意事项
 
 > 记录本机（Windows 11 + PowerShell 5.1）与依赖版本上踩过的坑。改构建配置前先读这里。
-> 最后更新：2026-09-24（M1）
+> 最后更新：2026-09-24（M2）
 
 ## 1. 工具链版本（已锁定，改动需同步本文与根 `gradle/libs.versions.toml`）
 
@@ -42,6 +42,17 @@
 5. **Room 2.8 的自定义 schema 目录**：`ksp { arg("room.schemaLocation", "$projectDir/schemas") }`，
    导出的 `1.json` 必须提交进版本库，否则迁移测试读不到 assets。改表不升 `version` 会被
    `MigrationTest` 的身份哈希断言直接拦下。
+
+## 3.5 M2 新增依赖（均已实测可从阿里云镜像解析）
+
+| 依赖 | 版本 | 用途 |
+|---|---|---|
+| `androidx.hilt:hilt-navigation-compose` | 1.2.0 | `hiltViewModel()` 在 Nav 目的地里取 VM |
+| `androidx.compose.material:material-icons-core` | 由 BOM 2026.06.01 锁定（1.7.8） | 顶栏与列表图标；注意不是 `material-icons-extended`（体积大） |
+| `androidx.datastore:datastore-preferences` | 1.1.7（从 1.0.0 升上来） | 记录「当前账本」选择 |
+
+`material-icons-core` 只带常用图标集（`Icons.Filled.Add/Check/MoreVert/KeyboardArrowDown` 等）；
+用到别的图标时先确认是否在 core 里，不在就改用文字或自绘，别顺手引 extended。
 
 ## 4. Gradle wrapper 生成方式
 

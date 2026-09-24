@@ -12,6 +12,7 @@ import com.han1997.vipledger.core.data.repository.RecurringRuleRepositoryImpl
 import com.han1997.vipledger.core.data.repository.TagRepositoryImpl
 import com.han1997.vipledger.core.data.repository.TxnRepositoryImpl
 import com.han1997.vipledger.core.data.support.AccountBalanceSyncerImpl
+import com.han1997.vipledger.core.data.support.PreferenceCurrentLedgerStore
 import com.han1997.vipledger.core.data.support.TransactionRunnerImpl
 import com.han1997.vipledger.core.domain.repository.AccountRepository
 import com.han1997.vipledger.core.domain.repository.AttachmentRepository
@@ -25,6 +26,7 @@ import com.han1997.vipledger.core.domain.repository.TagRepository
 import com.han1997.vipledger.core.domain.repository.TxnRepository
 import com.han1997.vipledger.core.domain.support.AccountBalanceSyncer
 import com.han1997.vipledger.core.domain.support.BuiltinCategorySource
+import com.han1997.vipledger.core.domain.support.CurrentLedgerStore
 import com.han1997.vipledger.core.domain.support.TransactionRunner
 import dagger.Binds
 import dagger.Module
@@ -87,4 +89,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindBuiltinCategorySource(impl: ResourceBuiltinCategorySource): BuiltinCategorySource
+
+    @Binds
+    @Singleton
+    abstract fun bindCurrentLedgerStore(impl: PreferenceCurrentLedgerStore): CurrentLedgerStore
 }

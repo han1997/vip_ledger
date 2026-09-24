@@ -2,6 +2,7 @@ package com.han1997.vipledger.core.domain.calculator
 
 import com.han1997.vipledger.core.common.result.AppError
 import com.han1997.vipledger.core.domain.model.Category
+import com.han1997.vipledger.core.domain.model.CategoryNode
 
 /**
  * 两级分类的约束与树上操作（docs/DATA-MODEL.md 3.3）。
@@ -60,5 +61,13 @@ object CategoryTree {
             all.filter { it.parentId == id }.forEach { queue.addLast(it.id) }
         }
         return result
+    }
+
+    /** 按一级分类分组的两级树，供分类管理与记账选择分类使用。 */
+    fun nodesOf(all: List<Category>, includeArchived: Boolean = false): List<CategoryNode> {
+        val visible = all.filter { includeArchived || (!it.isArchived && it.deletedAt == null) }
+        return visible.filter { it.isTopLevel }
+            .sortedBy { it.sortOrder }
+            .map { parent -> CategoryNode(parent, childrenOf(parent.id, visible)) }
     }
 }

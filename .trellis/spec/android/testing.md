@@ -26,3 +26,12 @@
 ```
 
 新增业务逻辑但不带测试的改动，视为未完成。
+
+## 模拟器走查（手工验收）
+
+- `adb shell input text` **注入不了中文**（非 ASCII 抛
+  `java.lang.NullPointerException: Attempt to get length of null array`）。
+  手工走查里需要输入的账本名/账户名/分类名/标签名一律用 ASCII，中文渲染靠内置数据覆盖。
+- 用 `adb shell uiautomator dump` 拿控件真实坐标，比截图估算可靠；Compose 的 `ExtendedFAB`
+  文案可能不出现在 dump 里，按坐标点。
+- `adb shell input swipe x y x y 1200`（同点、长按）可触发列表项的 `combinedClickable` 长按。

@@ -129,6 +129,8 @@ class TxnRepositoryImpl @Inject constructor(
 
     override suspend fun countByLedger(ledgerId: String): Int = txnDao.countByLedger(ledgerId)
 
+    override suspend fun countByCategory(categoryId: String): Int = txnDao.countByCategory(categoryId)
+
     private suspend fun writeWithTags(txn: Txn) {
         txnDao.upsert(txn.toEntity())
         txnTagDao.deleteByTxnId(txn.id)

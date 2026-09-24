@@ -14,6 +14,7 @@ import com.han1997.vipledger.core.domain.usecase.account.RecomputeAccountBalance
 import com.han1997.vipledger.core.domain.usecase.loan.SaveInstallmentPlanUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.CreateTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.DeleteTxnUseCase
+import com.han1997.vipledger.core.domain.usecase.txn.GetTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.ObserveTxnListUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.UpdateTxnUseCase
 import com.han1997.vipledger.core.common.time.TimeProvider
@@ -106,6 +107,10 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideObserveTxnListUseCase(txnRepository: TxnRepository) = ObserveTxnListUseCase(txnRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetTxnUseCase(txnRepository: TxnRepository) = GetTxnUseCase(txnRepository)
 
     @Provides
     @Singleton

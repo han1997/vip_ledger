@@ -26,10 +26,12 @@ import com.han1997.vipledger.core.domain.repository.RecurringRuleRepository
 import com.han1997.vipledger.core.domain.repository.TagRepository
 import com.han1997.vipledger.core.domain.repository.TxnRepository
 import com.han1997.vipledger.core.domain.support.AccountBalanceSyncer
+import com.han1997.vipledger.core.domain.support.CurrentLedgerStore
 import com.han1997.vipledger.core.domain.support.IdGenerator
 import com.han1997.vipledger.core.domain.support.TransactionRunner
 import com.han1997.vipledger.core.model.InstallmentPlanStatus
 import com.han1997.vipledger.core.model.money.Money
+import com.han1997.vipledger.core.model.time.toLocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -43,6 +45,19 @@ class FakeTransactionRunner : TransactionRunner {
     override suspend fun <T> inTransaction(block: suspend () -> T): T {
         transactionCount++
         return block()
+    }
+}
+
+/** 「当前账本」的假实现：内存里保存一个 id，方便断言切换行为。 */
+class FakeCurrentLedgerStore(initial: String? = null) : CurrentLedgerStore {
+    private val state = MutableStateFlow(initial)
+
+    val current: String? get() = state.value
+
+    override fun observeLedgerId(): Flow<String?> = state
+
+    override suspend fun setLedgerId(ledgerId: String) {
+        state.value = ledgerId
     }
 }
 
@@ -209,14 +224,25 @@ class FakeTagRepository(private val tags: MutableList<Tag> = mutableListOf()) : 
         tags[index] = tags[index].copy(deletedAt = deletedAt)
         return AppResult.success(Unit)
     }
+
+    fun snapshot(): List<Tag> = tags.toList()
 }
 
-class FakeTxnRepository(private val txns: MutableList<Txn> = mutableListOf()) : TxnRepository {
-    private val state = MutableStateFlow<List<Txn>>(emptyList())
+class FakeTxnRepository(
+    private val txns: MutableList<Txn> = mutableListOf(),
+    private val zone: TimeZone = TimeZone.of("Asia/Shanghai"),
+) : TxnRepository {
+    /** 构造时就同步一次，让「先塞数据再订阅」的写法也能看到已存在的数据。 */
+    private val state = MutableStateFlow(txns.toList())
 
-    override fun observe(filter: TxnFilter): Flow<List<Txn>> = state.map { list -> list.filter { matches(it, filter) } }
+    override fun observe(filter: TxnFilter): Flow<List<Txn>> = state.map { list -> select(list, filter) }
 
-    override suspend fun list(filter: TxnFilter): List<Txn> = txns.filter { matches(it, filter) }
+    override suspend fun list(filter: TxnFilter): List<Txn> = select(txns, filter)
+
+    private fun select(source: List<Txn>, filter: TxnFilter): List<Txn> {
+        val matched = source.filter { matches(it, filter) }
+        return if (filter.limit != null) matched.take(filter.limit) else matched
+    }
 
     override suspend fun getById(id: String): Txn? = txns.firstOrNull { it.id == id }
 
@@ -260,6 +286,9 @@ class FakeTxnRepository(private val txns: MutableList<Txn> = mutableListOf()) : 
 
     override suspend fun countByLedger(ledgerId: String): Int = txns.count { it.ledgerId == ledgerId && it.deletedAt == null }
 
+    override suspend fun countByCategory(categoryId: String): Int =
+        txns.count { it.categoryId == categoryId && it.deletedAt == null }
+
     fun snapshot(): List<Txn> = txns.toList()
 
     private fun publish() {
@@ -274,6 +303,9 @@ class FakeTxnRepository(private val txns: MutableList<Txn> = mutableListOf()) : 
         if (filter.accountIds.isNotEmpty() && txn.accountId !in filter.accountIds && txn.toAccountId !in filter.accountIds) return false
         if (filter.categoryIds.isNotEmpty() && txn.categoryId !in filter.categoryIds) return false
         if (filter.tagIds.isNotEmpty() && txn.tagIds.none { it in filter.tagIds }) return false
+        if (filter.range != null && txn.occurredAt.toLocalDate(zone) !in filter.range) return false
+        val keyword = filter.keyword
+        if (!keyword.isNullOrBlank() && !txn.title.contains(keyword) && !txn.remark.contains(keyword)) return false
         return true
     }
 }

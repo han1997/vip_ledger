@@ -28,4 +28,7 @@ interface TxnRepository {
     suspend fun existsImportHash(hash: String): Boolean
 
     suspend fun countByLedger(ledgerId: String): Int
+
+    /** 该分类下（不含子分类）未删除的账目数，用于「被引用则不许删分类」。 */
+    suspend fun countByCategory(categoryId: String): Int
 }

@@ -91,6 +91,10 @@ interface TxnDao {
     @Query("SELECT COUNT(*) FROM txn WHERE ledger_id = :ledgerId AND deleted_at IS NULL")
     suspend fun countByLedger(ledgerId: String): Int
 
+    /** 删除分类前的引用检查（软删的账目不算引用）。 */
+    @Query("SELECT COUNT(*) FROM txn WHERE category_id = :categoryId AND deleted_at IS NULL")
+    suspend fun countByCategory(categoryId: String): Int
+
     @Query("SELECT EXISTS(SELECT 1 FROM txn WHERE import_hash = :hash)")
     suspend fun existsImportHash(hash: String): Boolean
 
