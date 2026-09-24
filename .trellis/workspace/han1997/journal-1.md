@@ -38,3 +38,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: M1 数据层与领域模型
+
+**Date**: 2026-09-24
+**Task**: M1 数据层与领域模型
+**Branch**: `master`
+
+### Summary
+
+Room 12 表 + 12 DAO + 导出 schema；仓库接口/实现与 Hilt 装配；分期计息四种方式、余额/净资产、统计口径、两级分类校验等纯逻辑；98 个 JVM 单测全绿（gradlew test assembleDebug）
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ff8913c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
