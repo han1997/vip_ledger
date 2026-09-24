@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VipLedger</string>
+    <string name="home_title">VipLedger</string>
+    <string name="home_subtitle">本地优先的记账工具，数据只存在这台设备上</string>
+    <string name="home_m0_title">M0 工程骨架已就绪</string>
+    <string name="home_m0_item_modules">多模块 Gradle 工程与阿里云依赖镜像</string>
+    <string name="home_m0_item_model">金额与时间值对象（Money / DateRange）</string>
+    <string name="home_m0_item_test">单元测试与 Compose 主题可运行</string>
+    <string name="home_money_title">金额展示示例</string>
+    <string name="home_money_zero">零值</string>
+    <string name="home_money_typical">常规金额</string>
+    <string name="home_money_negative">派生负值（如结余为负）</string>
+    <string name="home_next_step">下一步：M1 数据层与领域模型（Room 表结构、迁移、仓库接口）</string>
+</resources>

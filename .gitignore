@@ -1,0 +1,42 @@
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.hprof
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+.kotlin/
+
+# Android build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Generated / temp
+*.tmp
+*.log
+tmp/
+
+# Signing & secrets
+keystore.properties
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local tooling
+.venv/
+tools/trainer/.venv/
+tools/trainer/__pycache__/

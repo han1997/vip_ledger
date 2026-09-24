@@ -1,0 +1,8 @@
+chore: M0 工程骨架与总体规划落盘
+
+- docs/: PLAN / ARCHITECTURE / DATA-MODEL / DEV-NOTES 四份权威文档
+- Gradle 多模块骨架（11 个模块）+ 阿里云依赖镜像 + version catalog
+- 版本矩阵：Kotlin 2.2.10 + KSP 2.2.10-2.0.2 + Hilt 2.57.2 + AGP 8.13.1 + Compose BOM 2026.06.01
+- core:model 落地 Money/DateRange 与枚举、core:common 落地 AppResult/AppError，18 个单测全绿
+- app 落地 Compose 空壳首页，已在 API 34 模拟器验证启动与渲染
+- .trellis/spec/android 规范 10 篇，替换原有 frontend/backend 占位
