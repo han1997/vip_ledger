@@ -2,18 +2,38 @@
 
 ## 界面与状态
 
-- 一个屏幕三件套：`XxxScreen`（无业务逻辑）、`XxxViewModel`、`XxxUiState`（不可变 `data class`）。
+- 一个屏幕三件套：`XxxScreen`（无业务逻辑）、`XxxViewModel`、`XxxUiState`（不可变 `data class`），三者同包。
 - 交互统一走 `XxxAction`：Screen 只调用 `viewModel.onAction(action)`，不直接调用仓库。
 - 状态用 `StateFlow<XxxUiState>` 暴露，`collectAsStateWithLifecycle()` 收集。
-- 一次性事件（弹提示、导航）用 `Channel` 或状态字段 + 消费后置空，不要用 LiveData。
+- 一次性事件（弹提示、导航、弹 SAF 选择器）用 `Channel` 或状态字段 + 消费后置空，不要用 LiveData。
+- UiState 里可以放「数据 + 选中项」，但**不放中文文案、不放 `Context`/`Uri`**；需要查表的名字用
+  `categoryNames` / `accountNames` 这类 `Map<String, String>` 由 ViewModel 组装。
 
 ## 样式
 
 - 主题只用 `core:designsystem` 的 `VipLedgerTheme`；禁止在屏幕里写死颜色值。
-  语义色（支出红、收入绿、转账蓝）从 designsystem 取。
+  语义色（支出红、收入绿、转账蓝）从 designsystem 取；图表配色用 `chartColorOf(index)`。
 - 金额展示统一 `Money.toDisplayString()`；列表里的金额右对齐、等宽数字，避免跳动。
 - 文案全部进 `strings.xml`；带参数的用占位符，不在 Kotlin 里拼中文。
+  跨 feature 共用的文案放 `core:designsystem/src/main/res/values/strings.xml`，feature 自有文案加模块前缀。
+- 日期/星期/类型/账户类型这类拼装放 `core.designsystem.format.Formatters`（`@Composable` 取串 + 填参），
+  不要在屏幕里手写字符串模板。
 - 列表用 `LazyColumn` + `key`，滚动状态用 `rememberLazyListState` 保存。
+- **一屏一个 `LazyColumn`**：图表 + 排行 + 列表都塞进同一个 `LazyColumn`，用 `item {}` / `items(...)` 拼装。
+  `LazyColumn` 里再套 `LazyColumn` 或 `Modifier.verticalScroll` 会抛
+  `Vertically scrollable component was measured with an infinity maximum height constraints`。
+  不可折叠的长内容用 `item { Column { ... } }` 包。
+- 筛选条件这种「多页共用的一组控件」放模块的 `ui/common/`（如 `FilterComponents` / `TxnFilterState`），
+  搜索页与统计页共用同一份状态与控件，避免两套条件语义漂移。
+
+## 统计类页面的口径
+
+- 统计页默认时间段必须是「本月」（`DateRangePreset.THIS_MONTH`），与首页「本月收支」一致；
+  默认「不限时间」会让两个页面的数字对不上（M3 验收项之一）。
+- 同一口径的聚合只允许有一处实现：按天分组走 `TxnDayGrouper.group(...)`，参与统计的判断走
+  `StatsCalculator.isCounted`。明细、搜索结果、下钻三处的「当日合计」都复用前者，否则数字会漂移。
+- 同屏图表与排行用同一份 `rows`（见 `StatsUiState.statsRowsOf`），不要各自再算一遍金额。
+- 跨页面/跨模块的口径一致性用单测钉住（`StatsMatchesHomeOverviewTest`），别靠手工对数。
 
 ## 预览与可测性
 
@@ -22,6 +42,8 @@
 - 表单类 UiState 的「默认选中 / 合法性」这类规则写成纯函数放在 UiState 上（如
   `TxnEditUiState.resolvedTargetAccountId()`），并在模块 `src/test` 里覆盖；
   放 Screen 里就只能靠手工走查，M2 的转账保存失败就是这么漏掉的。
+- 列表 → 排行/图表的映射同理写成 UiState 文件里的纯函数（如 `statsRowsOf(...)`），不写在 Screen 里。
+- 无状态组件的核心算术（图表几何、占比、桶边界）抽成纯函数对象单独测（见 charts.md）。
 
 ## 已踩过的坑（写代码前先看）
 
@@ -35,9 +57,22 @@
    ```
 2. **`Money` 是 `@JvmInline value class`，不能当 lambda 参数类型**：`(Long, Money, ...) -> Boolean`
    这类签名编译报 `Function5 cannot be a value class`。跨 lambda 传金额就传 `Long` 分，函数里再转。
+   图表数据类同理用 `Long` 分（见 charts.md）。
 3. **`SavedStateHandle.get<String>("arg")` 缺参时返回 `""` 而不是 null**（Nav 路径参数缺失）。
    用 `.orEmpty()` 或 `.takeIf { it.isNotBlank() }` 归一，别直接 `?:` 判断。
-4. **状态里不放中文**：一次性提示用枚举（`HomeNotice` / `ManageNotice`）+ 界面层 `stringResource` 查表；
+   可选查询参数的解析要连「非法值」一起兜住：解析失败的枚举名/日期当作没传
+   （参考 `feature:stats` 的 `drillArgsOf(...)`）。
+4. **状态里不放中文**：一次性提示用枚举（`HomeNotice` / `ManageNotice` / `SearchNotice`）+ 界面层 `stringResource` 查表；
    但领域层 `AppError.message` 本身就是给用户看的说明，失败提示应优先透出它（别一律显示「操作失败」）。
-5. **id → 名字的查表集中在一处**：`ui/common/NameMaps.kt` 的 `categoryNameMap()` / `accountNameMap()` /
-   `tagNameMap()`。账目只存 id，任何列表都要显式补齐名字，漏了就显示成「未分类」。
+5. **id → 名字的查表集中在一处**：`core.designsystem.format.NameMaps` 的 `categoryNameMap()` /
+   `accountNameMap()` / `tagNameMap()`（`feature:ledger` 与 `feature:stats` 共用）。账目只存 id，
+   任何列表都要显式补齐名字，漏了就显示成「未分类」。
+6. **导出图片要 `drawWithContent` + `graphicsLayer` 录制**：
+   ```kotlin
+   val layer = rememberGraphicsLayer()
+   Box(Modifier.drawWithContent { layer.record { this@drawWithContent.drawContent() }; drawLayer(layer) }) { ... }
+   // 导出时
+   val image = runCatching { layer.toImageBitmap() }.getOrNull() ?: return onExportFailed()
+   ```
+   只在 `drawWithContent` 里包一层 `graphicsLayer` 不会录制内容；`record`/`toImageBitmap` 在部分设备/版本上
+   会抛异常，必须 `runCatching` 兜底并提示「导出失败，可改用导出 CSV」，不能崩（见 import-export.md）。

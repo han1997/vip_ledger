@@ -3,7 +3,7 @@
   "name": "m3-search-stats",
   "title": "M3 搜索与统计",
   "description": "组合过滤搜索 + 时间段统计/分组/图表/下钻/导出",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

@@ -18,22 +18,25 @@
 ```
 
 - 新增业务逻辑必须有单测；改表必须有迁移测试。
-- 新增用户可见文案必须进 `strings.xml`，不在 Compose 里写死中文。
+- 新增用户可见文案必须进 `strings.xml`，不在 Compose 里写死中文；
+  跨 feature 共用的文案放 `core:designsystem`，feature 自有文案加模块前缀（`feature:stats` 用 `stats_`/`search_`/`drill_`）。
+- 新增模块要同时改 `settings.gradle.kts`、`:app` 依赖与 Hilt 装配（缺少 `@Provides` 会在编译期报 MissingBinding）。
 - 禁止提交 `local.properties`、`build/`、`.gradle/` 与任何密钥文件。
 
 ## 规范文件索引
 
 | 文件 | 内容 |
 |---|---|
-| [architecture.md](./architecture.md) | 模块划分、依赖方向、分层与 DI 约定 |
+| [architecture.md](./architecture.md) | 模块划分、依赖方向、分层与 DI 约定、共享件下沉与资源名前缀 |
 | [directory-structure.md](./directory-structure.md) | 各模块内文件放哪儿、命名规则 |
 | [database.md](./database.md) | Room 实体、DAO、迁移与测试约定 |
-| [ui.md](./ui.md) | Compose 与 ViewModel 约定、主题、预览 |
+| [ui.md](./ui.md) | Compose 与 ViewModel 约定、主题、预览、单屏单 `LazyColumn`、统计口径 |
+| [charts.md](./charts.md) | 自绘图表的几何契约、数据契约、边界与测试要求 |
 | [error-handling.md](./error-handling.md) | `AppResult` 与 `AppError` 使用方式 |
 | [logging-guidelines.md](./logging-guidelines.md) | 日志级别与敏感信息红线 |
-| [testing.md](./testing.md) | 测试分层、命名与命令 |
+| [testing.md](./testing.md) | 测试分层、命名与命令、跨模块口径一致性测试 |
 | [ai-ml.md](./ai-ml.md) | AI 解析管线、端侧分类器、模型文件格式 |
-| [import-export.md](./import-export.md) | 导入导出与 WebDAV 备份格式约定 |
+| [import-export.md](./import-export.md) | 导入导出（含 SAF 界面导出握手）、WebDAV 备份格式约定 |
 | [build-and-env.md](./build-and-env.md) | 构建配置、依赖仓库、环境坑位 |
 
 **文档语言**：中文。

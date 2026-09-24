@@ -107,7 +107,12 @@
 - [x] M2-c `:core:designsystem` 通用组件：金额、空态、顶栏、确认框、表单
 - [x] M2-d `:feature:ledger` 四组界面（首页 / 明细 / 记账编辑 / 四类管理页）+ 导航图
 - [x] M2-e 模拟器手工走查：记账、转账、收入、转账不计入统计、删除重算、账本隔离、杀进程不丢数据
-- [ ] M3 搜索与统计
+- [x] M3 搜索与统计（2026-09-24 完成：组合搜索 + 时间段统计（饼图/柱状图）+ 下钻 + CSV/图片导出；200 个 JVM 单测全绿；模拟器 8 项验收走查通过）
+- [x] M3-a `:core:domain`：`SearchQuery` / `StatsReport` 模型，搜索条件映射、统计报表、CSV 生成用例 + `TxnDayGrouper`
+- [x] M3-b `:core:designsystem`：下沉 Formatters/NameMaps/TxnLine，新增自绘 `PieChart`/`BarChart` 与纯几何 `ChartGeometry`
+- [x] M3-c `:feature:stats`：搜索页 / 统计页 / 下钻页 + 共用过滤组件 + SAF 导出（CSV / PNG）
+- [x] M3-d `:app` 装配 `statsGraph` 与首页顶栏「统计」入口；`:core:data` 补用例 Hilt 装配
+- [x] M3-e 单测：`SearchQuery`→`TxnFilter` 映射、报表分桶边界、`CsvWriter` 转义、`TxnDayGrouper`、`StatsMatchesHomeOverviewTest`（统计==首页口径）
 - [ ] M4 周期记账与借贷分期
 - [ ] M5 备份与导入导出
 - [ ] M6 AI 自然语言记账
