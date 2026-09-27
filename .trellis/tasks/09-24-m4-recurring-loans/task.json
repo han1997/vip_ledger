@@ -3,7 +3,7 @@
   "name": "m4-recurring-loans",
   "title": "M4 周期记账与借贷分期",
   "description": "周期规则引擎与补记 + 分期计划逐期生成/还款核销/提醒",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

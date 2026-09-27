@@ -36,6 +36,7 @@
 | [logging-guidelines.md](./logging-guidelines.md) | 日志级别与敏感信息红线 |
 | [testing.md](./testing.md) | 测试分层、命名与命令、跨模块口径一致性测试 |
 | [ai-ml.md](./ai-ml.md) | AI 解析管线、端侧分类器、模型文件格式 |
+| [recurring-loans.md](./recurring-loans.md) | 周期推算、草稿口径、分期还款、提醒与后台任务 |
 | [import-export.md](./import-export.md) | 导入导出（含 SAF 界面导出握手）、WebDAV 备份格式约定 |
 | [build-and-env.md](./build-and-env.md) | 构建配置、依赖仓库、环境坑位 |
 

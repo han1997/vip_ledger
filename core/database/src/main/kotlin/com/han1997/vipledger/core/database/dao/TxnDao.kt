@@ -85,6 +85,9 @@ interface TxnDao {
     @Query("UPDATE txn SET deleted_at = NULL, updated_at = :updatedAt WHERE id = :id")
     suspend fun restore(id: String, updatedAt: Long)
 
+    @Query("UPDATE txn SET draft_status = :draftStatus, updated_at = :updatedAt WHERE id = :id")
+    suspend fun updateDraftStatus(id: String, draftStatus: String, updatedAt: Long)
+
     @Query("DELETE FROM txn WHERE id = :id")
     suspend fun deleteHard(id: String)
 

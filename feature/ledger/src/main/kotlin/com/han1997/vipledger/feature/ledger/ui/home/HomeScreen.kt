@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -44,11 +45,14 @@ import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.TxnLine
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
+import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
 import com.han1997.vipledger.core.designsystem.theme.IncomeGreen
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.core.domain.model.HomeOverview
 import com.han1997.vipledger.core.domain.model.Ledger
+import com.han1997.vipledger.core.domain.model.Reminder
+import com.han1997.vipledger.core.domain.model.ReminderKind
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.money.Money
@@ -64,6 +68,10 @@ fun HomeScreen(
     onOpenAccounts: (String) -> Unit,
     onOpenCategories: (String) -> Unit,
     onOpenTags: (String) -> Unit,
+    onOpenRecurring: (String) -> Unit,
+    onOpenDrafts: (String) -> Unit,
+    onOpenLoans: (String) -> Unit,
+    onOpenLoanDetail: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -78,6 +86,10 @@ fun HomeScreen(
         onOpenAccounts = onOpenAccounts,
         onOpenCategories = onOpenCategories,
         onOpenTags = onOpenTags,
+        onOpenRecurring = onOpenRecurring,
+        onOpenDrafts = onOpenDrafts,
+        onOpenLoans = onOpenLoans,
+        onOpenLoanDetail = onOpenLoanDetail,
         modifier = modifier,
     )
 }
@@ -93,6 +105,10 @@ internal fun HomeContent(
     onOpenAccounts: (String) -> Unit,
     onOpenCategories: (String) -> Unit,
     onOpenTags: (String) -> Unit,
+    onOpenRecurring: (String) -> Unit,
+    onOpenDrafts: (String) -> Unit,
+    onOpenLoans: (String) -> Unit,
+    onOpenLoanDetail: (String, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ledgerId = state.ledgerId
@@ -157,11 +173,18 @@ internal fun HomeContent(
 
             else -> HomeBody(
                 overview = state.overview,
+                reminders = state.reminders,
+                pendingDraftCount = state.pendingDraftCount,
                 categoryNames = state.categoryNames,
                 accountNames = state.accountNames,
                 tagNames = state.tagNames,
                 modifier = Modifier.padding(padding),
                 onOpenTxns = { onOpenTxns(state.overview.ledgerId) },
+                onOpenRecurring = { ledgerId?.let(onOpenRecurring) },
+                onOpenDrafts = { ledgerId?.let(onOpenDrafts) },
+                onOpenLoans = { ledgerId?.let(onOpenLoans) },
+                onOpenLoanDetail = { planId -> ledgerId?.let { onOpenLoanDetail(it, planId) } },
+                onOpenAccounts = { ledgerId?.let(onOpenAccounts) },
             )
         }
     }
@@ -170,10 +193,17 @@ internal fun HomeContent(
 @Composable
 private fun HomeBody(
     overview: HomeOverview,
+    reminders: List<Reminder>,
+    pendingDraftCount: Int,
     categoryNames: Map<String, String>,
     accountNames: Map<String, String>,
     tagNames: Map<String, String>,
     onOpenTxns: () -> Unit,
+    onOpenRecurring: () -> Unit,
+    onOpenDrafts: () -> Unit,
+    onOpenLoans: () -> Unit,
+    onOpenLoanDetail: (String) -> Unit,
+    onOpenAccounts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -188,6 +218,23 @@ private fun HomeBody(
     ) {
         item { NetWorthCard(overview) }
         item { MonthCard(overview) }
+        item {
+            QuickEntries(
+                draftCount = pendingDraftCount,
+                onOpenRecurring = onOpenRecurring,
+                onOpenDrafts = onOpenDrafts,
+                onOpenLoans = onOpenLoans,
+            )
+        }
+        if (reminders.isNotEmpty()) {
+            item {
+                ReminderCard(
+                    reminders = reminders,
+                    onOpenPlan = onOpenLoanDetail,
+                    onOpenAccount = { onOpenAccounts() },
+                )
+            }
+        }
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -385,6 +432,122 @@ private fun ManageMenu(
 }
 
 private const val RECENT_PREVIEW: Int = 5
+private const val REMINDER_PREVIEW: Int = 3
+
+/** 三个高频入口：周期记账 / 待确认 / 分期。 */
+@Composable
+private fun QuickEntries(
+    draftCount: Int,
+    onOpenRecurring: () -> Unit,
+    onOpenDrafts: () -> Unit,
+    onOpenLoans: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        QuickEntry(
+            label = stringResource(R.string.home_recurring),
+            modifier = Modifier.weight(1f),
+            onClick = onOpenRecurring,
+        )
+        QuickEntry(
+            label = if (draftCount > 0) {
+                stringResource(R.string.draft_count, draftCount)
+            } else {
+                stringResource(R.string.draft_title)
+            },
+            modifier = Modifier.weight(1f),
+            onClick = onOpenDrafts,
+        )
+        QuickEntry(
+            label = stringResource(R.string.home_loans),
+            modifier = Modifier.weight(1f),
+            onClick = onOpenLoans,
+        )
+    }
+}
+
+@Composable
+private fun QuickEntry(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(modifier = modifier, onClick = onClick) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = label, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/** 提醒卡：分期临近 / 逾期 + 信用卡账单日 / 还款日，最多展示 [REMINDER_PREVIEW] 条。 */
+@Composable
+private fun ReminderCard(
+    reminders: List<Reminder>,
+    onOpenPlan: (String) -> Unit,
+    onOpenAccount: () -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.reminder_title),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            reminders.take(REMINDER_PREVIEW).forEach { reminder ->
+                val planId = reminder.planId
+                Text(
+                    text = reminderText(reminder),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable {
+                        if (planId != null) onOpenPlan(planId) else onOpenAccount()
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun reminderText(reminder: Reminder): String = when (reminder.kind) {
+    ReminderKind.INSTALLMENT_DUE -> stringResource(
+        R.string.reminder_installment_due,
+        reminder.name,
+        reminder.periodNo ?: 0,
+        relativeDayLabel(reminder.daysUntilDue),
+    )
+
+    ReminderKind.INSTALLMENT_OVERDUE -> stringResource(
+        R.string.reminder_installment_overdue,
+        reminder.name,
+        reminder.periodNo ?: 0,
+        -reminder.daysUntilDue,
+    )
+
+    ReminderKind.CARD_BILLING -> stringResource(
+        R.string.reminder_card_billing,
+        reminder.name,
+        fullDateLabel(reminder.dueDate),
+    )
+
+    ReminderKind.CARD_DUE -> stringResource(
+        R.string.reminder_card_due,
+        reminder.name,
+        fullDateLabel(reminder.dueDate),
+        reminder.amount.toDisplayString(),
+    )
+}
+
+@Composable
+private fun relativeDayLabel(daysUntilDue: Int): String = when {
+    daysUntilDue <= 0 -> stringResource(R.string.reminder_today)
+    daysUntilDue == 1 -> stringResource(R.string.reminder_tomorrow)
+    else -> stringResource(R.string.reminder_in_days, daysUntilDue)
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -433,6 +596,10 @@ private fun HomeContentPreview() {
             onOpenAccounts = {},
             onOpenCategories = {},
             onOpenTags = {},
+            onOpenRecurring = {},
+            onOpenDrafts = {},
+            onOpenLoans = {},
+            onOpenLoanDetail = { _, _ -> },
         )
     }
 }

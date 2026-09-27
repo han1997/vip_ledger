@@ -20,6 +20,9 @@ interface InstallmentRepository {
 
     suspend fun listPeriods(planId: String): List<InstallmentPeriod>
 
+    /** 账本下所有计划的各期（提醒计算要跨计划看，避免按计划逐次查询）。 */
+    suspend fun listPeriodsForLedger(ledgerId: String): List<InstallmentPeriod>
+
     suspend fun getPeriod(planId: String, periodNo: Int): InstallmentPeriod?
 
     suspend fun markPeriodPaid(planId: String, periodNo: Int, txnId: String, paidAt: Long): AppResult<Unit>

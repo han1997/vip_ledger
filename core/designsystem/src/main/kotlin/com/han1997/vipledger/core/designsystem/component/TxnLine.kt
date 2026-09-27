@@ -41,6 +41,7 @@ fun TxnLine(
     onLongClick: (() -> Unit)? = null,
 ) {
     val uncategorized = stringResource(R.string.common_uncategorized)
+    val draftLabel = stringResource(R.string.common_draft_pending)
     val headline = txn.title.ifBlank { categoryName ?: uncategorized }
     val subtitle = buildList {
         categoryName?.let { add(it) }
@@ -65,12 +66,26 @@ fun TxnLine(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text(
-                text = headline,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = headline,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (txn.isDraft) {
+                    Text(
+                        text = draftLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        maxLines = 1,
+                    )
+                }
+            }
             if (subtitle.isNotEmpty()) {
                 Text(
                     text = subtitle,

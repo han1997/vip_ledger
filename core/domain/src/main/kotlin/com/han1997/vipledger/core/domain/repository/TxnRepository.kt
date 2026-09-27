@@ -3,6 +3,7 @@ package com.han1997.vipledger.core.domain.repository
 import com.han1997.vipledger.core.common.result.AppResult
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.model.TxnFilter
+import com.han1997.vipledger.core.model.DraftStatus
 import kotlinx.coroutines.flow.Flow
 
 interface TxnRepository {
@@ -20,6 +21,9 @@ interface TxnRepository {
     suspend fun insert(txn: Txn): AppResult<Unit>
 
     suspend fun update(txn: Txn): AppResult<Unit>
+
+    /** 只改草稿状态（待确认 → 已确认 / 已丢弃），避免整行覆盖时带上过期字段。 */
+    suspend fun updateDraftStatus(id: String, status: DraftStatus, updatedAt: Long): AppResult<Unit>
 
     suspend fun softDelete(id: String, deletedAt: Long): AppResult<Unit>
 

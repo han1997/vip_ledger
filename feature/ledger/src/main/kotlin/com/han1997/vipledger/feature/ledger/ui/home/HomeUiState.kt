@@ -2,6 +2,7 @@ package com.han1997.vipledger.feature.ledger.ui.home
 
 import com.han1997.vipledger.core.domain.model.HomeOverview
 import com.han1997.vipledger.core.domain.model.Ledger
+import com.han1997.vipledger.core.domain.model.Reminder
 
 /**
  * 首页状态；[overview] 为 null 表示还没有账本或数据还没到。
@@ -14,6 +15,8 @@ data class HomeUiState(
     val ledgerName: String = "",
     val ledgers: List<Ledger> = emptyList(),
     val overview: HomeOverview? = null,
+    val reminders: List<Reminder> = emptyList(),
+    val pendingDraftCount: Int = 0,
     val accountNames: Map<String, String> = emptyMap(),
     val categoryNames: Map<String, String> = emptyMap(),
     val tagNames: Map<String, String> = emptyMap(),

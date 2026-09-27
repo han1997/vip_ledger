@@ -52,6 +52,9 @@ class InstallmentRepositoryImpl @Inject constructor(
     override suspend fun listPeriods(planId: String): List<InstallmentPeriod> =
         periodDao.listPeriods(planId).map { it.toDomain() }
 
+    override suspend fun listPeriodsForLedger(ledgerId: String): List<InstallmentPeriod> =
+        periodDao.listPeriodsForLedger(ledgerId).map { it.toDomain() }
+
     override suspend fun getPeriod(planId: String, periodNo: Int): InstallmentPeriod? =
         periodDao.getPeriod(planId, periodNo)?.toDomain()
 

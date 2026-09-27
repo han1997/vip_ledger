@@ -11,6 +11,8 @@ import com.han1997.vipledger.core.domain.usecase.home.ObserveHomeOverviewUseCase
 import com.han1997.vipledger.core.domain.usecase.ledger.ObserveCurrentLedgerUseCase
 import com.han1997.vipledger.core.domain.usecase.ledger.ObserveLedgersUseCase
 import com.han1997.vipledger.core.domain.usecase.ledger.SelectLedgerUseCase
+import com.han1997.vipledger.core.domain.usecase.recurring.ObservePendingDraftsUseCase
+import com.han1997.vipledger.core.domain.usecase.reminder.ObserveRemindersUseCase
 import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -33,6 +35,8 @@ class HomeViewModel @Inject constructor(
     observeCategoryTree: ObserveCategoryTreeUseCase,
     observeTags: ObserveTagsUseCase,
     private val observeHomeOverview: ObserveHomeOverviewUseCase,
+    private val observeReminders: ObserveRemindersUseCase,
+    private val observePendingDrafts: ObservePendingDraftsUseCase,
     private val selectLedger: SelectLedgerUseCase,
 ) : ViewModel() {
 
@@ -60,6 +64,12 @@ class HomeViewModel @Inject constructor(
                         tagNames = tags.tagNameMap(),
                     )
                 }
+                    .combine(observeReminders(ledger.id)) { state, reminders ->
+                        state.copy(reminders = reminders)
+                    }
+                    .combine(observePendingDrafts(ledger.id)) { state, drafts ->
+                        state.copy(pendingDraftCount = drafts.size)
+                    }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())

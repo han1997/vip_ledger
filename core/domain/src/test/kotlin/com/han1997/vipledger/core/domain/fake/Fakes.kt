@@ -30,6 +30,7 @@ import com.han1997.vipledger.core.domain.support.CurrentLedgerStore
 import com.han1997.vipledger.core.domain.support.IdGenerator
 import com.han1997.vipledger.core.domain.support.TransactionRunner
 import com.han1997.vipledger.core.model.InstallmentPlanStatus
+import com.han1997.vipledger.core.model.DraftStatus
 import com.han1997.vipledger.core.model.money.Money
 import com.han1997.vipledger.core.model.time.toLocalDate
 import kotlinx.coroutines.flow.Flow
@@ -266,6 +267,14 @@ class FakeTxnRepository(
         return AppResult.success(Unit)
     }
 
+    override suspend fun updateDraftStatus(id: String, status: DraftStatus, updatedAt: Long): AppResult<Unit> {
+        val index = txns.indexOfFirst { it.id == id }
+        if (index < 0) return AppResult.failure(AppError.NotFound("账目不存在"))
+        txns[index] = txns[index].copy(draftStatus = status, updatedAt = updatedAt)
+        publish()
+        return AppResult.success(Unit)
+    }
+
     override suspend fun softDelete(id: String, deletedAt: Long): AppResult<Unit> {
         val index = txns.indexOfFirst { it.id == id }
         if (index < 0) return AppResult.failure(AppError.NotFound("账目不存在"))
@@ -341,6 +350,12 @@ class FakeInstallmentRepository(
 
     override suspend fun listPeriods(planId: String): List<InstallmentPeriod> =
         periods.filter { it.planId == planId }.sortedBy { it.periodNo }
+
+    override suspend fun listPeriodsForLedger(ledgerId: String): List<InstallmentPeriod> {
+        val planIds = plans.filter { it.ledgerId == ledgerId }.map { it.id }.toSet()
+        return periods.filter { it.planId in planIds }
+            .sortedWith(compareBy({ it.dueDate }, { it.periodNo }))
+    }
 
     override suspend fun getPeriod(planId: String, periodNo: Int): InstallmentPeriod? =
         periods.firstOrNull { it.planId == planId && it.periodNo == periodNo }

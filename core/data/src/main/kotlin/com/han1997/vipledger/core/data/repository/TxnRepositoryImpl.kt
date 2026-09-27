@@ -11,6 +11,7 @@ import com.han1997.vipledger.core.database.entity.TxnTagEntity
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.model.TxnFilter
 import com.han1997.vipledger.core.domain.repository.TxnRepository
+import com.han1997.vipledger.core.model.DraftStatus
 import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.time.toEpochMillisBounds
 import javax.inject.Inject
@@ -118,6 +119,12 @@ class TxnRepositoryImpl @Inject constructor(
     override suspend fun insert(txn: Txn): AppResult<Unit> = dataResult { writeWithTags(txn) }
 
     override suspend fun update(txn: Txn): AppResult<Unit> = dataResult { writeWithTags(txn) }
+
+    override suspend fun updateDraftStatus(
+        id: String,
+        status: DraftStatus,
+        updatedAt: Long,
+    ): AppResult<Unit> = dataResult { txnDao.updateDraftStatus(id, status.name, updatedAt) }
 
     override suspend fun softDelete(id: String, deletedAt: Long): AppResult<Unit> =
         dataResult { txnDao.softDelete(id, deletedAt) }

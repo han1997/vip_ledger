@@ -41,6 +41,18 @@ interface InstallmentPeriodDao {
     @Query("SELECT * FROM installment_period WHERE plan_id = :planId ORDER BY period_no ASC")
     suspend fun listPeriods(planId: String): List<InstallmentPeriodEntity>
 
+    @Query(
+        """
+        SELECT * FROM installment_period
+        WHERE plan_id IN (
+            SELECT id FROM installment_plan
+            WHERE ledger_id = :ledgerId AND deleted_at IS NULL
+        )
+        ORDER BY due_date ASC, period_no ASC
+        """,
+    )
+    suspend fun listPeriodsForLedger(ledgerId: String): List<InstallmentPeriodEntity>
+
     @Query("SELECT * FROM installment_period WHERE plan_id = :planId AND period_no = :periodNo LIMIT 1")
     suspend fun getPeriod(planId: String, periodNo: Int): InstallmentPeriodEntity?
 

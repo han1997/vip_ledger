@@ -113,7 +113,11 @@
 - [x] M3-c `:feature:stats`：搜索页 / 统计页 / 下钻页 + 共用过滤组件 + SAF 导出（CSV / PNG）
 - [x] M3-d `:app` 装配 `statsGraph` 与首页顶栏「统计」入口；`:core:data` 补用例 Hilt 装配
 - [x] M3-e 单测：`SearchQuery`→`TxnFilter` 映射、报表分桶边界、`CsvWriter` 转义、`TxnDayGrouper`、`StatsMatchesHomeOverviewTest`（统计==首页口径）
-- [ ] M4 周期记账与借贷分期
+- [x] M4 周期记账与借贷分期（2026-09-27 完成：六种频率推算 + 草稿/自动入账 + 补记幂等、四种计息分期与还款核销、四类提醒 + 每日后台任务；346 个 JVM 单测全绿）
+- [x] M4-a `:core:domain`：`RecurrenceCalculator`（锚点+序号式推算）、`ReminderCalculator`、周期/草稿/分期/提醒用例
+- [x] M4-b `:core:data` / `:core:database`：DAO 查询与仓库实现、用例 Hilt 装配（未改表）
+- [x] M4-c `:feature:ledger`：周期规则列表/编辑、待确认草稿、分期列表/详情/新建、首页提醒卡与三个新入口
+- [x] M4-d `:app`：WorkManager 每日任务（`@EntryPoint` 注入）+ 通知渠道与 `POST_NOTIFICATIONS` 申请
 - [ ] M5 备份与导入导出
 - [ ] M6 AI 自然语言记账
 - [ ] M7 端侧模型与训练工具链

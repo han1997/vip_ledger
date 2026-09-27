@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">VipLedger</string>
+
+    <!-- 后台提醒通知（前缀 notify_） -->
+    <string name="notify_channel_reminders">还款提醒</string>
+    <string name="notify_channel_reminders_desc">分期到期与信用卡账单 / 还款日提醒</string>
+    <string name="notify_title">VipLedger 提醒</string>
+    <string name="notify_installment_due">「%1$s」第 %2$d 期 %3$s到期</string>
+    <string name="notify_installment_overdue">「%1$s」第 %2$d 期已逾期 %3$d 天</string>
+    <string name="notify_card_billing">「%1$s」账单日 %2$s</string>
+    <string name="notify_card_due">「%1$s」还款日 %2$s，欠款 %3$s</string>
+    <string name="notify_today">今天</string>
+    <string name="notify_tomorrow">明天</string>
+    <string name="notify_in_days">%1$d 天后</string>
+    <string name="notify_more">等 %1$d 项</string>
 </resources>
