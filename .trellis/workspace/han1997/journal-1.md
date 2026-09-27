@@ -140,3 +140,36 @@ Room 12 表 + 12 DAO + 导出 schema；仓库接口/实现与 Hilt 装配；分�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: Complete M4 recurring transactions and loans
+
+**Date**: 2026-09-28
+**Task**: Complete M4 recurring transactions and loans
+**Branch**: `master`
+
+### Summary
+
+Completed M4 recurring rules, draft generation and confirmation, installment repayment and reminders. Verified on API 34 emulator; test assembleDebug and lint passed. Committed implementation and archived task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b133507` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
