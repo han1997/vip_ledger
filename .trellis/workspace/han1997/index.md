@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
-- **Last Active**: 2026-09-24
+- **Total Sessions**: 4
+- **Last Active**: 2026-09-27
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~106 | Active |
+| `journal-1.md` | ~142 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 4 | 2026-09-27 | M3 搜索与统计 | `2d8cc6f`, `8af79db`, `2796f20`, `a7f8a45` | `master` |
 | 3 | 2026-09-24 | M2 记账主干 | `dcd7228` | `master` |
 | 2 | 2026-09-24 | M1 数据层与领域模型 | `ff8913c` | `master` |
 | 1 | 2026-09-24 | M0 工程骨架与总体规划落盘 | `7ff65a8` | `master` |

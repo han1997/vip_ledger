@@ -104,3 +104,39 @@ Room 12 表 + 12 DAO + 导出 schema；仓库接口/实现与 Hilt 装配；分�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: M3 搜索与统计
+
+**Date**: 2026-09-27
+**Task**: M3 搜索与统计
+**Branch**: `master`
+
+### Summary
+
+搜索/统计领域层（SearchQuery/StatsReport + 搜索/报表/CSV 用例）、designsystem 下沉与自绘图表、feature:stats 搜索/统计/下钻三页与导航装配；图表规范等 6 篇 android spec 落地；gradlew test assembleDebug 全绿（200 JVM 单测 0 失败），模拟器 8 项手工验收通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2d8cc6f` | (see git log) |
+| `8af79db` | (see git log) |
+| `2796f20` | (see git log) |
+| `a7f8a45` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
