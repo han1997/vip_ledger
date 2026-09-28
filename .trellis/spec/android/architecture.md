@@ -17,6 +17,24 @@
   `feature:*` 之间禁止互相依赖（需要共享时下沉到 `core:domain` 或 `core:designsystem`）。
 - `:core:designsystem` 允许依赖 `:core:model` 与 `:core:domain`（M3 起）：共享组件要展示账目与分类树，
   必须认识领域模型。`core:*` 内部只允许出现「向内」的依赖（model <- domain <- data），禁止反向。
+- **`:ml:classifier` 依赖 `:core:domain`（M6 起）**：端侧分类器实现的是 `core:domain/nlp` 里的
+  `CategoryClassifier` 接口，属「向内」方向，与 `core:data -> core:domain` 同构，无环。
+  反过来 **`:core:domain` 不得依赖 `:ml:classifier`**——管线只编程到接口，这样 M7 换实现时
+  不必回头改管线。同理，云端客户端 `LlmParserClient` 的接口在 `:core:domain`、实现在
+  `:core:data`；`feature:*` 永远只注入接口，不依赖 `:core:data`。
+
+### 跨层能力的落位口诀（M6 归纳）
+
+同一个能力横跨多层时，按「接口向内、实现向外、UI 只认接口」摆：
+
+| 位置 | 放什么 | 例子 |
+|---|---|---|
+| `core:domain` | 接口 + 纯逻辑 + 用例 | `LlmParserClient`、`AiSettingsRepository`、`CategoryClassifier`、`core/domain/nlp/*` |
+| `core:data` | 具体实现 + Hilt 绑定 | `OpenAiCompatibleLlmParserClient`、`EncryptedAiSettingsStore`、`AiModule` |
+| `ml:*` | 可选算法的具体实现 | `PlaceholderCategoryClassifier`（M7 换真模型） |
+| `feature:*` | Compose 界面 + ViewModel | `feature/ai/*`，只 import `core:domain` 的接口 |
+
+判据：如果 `feature:*` 需要 import 某个 `core:data` 的类，就是把实现写错了位置。
 
 ## 分层职责
 

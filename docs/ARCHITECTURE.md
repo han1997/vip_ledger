@@ -91,7 +91,9 @@ Compose Screen ◀──StateFlow<UiState>────────────�
 
 ## 6. AI 管线（自然语言记账）
 
-三级回退，按顺序尝试，任何一级失败都降级到下一级：
+三级回退，按顺序尝试。注意「降级」的触发是**产出不足**而非「彻底失败」：云端在规则层产出零条目、
+有字段未识别、或整体置信度非 HIGH 时补位——只按「零条目」判定，会让「昨天午饭 35 块」这类句子
+永远走不到云端（规则层总能抽出金额），开关打开也看不到 AI 起作用。
 
 1. **规则层（永远可用，离线）**：正则抽金额（`12` / `12.5` / `12块5`）、日期（今天/昨天/上周三/3月5日）、
    账户关键词；商户规则表 `merchant_rule` 命中直接定分类。
@@ -99,7 +101,13 @@ Compose Screen ◀──StateFlow<UiState>────────────�
    （低于阈值不出建议）。
 3. **云端 LLM（可选，默认关闭联网）**：调用 `POST {baseUrl}/chat/completions`，
    要求返回严格 JSON（`amountCents`、`type`、`categoryId`、`accountId`、`occurredAt`、`title`、`remark`、
-   `confidence`）；用 JSON Schema 约束 + 解析失败重试一次。
+   `confidence`）；用**降级阶梯**约束：基线 `response_format={"type":"json_object"}` + 提示词内嵌
+   schema，strict `json_schema` 只作升级档（不少 OpenAI 兼容服务对不认识的 `response_format`
+   直接 400，硬失败会打穿「云端失败可回退」这条验收）；解析失败只做**一次**提示式修复重试，
+   全程 ≤2 次网络调用。
+   **相对日期一律由规则层负责**：实测 5 个本地模型无一次算对「昨天/上周三」，模型给的日期只在
+   规则层未识别出日期时参考并需做单位与区间校验。响应的围栏/` thinking` 包裹必须容错抽取——
+   实测两个不同服务商都会加围栏。
 
 结果统一落成**待确认草稿**（`transaction.draftStatus = pending`），用户确认或修正后入库；
 每次修正写一条 `ml_training_sample`，供端侧训练与 Python 脚本导出使用。

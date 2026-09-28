@@ -35,7 +35,7 @@
 | [error-handling.md](./error-handling.md) | `AppResult` 与 `AppError` 使用方式 |
 | [logging-guidelines.md](./logging-guidelines.md) | 日志级别与敏感信息红线 |
 | [testing.md](./testing.md) | 测试分层、命名与命令、跨模块口径一致性测试 |
-| [ai-ml.md](./ai-ml.md) | AI 解析管线、端侧分类器、模型文件格式 |
+| [ai-ml.md](./ai-ml.md) | AI 解析管线与降级触发、云端调用契约（阶梯/容错抽取/错误矩阵/UA 硬前提）、未识别字段表示、端侧分类器、实测约束与隐私红线 |
 | [recurring-loans.md](./recurring-loans.md) | 周期推算、草稿口径、分期还款、提醒与后台任务 |
 | [import-export.md](./import-export.md) | 导入导出（含 SAF 界面导出握手）、WebDAV 备份格式约定 |
 | [build-and-env.md](./build-and-env.md) | 构建配置、依赖仓库、环境坑位 |
