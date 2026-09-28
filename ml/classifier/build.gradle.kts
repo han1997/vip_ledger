@@ -12,6 +12,8 @@ dependencies {
     // 方向与 architecture.md 一致：core 内部只允许向内依赖，:ml 不是 core 模块，可依赖 core:domain。
     implementation(project(":core:domain"))
     implementation(libs.kotlinx.serialization.json)
+    // 训练按 ARCHITECTURE §7 在 Dispatchers.Default 上跑，故显式声明协程核心（工程既有依赖，非新增第三方库）。
+    implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
