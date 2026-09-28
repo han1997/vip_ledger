@@ -173,3 +173,44 @@ Completed M4 recurring rules, draft generation and confirmation, installment rep
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: M5 backup, WebDAV snapshots and import/export
+
+**Date**: 2026-09-28
+**Task**: M5 backup, WebDAV snapshots and import/export
+**Branch**: `master`
+
+### Summary
+
+Completed M5: encrypted snapshot backup/restore (PBKDF2+AES-256-GCM), hand-written OkHttp WebDAV client, WorkManager scheduled backup with Wi-Fi-only constraint and retention policy, SAF CSV/JSON export, and Alipay/WeChat/generic CSV import with SHA-1 dedup. This session added a streaming snapshot export that stays byte-identical to the old whole-object build (peak memory bounded by one row), fixed header detection for real WeChat/Alipay bills whose 起始时间/终止时间 preamble rows hijacked the header row, and passed the quality check (412 JVM tests, lint, assembleDebug/release). Emulator acceptance walkthrough completed against a real LAN WebDAV server: backup -> wipe -> restore left all 12 tables row-identical, the uploaded file's sha256 matched latest.json, the encrypted snapshot decrypted with manifest checksum intact, a wrong passphrase created no safety copy and left the main library byte-identical, retention pruned to the configured count, and a second WeChat import inserted nothing while reporting the transfer row as a failed line.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bc8a2a5` | (see git log) |
+| `fcc9412` | (see git log) |
+| `411ca61` | (see git log) |
+| `beeed43` | (see git log) |
+| `966b15f` | (see git log) |
+| `93d24b5` | (see git log) |
+| `c326351` | (see git log) |
+| `634421c` | (see git log) |
+| `fd94b66` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
