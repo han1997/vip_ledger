@@ -154,4 +154,65 @@ class AiEntryUiStateTest {
         assertNull(attempt.toAccountId)
         assertFalse(attempt.canConfirm())
     }
+
+    @Test
+    fun choosingTypeClearsTypeUnresolvedAndUnblocksConfirm() {
+        // 云端关闭时「昨天午饭 35 块 微信」这类无明确收支线索的句子 → 类型未识别（PRD Requirement 8）。
+        val draft = draftsOf(
+            listOf(entry(3500, "午饭", unresolved = setOf(ParsedField.TYPE))),
+        ).single()
+
+        assertTrue(draft.isUnresolved(ParsedField.TYPE))
+        assertEquals(setOf(ParsedField.TYPE), draft.blockingUnresolved)
+        assertFalse(draft.canConfirm(), "类型未识别时不得确认")
+
+        val chosen = draft.withType(TransactionType.EXPENSE, expenseCategories)
+        assertFalse(chosen.isUnresolved(ParsedField.TYPE), "选定类型后 TYPE 标记必须清除")
+        assertTrue(chosen.blockingUnresolved.isEmpty(), "TYPE 不应继续阻塞确认")
+        assertTrue(chosen.canConfirm(), "账户与分类已识别，选定类型后即可确认")
+    }
+
+    @Test
+    fun switchingTypeReaddsCategoryOnlyWhenDirectionDiffersAndItStaysClearable() {
+        // 同一次切换既清 TYPE（选定即确定）又加 CATEGORY（方向不合需重选），净结果必须两件都对。
+        val draft = draftsOf(
+            listOf(entry(3500, "午饭", unresolved = setOf(ParsedField.TYPE))),
+        ).single()
+
+        val income = draft.withType(TransactionType.INCOME, expenseCategories)
+        assertTrue(income.isUnresolved(ParsedField.CATEGORY), "支出分类不能挂到收入上，需重选")
+        assertFalse(income.isUnresolved(ParsedField.TYPE), "选定类型后 TYPE 不得回灰")
+        assertFalse(income.canConfirm())
+
+        val resolved = income.withCategory("c_salary")
+        assertFalse(resolved.isUnresolved(ParsedField.CATEGORY), "重选分类后 CATEGORY 必须清除")
+        assertTrue(resolved.canConfirm(), "重选分类后应能确认")
+    }
+
+    @Test
+    fun switchingTypeOnFullyResolvedDraftKeepsUnresolvedEmpty() {
+        val draft = draftsOf(listOf(entry(3500, "午饭"))).single()
+        assertTrue(draft.unresolved.isEmpty())
+
+        // 同方向切换不改动分类，也不缺目标账户：不得凭空产生未识别标记。
+        val sameDirection = draft.withType(TransactionType.EXPENSE, expenseCategories)
+        assertTrue(sameDirection.unresolved.isEmpty(), "无未识别字段的草稿切类型后仍应无标记")
+        assertTrue(sameDirection.canConfirm())
+    }
+
+    @Test
+    fun editingAmountClearsAmountUnresolved() {
+        // 云端解析不出金额时该条被标 AMOUNT 未识别，用户补填后必须解锁确认（同类缺陷）。
+        val draft = draftsOf(
+            listOf(entry(0, "午饭", unresolved = setOf(ParsedField.AMOUNT))),
+        ).single()
+
+        assertTrue(draft.isUnresolved(ParsedField.AMOUNT))
+        assertFalse(draft.canConfirm())
+
+        val filled = draft.withAmountCents(3500)
+        assertEquals(3500L, filled.amountCents)
+        assertFalse(filled.isUnresolved(ParsedField.AMOUNT), "补填金额后 AMOUNT 标记必须清除")
+        assertTrue(filled.canConfirm())
+    }
 }

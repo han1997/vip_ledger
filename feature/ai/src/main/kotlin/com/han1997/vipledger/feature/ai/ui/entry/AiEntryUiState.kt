@@ -143,7 +143,15 @@ fun expectedCategoryKind(type: TransactionType): CategoryKind = when (type) {
 fun cloudClientFor(settings: AiSettings, client: LlmParserClient?): LlmParserClient? =
     if (settings.networkEnabled) client else null
 
-fun AiDraft.withAmountCents(cents: Long): AiDraft = copy(amountCents = cents)
+/**
+ * 改金额。`Long` 非空，赋值即代表「已有金额」，因此必须同时清掉 [ParsedField.AMOUNT]：
+ * 云端解析不出金额时会把该条落成 `amount = 0` 且标未识别（`OpenAiCompatibleLlmParserClient`），
+ * 用户补填后若标记不清，`blockingUnresolved` 会永久阻塞确认（与 [withType] 同类缺陷）。
+ */
+fun AiDraft.withAmountCents(cents: Long): AiDraft = copy(
+    amountCents = cents,
+    unresolved = unresolved - ParsedField.AMOUNT,
+)
 
 fun AiDraft.withTitle(title: String): AiDraft = copy(
     title = title,
@@ -184,7 +192,9 @@ fun AiDraft.withCategory(categoryId: String): AiDraft = copy(
 fun AiDraft.withType(type: TransactionType, categories: List<AiOption>): AiDraft {
     val expected = expectedCategoryKind(type)
     val currentKind = categories.firstOrNull { it.id == categoryId }?.kind
-    var next = copy(type = type)
+    // 选定类型即清掉 TYPE 未识别标记（与 withTitle / withAccount 等同构）：`type` 非空，
+    // 赋值即代表已确定方向。漏掉这一步会让 TYPE 永久阻塞确认（PRD Requirement 8 的对称面）。
+    var next = copy(type = type, unresolved = unresolved - ParsedField.TYPE)
 
     if (next.categoryId != null && currentKind != null && currentKind != expected) {
         next = next.copy(categoryId = null, unresolved = next.unresolved + ParsedField.CATEGORY)
