@@ -40,3 +40,10 @@ desktop.ini
 .venv/
 tools/trainer/.venv/
 tools/trainer/__pycache__/
+
+# Local captures and crash dumps
+.tmp_*/
+.tmp_*.png
+.tmp_*.xml
+hs_err_pid*.log
+replay_pid*.log
