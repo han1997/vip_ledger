@@ -22,7 +22,12 @@
 ```
 
 - 以后用户说「编译」时，默认同时产出 debug 与 release：`assembleDebug assembleRelease`。
-  当前 release 没有正式签名配置，产物是 `app-release-unsigned.apk`；装到已连接的开发机前，用本机 debug keystore 签成 `app-release-debugsigned.apk` 再 `adb install -r`。不要把 keystore、密码或已签名 apk 提交进仓库。
+  release 已配置正式签名，产物是 `app/build/outputs/apk/release/app-release.apk`；本地无需再用 debug keystore 事后签名。
+- release 签名来自根目录未跟踪的 `keystore.properties`（四个键：`storeFile`/`storePassword`/`keyAlias`/`keyPassword`）
+  与本地 keystore（`keystore/vipledger-release.jks`，alias `vipledger`）。`keystore.properties` 不存在时构建不失败，
+  只是产出未签名 apk，因此新鲜 clone 与未来 CI 都能编译。
+- 红线：不要把 keystore、`keystore.properties`、密码或已签名 apk 提交进仓库。keystore 只在本机，
+  换机或重装后要先从密码管理器取回 keystore 与密码，否则无法用同一把 key 覆盖安装已发布版本。
 
 - 保持 `org.gradle.java.installations.auto-download=false`，否则构建会去 foojay 拉 JDK 并失败。
 - 若项目根再次出现 `gradle/gradle-daemon-jvm.properties`（AGP 9 产物），删掉它。

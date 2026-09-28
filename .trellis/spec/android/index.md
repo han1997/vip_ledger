@@ -10,6 +10,8 @@
 3. 读本目录下与本次改动相关的规范文件（见下表）。
 4. 涉及依赖版本改动时，先核对 `docs/DEV-NOTES.md` 第 3 节的版本矩阵约束。
 5. 金额用 `Money`（整数分），时间存 UTC epoch millis 并按设备时区归到 `LocalDate`。
+6. 重要更新与必要内容随做随写进 `README.md`，不要攒到最后补：涉及构建/用法/功能/需求/安装的变更，
+   必须在同一变更里同步 `README.md` 对应章节。
 
 ## Quality Check（提交前必跑）
 
@@ -21,6 +23,7 @@
 - 新增用户可见文案必须进 `strings.xml`，不在 Compose 里写死中文；
   跨 feature 共用的文案放 `core:designsystem`，feature 自有文案加模块前缀（`feature:stats` 用 `stats_`/`search_`/`drill_`）。
 - 新增模块要同时改 `settings.gradle.kts`、`:app` 依赖与 Hilt 装配（缺少 `@Provides` 会在编译期报 MissingBinding）。
+- 重要更新与必要内容必须随做随写进 `README.md`（构建命令、用法、功能、安装/签名等），不要留到收尾再补。
 - 禁止提交 `local.properties`、`build/`、`.gradle/` 与任何密钥文件。
 
 ## 规范文件索引
