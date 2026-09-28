@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 6
+- **Total Sessions**: 7
 - **Last Active**: 2026-09-28
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~216 | Active |
+| `journal-1.md` | ~256 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 7 | 2026-09-28 | M6 AI natural-language entry | `83b31db`, `3db7506`, `e8d6820`, `c5f1c68`, `35cf09d`, `ed786a6`, `3f17907`, `39fa478` | `master` |
 | 6 | 2026-09-28 | M5 backup, WebDAV snapshots and import/export | `bc8a2a5`, `fcc9412`, `411ca61`, `beeed43`, `966b15f`, `93d24b5`, `c326351`, `634421c`, `fd94b66` | `master` |
 | 5 | 2026-09-28 | Complete M4 recurring transactions and loans | `b133507` | `master` |
 | 4 | 2026-09-27 | M3 搜索与统计 | `2d8cc6f`, `8af79db`, `2796f20`, `a7f8a45` | `master` |

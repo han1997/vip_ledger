@@ -214,3 +214,43 @@ Completed M5: encrypted snapshot backup/restore (PBKDF2+AES-256-GCM), hand-writt
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: M6 AI natural-language entry
+
+**Date**: 2026-09-28
+**Task**: M6 AI natural-language entry
+**Branch**: `master`
+
+### Summary
+
+Completed M6: offline rule-layer parser (span table + priority claiming, pure JVM, explicit today/DB candidates), CategoryClassifier seam with a :ml:classifier placeholder, OpenAI-compatible cloud client with a downgrade ladder (json_object baseline, tolerant extraction, one repair retry, <=2 calls), the AI entry page (multi-entry, unresolved fields shown and required, corrections writing ml_training_sample + LEARNED merchant rules at priority 110), a merchant-rule management page, and encrypted AI settings with a default-off network switch. Measured on real endpoints: all 5 local Ollama models got relative dates wrong (5/5) so the rule layer owns the date; response wrapping is model-dependent so tolerant extraction is mandatory; one gateway requires a browser User-Agent or it 403s; a 7B model needs ~65s per parse. Benchmarked gemma3:4b as the best speed/quality default. The emulator walkthrough caught two defects no unit test saw: withType/withAmountCents never cleared their unresolved markers (making type- or amount-unresolved drafts impossible to confirm), and account-unresolved unconditionally triggering the cloud (burning 15-60s on nearly every parse, defeating the learned-rule AC). Both fixed. Not verified end-to-end on-device: the account-exemption isolation (domain unit test with fail-without-fix evidence only) and the online MiniMax-M2 call (host curl + header unit test only).
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `83b31db` | (see git log) |
+| `3db7506` | (see git log) |
+| `e8d6820` | (see git log) |
+| `c5f1c68` | (see git log) |
+| `35cf09d` | (see git log) |
+| `ed786a6` | (see git log) |
+| `3f17907` | (see git log) |
+| `39fa478` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
