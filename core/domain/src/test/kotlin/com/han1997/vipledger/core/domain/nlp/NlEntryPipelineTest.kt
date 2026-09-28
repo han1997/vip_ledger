@@ -101,11 +101,58 @@ class NlEntryPipelineTest {
 
     @Test
     fun unresolvedFieldTriggersCloudEvenAtHighConfidence() = runTest {
-        // 规则命中使分类确定并升为 HIGH，但账户/类型仍缺 → 仍应触发云端补位（D7 条件 b）。
-        val cloud = FakeCloud(AppResult.success(listOf(cloudEntry())))
+        // 规则命中使分类确定并升为 HIGH，但类型仍缺（账户字段已豁免，不参与触发）→
+        // 仍应触发云端补位（D7 条件 b 对「云端能补的字段」成立）。
+        // 云端返回失败，使条目不被合并，从而能直接观察规则层真实输出。
+        val cloud = FakeCloud(AppResult.Failure(AppError.Network("offline")))
         val rules = listOf(merchantRule("rule_lunch", "午饭", "cat_food"))
-        pipeline(FixedClassifier(emptyList()), cloud, rules).parse("午饭 35 块", REF)
-        assertEquals(1, cloud.callCount, "存在未识别字段时应调用云端")
+        val result = pipeline(FixedClassifier(emptyList()), cloud, rules).parse("午饭 35 块", REF)
+        val entry = result.entries.single()
+        assertTrue(entry.unresolved.contains(ParsedField.TYPE), "类型无线索，应标未识别")
+        assertEquals(Confidence.HIGH, entry.confidence, "规则命中即 HIGH")
+        assertEquals(1, cloud.callCount, "存在云端能补的未识别字段（类型）时应调用云端")
+    }
+
+    @Test
+    fun unresolvedAccountAloneDoesNotTriggerCloud() = runTest {
+        // 设备实测场景：LEARNED 规则已定分类、类型由线索词（收到/退款）确定、金额带单位 → HIGH，
+        // 唯一未识别的是账户（句中没提账户名）。账户云端造不出来、必须由用户手选 → 不得联网。
+        // 改动前此用例会联网（callCount == 1），改动后必须为 0。
+        val cloud = FakeCloud(AppResult.success(listOf(cloudEntry())))
+        val rules = listOf(merchantRule("rule_refund", "退款", "cat_refund", source = RuleSource.LEARNED))
+        val result = pipeline(FixedClassifier(emptyList()), cloud, rules).parse("收到退款 88 元", REF)
+        assertEquals(0, cloud.callCount, "账户未识别不得触发云端（PRD D7 豁免账户字段）")
+        val entry = result.entries.single()
+        assertEquals(setOf(ParsedField.ACCOUNT), entry.unresolved, "账户仍应标未识别，由用户选择")
+        assertEquals(Confidence.HIGH, entry.confidence)
+        assertEquals("cat_refund", entry.categoryId)
+        assertEquals("rule_refund", entry.matchedRuleId)
+    }
+
+    @Test
+    fun unresolvedTargetAccountOnTransferDoesNotTriggerCloud() = runTest {
+        // 转账收款方（TO_ACCOUNT）与账户同类：云端造不出合法 id → 同样不得触发云端。
+        val cloud = FakeCloud(AppResult.success(listOf(cloudEntry())))
+        val rules = listOf(merchantRule("rule_transfer", "转账", "cat_rent", source = RuleSource.LEARNED))
+        val result = pipeline(FixedClassifier(emptyList()), cloud, rules).parse("从微信转账 500 元", REF)
+        assertEquals(0, cloud.callCount, "收款账户未识别不得触发云端（PRD D7 豁免账户字段）")
+        val entry = result.entries.single()
+        assertEquals(TransactionType.TRANSFER, entry.type)
+        assertEquals("acct_wechat", entry.accountId, "转出账户已识别")
+        assertEquals(setOf(ParsedField.TO_ACCOUNT), entry.unresolved, "收款账户仍应标未识别")
+        assertEquals(Confidence.HIGH, entry.confidence)
+    }
+
+    @Test
+    fun unresolvedCategoryStillTriggersCloud() = runTest {
+        // 分类是云端**能**补的字段（调用方传入真实分类列表后校验）→ 分类未识别仍触发云端。
+        // 回归护栏：豁免只为账户字段，且不得把「未识别即触发」整体削弱。
+        val cloud = FakeCloud(AppResult.Failure(AppError.Network("offline")))
+        val result = pipeline(FixedClassifier(emptyList()), cloud).parse("收到奖金 12000 元 微信", REF)
+        val entry = result.entries.single()
+        assertTrue(entry.unresolved.contains(ParsedField.CATEGORY), "句中无分类线索")
+        assertEquals(Confidence.HIGH, entry.confidence)
+        assertEquals(1, cloud.callCount, "分类未识别应触发云端")
     }
 
     @Test

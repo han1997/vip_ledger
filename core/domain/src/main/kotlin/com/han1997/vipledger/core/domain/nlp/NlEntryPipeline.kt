@@ -60,14 +60,17 @@ class NlEntryPipeline(
 
     /**
      * PRD D7 触发判据：任一成立即认为规则层「产出不足」，云端补位——
-     * (a) 零条目；(b) 有字段落入 [ParsedEntry.unresolved]；(c) 整体置信度非 [Confidence.HIGH]。
+     * (a) 零条目；(b) 有**云端能补的**字段落入 [ParsedEntry.unresolved]
+     * （账户字段是豁免的，见 [CLOUD_CANNOT_RESOLVE_FIELDS]）；(c) 整体置信度非 [Confidence.HIGH]。
      *
      * 反例：LEARNED `merchant_rule` 命中且字段齐全的句子为 [Confidence.HIGH] 且无未识别字段，
      * 于是**不消耗云端调用**（PRD AC「同商户二次输入由规则层直接命中」）。
      */
     private fun needsCloud(result: ParseResult): Boolean {
         if (result.entries.isEmpty()) return true
-        return result.entries.any { it.unresolved.isNotEmpty() || it.confidence != Confidence.HIGH }
+        return result.entries.any { entry ->
+            (entry.unresolved - CLOUD_CANNOT_RESOLVE_FIELDS).isNotEmpty() || entry.confidence != Confidence.HIGH
+        }
     }
 
     private suspend fun applyClassifier(result: ParseResult): ParseResult {
@@ -216,5 +219,25 @@ class NlEntryPipeline(
         } else {
             ParseResult.Partial(entries, unresolved, warnings)
         }
+    }
+
+    private companion object {
+        /**
+         * 云端**造不出来**的「未识别」字段——因此它们不构成 [needsCloud] 的触发条件。
+         *
+         * 账户 / 目标账户只能是用户库里已存在、且由用户在本页手选的 id：云端看不到用户的账户表，
+         * 凭空给不出一个合法 id（实测 `gemma3:4b` 给的账户就是不存在的，会被 id 后校验挡成「未识别」，
+         * 见 PRD Requirement 8 禁止静默降级成默认账户）。而用户的账户名（如「现金」「card」）
+         * 几乎不会出现在账目文本里——若把 ACCOUNT 计入触发条件，等于**几乎每句都联网**
+         * （实测单次 15–60 s），直接违背 PRD D7「规则层产出不足时才补位」与 AC
+         * 「同商户二次输入由规则层直接命中、不消耗云端调用」。
+         *
+         * 注意这只是**云端触发**判据的豁免：[ParsedEntry.unresolved] 里仍保留 ACCOUNT，
+         * 界面照常显示「未能识别：账户」并要求用户选择后才能确认（Requirement 8）。
+         *
+         * 不要「简化」回「只看 unresolved 是否为空」：`TO_ACCOUNT` 与 `ACCOUNT` 同类
+         * （转账收款方也是云端造不出来的 id），必须一起排除。
+         */
+        private val CLOUD_CANNOT_RESOLVE_FIELDS = setOf(ParsedField.ACCOUNT, ParsedField.TO_ACCOUNT)
     }
 }
