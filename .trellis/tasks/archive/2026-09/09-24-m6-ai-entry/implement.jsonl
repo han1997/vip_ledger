@@ -1,0 +1,12 @@
+{"file": ".trellis/spec/android/ai-ml.md", "reason": "本任务的权威契约：三级回退管线（规则层→端侧分类器→云端 LLM）、结果一律落 draft_status=PENDING、修正写 ml_training_sample、隐私红线（联网默认关且开启时须告知发送目标）"}
+{"file": ".trellis/spec/android/index.md", "reason": "spec 层索引与阅读顺序"}
+{"file": ".trellis/spec/android/architecture.md", "reason": "分层与「feature 之间禁止互相依赖」：决定规则层放 core/domain/nlp、云端接口放 core:domain 而实现放 core:data、UI 放 feature:ai"}
+{"file": ".trellis/spec/android/directory-structure.md", "reason": "新增 feature/ai 页面与 core/domain/nlp 包应放置的目录结构"}
+{"file": ".trellis/spec/android/database.md", "reason": "Room DAO 与事务约定；merchant_rule 命中查询、LEARNED 规则写入、ml_training_sample 写入需遵守"}
+{"file": ".trellis/spec/android/testing.md", "reason": "单测约定；规则层必须可纯 JVM 测（不依赖 Android），云端降级阶梯用 MockWebServer 覆盖"}
+{"file": ".trellis/spec/android/ui.md", "reason": "Compose 页面规范与已知坑（SavedStateHandle 缺参、一次性状态、remember 暂存），AI 页与草稿确认 UI 需遵守"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "失败收敛与 AppResult 约定；三级管线任何一级失败都不得抛异常到 UI"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "依赖矩阵与 version catalog 用法；确认 OkHttp/MockWebServer 在正确模块，不新增第三方 SDK"}
+{"file": ".trellis/spec/android/logging-guidelines.md", "reason": "红线：apiKey 与账目文本不得进日志；云端请求/响应的日志审查依据"}
+{"file": ".trellis/tasks/09-24-m6-ai-entry/research/chinese-nl-rule-parser.md", "reason": "规则层文法与抽取器架构：Span 表 + 优先级认领、固定遍次 P0→P9、中文金额/日期文法与歧义陷阱、建议的单测语料"}
+{"file": ".trellis/tasks/09-24-m6-ai-entry/research/llm-structured-output.md", "reason": "云端结构化输出：json_object 基线与 json_schema 升级档、容错抽取 + 一次修复重试、字段级坑位（元vs分、幻觉 id、ISO vs epoch）"}

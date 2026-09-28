@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/android/ai-ml.md", "reason": "逐条核对三级管线是否按序降级、草稿是否落 draft_status=PENDING、修正是否写样本、隐私红线是否守住"}
+{"file": ".trellis/spec/android/index.md", "reason": "spec 层索引"}
+{"file": ".trellis/spec/android/architecture.md", "reason": "核对无跨 feature 依赖、core:* 依赖方向正确（model<-domain<-data）"}
+{"file": ".trellis/spec/android/testing.md", "reason": "核对规则层纯 JVM 可测、云端各降级分支（400/超时/非 JSON/围栏包裹/截断）有 MockWebServer 覆盖、语料条数达标"}
+{"file": ".trellis/spec/android/ui.md", "reason": "核对一次性状态回传、导航装配与已知坑"}
+{"file": ".trellis/spec/android/database.md", "reason": "核对 merchant_rule 查询与 LEARNED 写入的事务性、Room 失效通知"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "核对所有失败路径都有用户可见反馈且不抛异常到 UI"}
+{"file": ".trellis/spec/android/logging-guidelines.md", "reason": "核对 apiKey 与账目文本未进日志"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "核对未新增第三方 SDK、测试依赖放在正确模块"}
+{"file": ".trellis/tasks/09-24-m6-ai-entry/research/chinese-nl-rule-parser.md", "reason": "核对实现覆盖了研究列出的歧义案例（3月5日的数字、五折、一千五），且「规则做不到」的漏判被显式记录而非硬凑"}
