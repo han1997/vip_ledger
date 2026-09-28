@@ -24,7 +24,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -56,6 +55,7 @@ import com.han1997.vipledger.core.data.importexport.ImportReport
 import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.feature.sync.R
@@ -128,7 +128,7 @@ internal fun BackupContent(
         }
     }
 
-    Scaffold(
+    VipLedgerScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { VipLedgerTopBar(title = stringResource(R.string.backup_title), onBack = onBack) },
         snackbarHost = { SnackbarHost(snackbarHostState) },

@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -25,7 +25,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.TxnLine
+import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
@@ -106,7 +106,7 @@ internal fun HomeContent(
     modifier: Modifier = Modifier,
 ) {
     val ledgerId = state.ledgerId
-    Scaffold(
+    VipLedgerScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             VipLedgerTopBar(
@@ -238,17 +238,30 @@ private fun HomeBody(
                 }
             }
         }
-        if (overview.recentTxns.isEmpty()) {
-            item { EmptyState(message = stringResource(R.string.home_recent_empty)) }
-        } else {
-            items(items = overview.recentTxns.take(RECENT_PREVIEW), key = { it.id }) { txn ->
-                TxnLine(
-                    txn = txn,
-                    categoryName = txn.categoryId?.let { categoryNames[it] },
-                    accountName = accountNames[txn.accountId],
-                    tagNames = txn.tagIds.mapNotNull { tagNames[it] },
-                    onClick = onOpenTxns,
-                )
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                if (overview.recentTxns.isEmpty()) {
+                    EmptyState(message = stringResource(R.string.home_recent_empty))
+                } else {
+                    Column {
+                        overview.recentTxns.take(RECENT_PREVIEW).forEachIndexed { index, txn ->
+                            if (index > 0) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            }
+                            TxnLine(
+                                txn = txn,
+                                categoryName = txn.categoryId?.let { categoryNames[it] },
+                                accountName = accountNames[txn.accountId],
+                                tagNames = txn.tagIds.mapNotNull { tagNames[it] },
+                                onClick = onOpenTxns,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -256,29 +269,35 @@ private fun HomeBody(
 
 @Composable
 private fun NetWorthCard(overview: HomeOverview) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(R.string.home_net_worth),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Text(
                     text = stringResource(R.string.home_account_count, overview.usableAccountCount),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
             AmountText(
                 amount = overview.netWorth,
                 style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -288,12 +307,15 @@ private fun NetWorthCard(overview: HomeOverview) {
                     label = stringResource(R.string.home_total_debt),
                     amount = overview.totalDebt,
                     modifier = Modifier.weight(1f),
+                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 LabeledAmount(
                     label = stringResource(R.string.home_today_expense),
                     amount = overview.todayExpense,
                     color = ExpenseRed,
                     modifier = Modifier.weight(1f),
+                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f),
                 )
             }
         }
@@ -302,11 +324,15 @@ private fun NetWorthCard(overview: HomeOverview) {
 
 @Composable
 private fun MonthCard(overview: HomeOverview) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 18.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             LabeledAmount(
@@ -336,18 +362,19 @@ private fun LabeledAmount(
     amount: Money,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
+    labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium,
+            color = labelColor,
             maxLines = 1,
         )
-        AmountText(amount = amount, color = color)
+        AmountText(amount = amount, color = color, style = MaterialTheme.typography.titleSmall)
     }
 }
 

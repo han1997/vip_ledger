@@ -27,7 +27,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -51,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.core.domain.model.MerchantRule
@@ -94,7 +94,7 @@ internal fun MerchantRuleManageContent(
         }
     }
 
-    Scaffold(
+    VipLedgerScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { VipLedgerTopBar(title = stringResource(R.string.ai_rule_title), onBack = onBack) },
         snackbarHost = { SnackbarHost(snackbarHostState) },

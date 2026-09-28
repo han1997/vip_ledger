@@ -25,7 +25,6 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -48,6 +47,7 @@ import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.accountTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
@@ -91,7 +91,7 @@ internal fun AccountManageContent(
         }
     }
 
-    Scaffold(
+    VipLedgerScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             VipLedgerTopBar(
@@ -117,7 +117,7 @@ internal fun AccountManageContent(
             ) {
                 CircularProgressIndicator()
             }
-            return@Scaffold
+            return@VipLedgerScaffold
         }
         LazyColumn(
             modifier = Modifier
