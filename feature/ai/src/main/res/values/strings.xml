@@ -121,7 +121,7 @@
     <string name="ai_model_open">模型</string>
     <string name="ai_model_title">端侧模型</string>
     <string name="ai_model_loading">正在处理…</string>
-    <string name="ai_model_none">还没有训练过的模型。修正分类或导入样本后，打开自动训练或点「立即训练」。</string>
+    <string name="ai_model_none">还没有训练过的模型。在分类修正中积累样本后，打开自动训练或点「立即训练」。</string>
     <string name="ai_model_section_current">当前模型</string>
     <string name="ai_model_version">版本</string>
     <string name="ai_model_trained_at">上次训练</string>
@@ -130,7 +130,7 @@
     <string name="ai_model_label_count">分类标签数</string>
     <string name="ai_model_feature_version">特征版本</string>
     <string name="ai_model_section_skipped">样本不足被跳过的分类</string>
-    <string name="ai_model_skipped_hint">样本数低于阈值（%1$d）的分类不参与训练、也不出建议；攒够后会自动转为可训练。</string>
+    <string name="ai_model_skipped_hint">某个分类的累计样本数低于 %1$d 条时，该分类不参与训练、也不出建议；攒够后会自动转为可训练。</string>
     <string name="ai_model_skipped_empty">没有被跳过的分类。</string>
     <string name="ai_model_skipped_row">%1$s · 样本 %2$d</string>
     <string name="ai_model_section_autotrain">自动训练</string>

@@ -1,6 +1,7 @@
 package com.han1997.vipledger.feature.ai.ui.model
 
 import com.han1997.vipledger.feature.ai.model.AutoTrainTrigger
+import com.han1997.vipledger.ml.classifier.train.TrainingConfig
 
 /**
  * 被跳过（累计样本数低于阈值）的分类，在模型管理页上展示（PRD D3#3 后果说明）。
@@ -42,7 +43,14 @@ data class ModelManageUiState(
     /** 尚未纳入训练的样本数；达到 [autoTrainThreshold] 时下一轮修正会触发自动训练。 */
     val untrainedSamples: Int = 0,
     val autoTrainEnabled: Boolean = false,
+    /** 自动训练触发线（ARCHITECTURE §7）：未训练样本累计到它才自动训练。与 [minSamplesPerClass] 不同。 */
     val autoTrainThreshold: Int = AutoTrainTrigger.AUTO_TRAIN_THRESHOLD,
+    /**
+     * 类别不平衡抑制阈值（PRD D3#3）：某个分类的**累计**样本数低于它的，该分类既不参与训练、
+     * 也不进标签表（因此不出建议）。取值直连 [TrainingConfig] 的默认值，页面文案随源码走，
+     * 不会被写死成另一个数（曾误用 [autoTrainThreshold] 的 30 描述本规则）。
+     */
+    val minSamplesPerClass: Int = TrainingConfig.DEFAULT_MIN_SAMPLES_PER_CLASS,
     val skippedClasses: List<SkippedClass> = emptyList(),
     val busy: Boolean = false,
     val pendingExport: ModelExport? = null,

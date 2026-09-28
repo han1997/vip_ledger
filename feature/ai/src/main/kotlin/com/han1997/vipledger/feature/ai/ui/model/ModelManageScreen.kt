@@ -191,7 +191,8 @@ private fun SkippedSection(state: ModelManageUiState) {
     ) {
         SectionTitle(stringResource(R.string.ai_model_section_skipped))
         Text(
-            text = stringResource(R.string.ai_model_skipped_hint, state.autoTrainThreshold),
+            // 每类阈值（D3#3）：与自动训练触发线（autoTrainThreshold）是两个数，别拿后者来写这句。
+            text = stringResource(R.string.ai_model_skipped_hint, state.minSamplesPerClass),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
