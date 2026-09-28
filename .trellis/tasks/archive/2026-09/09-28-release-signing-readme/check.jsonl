@@ -1,0 +1,3 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "校验构建命令、版本矩阵约束与密钥不入库红线；本任务改动的正是该文件的签名段"}
+{"file": ".trellis/spec/android/index.md", "reason": "Quality Check 硬性要求：提交前必跑 test assembleDebug，禁止提交密钥文件"}
