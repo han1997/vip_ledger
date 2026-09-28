@@ -4,7 +4,12 @@
 
 - CSV：UTF-8 带 BOM，列顺序
   `日期,类型,金额,分类,子分类,标签,账户,目标账户,标题,备注,来源`；金额为两位小数字符串。
-- JSON：直接序列化领域模型，用于备份与迁移，字段名与 `docs/DATA-MODEL.md` 一致。
+  由 `core:domain` 的 `BuildBackupCsvUseCase` 产出（`HEADER` 为该列序）。
+- JSON：**整库表数据 JSON**，结构 `{"tables": {"<表名>": [{"<列名>": 值}, ...]}}`，
+  表名与列名取 SQLite 实际名字，与 `docs/DATA-MODEL.md` 一致 —— **不是**领域模型的 camelCase 字段名。
+  M5 的落地方式是 `core:data` 的 `SnapshotJsonCodec`，它同时供用户导出与快照 `db.json` 使用，两者字节级同构。
+  「备份 JSON」与「快照」的差别只在快照多一层 manifest + 校验和 + 可选加密，见下节。
+  BLOB 列按 `Base64(NO_WRAP)` 文本写出，读回时必须解码 —— 见文末坑 1。
 - 导出文件默认写到应用私有目录的 `files/export/`，再通过系统分享或 SAF 让用户取走。
 
 ## 界面侧导出（SAF `CreateDocument`，M3 起）
@@ -43,6 +48,9 @@ LaunchedEffect(state.pendingExport) {
   （`csvSuggestedFileName` / `imageSuggestedFileName`）。中文文件名在部分文件管理器/Provider 上会乱码或保存失败。
 - 写盘封装在 `feature:stats/ui/common/UriWriter.kt`：`writeTextToUri` / `writeImageToUri` 用
   `runCatching` 把任何异常收敛成 `false`，界面提示「导出失败」/「导出失败，可改用导出 CSV」。
+  `:feature:sync` 有一份**同契约**的镜像（`feature/sync/ui/common/UriWriter.kt` + `ExportNaming.kt`），
+  因为 `feature:*` 之间禁止互相依赖、下沉到 core 又会牵动 `feature:stats` 的调用点。
+  **再有第三个 feature 需要它时，就该下沉到 `core:designsystem`**（见 architecture.md 的共享件规则）。
 
 ## 导出内容
 
@@ -50,7 +58,8 @@ LaunchedEffect(state.pendingExport) {
   `\r\n` 行尾；字段含 `,` / `"` / 换行时用双引号包裹并把 `"` 转义成 `""`；
   BOM（`\uFEFF`）只在文件开头写一次，让 Excel 双击不乱码。M3 明细导出的列（`BuildTxnCsvUseCase.HEADER`）：
   `日期,时间,类型,金额,账户,目标账户,分类,标签,标题,备注,计入统计,来源,状态,已删除`
-  （本文件第一节的 `日期,类型,金额,分类,...` 是 M5 备份/导入用的对外格式，两者不要混）。
+  （本文件第一节的 `日期,类型,金额,分类,...` 是 M5 备份/导入用的对外格式，两者不要混：
+  M3 格式面向「给人看的明细」，M5 格式面向「能再导回来的账目」，列集与粒度都不同）。
 - **统计图片**：PNG（`Bitmap.CompressFormat.PNG`），内容是统计卡片区域。Compose 侧用
   `rememberGraphicsLayer()` 录制（`Modifier.drawWithContent { layer.record { ... }; drawLayer(layer) }`，
   见 ui.md 的坑 6），导出时 `runCatching { layer.toImageBitmap() }`；失败提示「导出失败，可改用导出 CSV」，
@@ -65,6 +74,25 @@ LaunchedEffect(state.pendingExport) {
 - 导入报告必须展示「新增 / 重复 / 失败」计数与失败样例行号。
 - 导入全程包在一个事务或可回滚的分批写入中，失败不得留下半份数据。
 
+> **`Importer` 接口尚未落地（M5 现状）**：只有 `core:data` 的 `CsvLedgerImporter`（`object`，含
+> `preview` / `parse` / `presetMapping` / `fingerprint`）。支付宝/微信预设与通用映射都由它承担，
+> 「微信」「支付宝」目前只影响默认类型与表头探测的候选词。等到真要接第二种账单格式时再抽接口，
+> 避免按猜测设计签名（与上一条「禁止凭猜测写解析」同源）。
+
+M5 落地的具体契约：
+
+- 必填字段只有三个：`TIME` / `AMOUNT` / `TITLE`（`CsvMapping.missingRequired()`）。`TITLE` 缺失时回落到备注。
+- 去重键实现为字符串 `"${occurredAt / 60_000}|$amountCents|$accountId|$title"` 的 SHA-1 十六进制。
+  分钟粒度是规格的一部分，不要图省事改成秒级。
+- `TxnDao.existsImportHash` 是**全库**判定：`SELECT EXISTS(... WHERE import_hash = :hash)`，
+  且**不过滤 `deleted_at`**。软删除的行仍占住 `import_hash` 唯一索引，过滤掉会导致撞索引失败。
+  全库不按账本过滤是安全的：`accountId` 是全局唯一 UUID，跨账本不会误判。
+- 单行解析失败（日期/金额格式错、金额为 0、转账与还款类）计入 `failedLines`，不阻断整批；
+  但**整批要么全提交要么全回滚**——`BackupIoManager.importCsv` 把插入与余额同步包在
+  `database.withTransaction {}` 里，异常时回滚并返回一条以失败行号为主的报告。
+- 金额解析：先剥掉千分位 `,` 与 `￥`/`¥`，再 `BigDecimal(...).movePointRight(2).longValueExact()`，
+  避免浮点误差；无法精确转成整数分即判该行失败。
+
 ## WebDAV 备份
 
 - 客户端基于 OkHttp 手写 `PROPFIND` / `MKCOL` / `PUT` / `GET` / `DELETE`，Basic 认证；
@@ -76,3 +104,74 @@ LaunchedEffect(state.pendingExport) {
   允许用户选择不加密。
 - 恢复前强制先导出当前库到本地；恢复后校验行数与校验和，不一致则中止并保留原库。
 - 定时备份用 WorkManager，支持「仅 WiFi」；每次结果写入设置页可见的备份日志。
+
+M5 落地的具体契约（`core:data` 的 `backup/` 包）：
+
+**快照格式**（`SnapshotArchive`）
+
+- `FORMAT_VERSION = 1`；manifest 字段固定为 `formatVersion` / `createdAt` / `counts`（表名 → 行数）/ `sha256OfDb`。
+- `db.json` = `SnapshotJsonCodec` 的整库表数据 JSON（与用户 JSON 导出同构），
+  表序固定为 `SnapshotArchive.TABLES`，导出时 `ORDER BY rowid`，保证同一份数据校验和稳定。
+- 加密快照是「**先写 8 字节 MAGIC `VLENC001`，再写 16 字节 salt + 12 字节 IV，之后是 GCM 密文**」的单文件流。
+  读侧靠 MAGIC 判定是否加密，所以 `restore` 不需要用户先声明「这份是加密的」。
+- PBKDF2-HMAC-SHA256 **150,000** 次（规格下限 12 万，留了余量），AES-256-GCM，128-bit tag。
+- 口令与密钥字节用完即 `fill('\u0000')` 清零。
+
+**恢复次序**（顺序即安全边界，不许调整）
+
+1. 解压提取 `manifest.json` / `db.json`，条目名含 `..` 或以 `/` 开头直接拒绝（zip-slip）。
+2. 校验 `formatVersion`，不认识就中止。
+3. 校验 `sha256OfDb`。
+4. 在**临时库**里插入并验证：`PRAGMA foreign_key_check` 无输出 + 每张表行数与 manifest 一致。
+5. 生成当前库的安全副本。
+6. 才在**同一事务**里清表 + 写入真实库，提交后再 `invalidationTracker.refreshAsync()`。
+
+- 1–4 任何一步失败都必须**完全没碰过主库**。安全副本本身只读主库，不构成写入。
+- 安全副本存 `filesDir/backups/`，保留最近 **5** 份（`SAFETY_COPY_LIMIT`），每次恢复只生成一份。
+- 临时校验库无论成功失败都要 `close()` 并删掉 `.db` / `-wal` / `-shm`。
+
+**远端指针与保留**
+
+- `latest.json` 字段：`file` / `size` / `sha256` / `formatVersion`，**仅在快照 PUT 成功之后**才更新。
+  上传失败时不得留下指向不存在文件的指针。
+- `retain(keep)` 按文件名倒序（时间戳命名即时间序）保留前 `keep` 份，`drop(keep)` 的才删，
+  所以刚上传的那份永远不会被自己删掉。
+- 上传用 `asRequestBody` 流式送文件，不要 `readBytes()`。
+
+**凭据与日志**
+
+- WebDAV 地址/用户名/密码/口令存 `EncryptedSettingsStore`：`backup_settings` SharedPreferences 里的
+  一个 AndroidKeyStore AES-GCM 加密 payload，任何情况下不落明文、不进日志。
+- 备份日志 `BackupLogStore` 只保留最近 **20** 条 `{success, time, message}`；
+  `message` 里只允许出现文件名或 `IOException` 文本（如 `WebDAV upload failed (500)`），
+  不得拼进凭据、口令或账单内容。
+- `BackupWorker` 重试上限 3 次，超过记 `failure`，不做无限重试。
+- 联网权限 `INTERNET` + `ACCESS_NETWORK_STATE` 必须声明在 `:app` 的 manifest 里 ——
+  `:feature:sync` / `:core:data` 作为 library 不会自动带上，漏了就是「测试全绿、真机全挂」。
+
+## 常见坑（M5 实测踩过）
+
+### 坑 1：BLOB 列必须在导入侧解码
+
+导出把 `Cursor.FIELD_TYPE_BLOB` 写成 `Base64(NO_WRAP)` 文本；导入若直接把这个字符串当参数绑回去，
+SQLite 会把文本原样存进 BLOB 列，`attachment` 等二进制字段**静默损坏**（不报错、校验和也对，因为
+校验的是 `db.json` 而不是库内容）。导入侧必须按 `PRAGMA table_info` 的声明类型识别 BLOB 列并解码成 `ByteArray`。
+新增二进制列时同步检查 `SnapshotArchiveTest` 的 BLOB 往返用例。
+
+### 坑 2：裸 SQL 写入不会触发 Room 的失效通知
+
+恢复走的是 `DELETE` / `INSERT` 裸 SQL，绕开 Room 的 invalidation tracker —— 事务提交了、库里数据换了，
+但所有 `Flow` 观察者不会收到通知，界面继续显示**旧数据**，用户以为恢复没生效。
+必须在提交后显式 `database.invalidationTracker.refreshAsync()`（`RoomDatabase.clearAllTables()` 内部也是这么做的）。
+
+### 坑 3：`File.copyTo` 拷到自己会把自己清空
+
+加密快照曾写成「输出到 `zipped`，最后 `zipped.copyTo(destination, overwrite = true)`」，
+而加密分支里 `zipped` 就等于 `destination` —— 同一路径自我拷贝：先截断目标文件再读源文件，
+**产出一份 0 字节或半截的归档**。这类 bug 在只跑非加密用例时完全不可见。
+写「临时文件 → 最终文件」的搬运逻辑前，先确认两个 `File` 不是同一个路径（或干脆只传一个目的地）。
+
+### 坑 4：`feature:*` 的资源名要加模块前缀
+
+library 资源会被 `:app` 合并，重名即 `mergeDebugResources` 失败。
+`:feature:sync` 用 `backup_` 前缀并在 `strings.xml` 顶部注释写明规则（见 architecture.md「资源名全局唯一」）。

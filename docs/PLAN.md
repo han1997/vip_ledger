@@ -118,7 +118,7 @@
 - [x] M4-b `:core:data` / `:core:database`：DAO 查询与仓库实现、用例 Hilt 装配（未改表）
 - [x] M4-c `:feature:ledger`：周期规则列表/编辑、待确认草稿、分期列表/详情/新建、首页提醒卡与三个新入口
 - [x] M4-d `:app`：WorkManager 每日任务（`@EntryPoint` 注入）+ 通知渠道与 `POST_NOTIFICATIONS` 申请
-- [ ] M5 备份与导入导出
+- [ ] M5 备份与导入导出（2026-09-28 代码完成：PBKDF2+AES-256-GCM 加密快照、OkHttp 手写 WebDAV 备份/恢复/保留、WorkManager 定时任务、CSV/JSON 导出、支付宝/微信/通用 CSV 导入去重；400 个 JVM 单测全绿，`test assembleDebug` 与 `lint` 通过。**模拟器验收走查待做**：备份→清库→恢复、微信账单重复导入）
 - [ ] M6 AI 自然语言记账
 - [ ] M7 端侧模型与训练工具链
 

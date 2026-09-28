@@ -6,7 +6,7 @@
 |---|---|---|---|
 | 纯逻辑单测 | `core:model` / `core:domain` / `core:designsystem` / `ml:classifier` 的 `src/test` | JUnit4 + kotlin.test | 金额、日期范围、分期计息、周期推算、统计聚合、CSV 转义、图表几何、分类器训练与推理 |
 | 数据层测试 | `core:database` / `core:data` 的 `src/test` | Robolectric + Room in-memory | DAO 查询、迁移、仓库错误映射 |
-| 网络测试 | `core:data` 的 `src/test` | OkHttp MockWebServer | WebDAV PROPFIND/PUT/GET、AI 端点解析与失败回退 |
+| 网络测试 | `core:data` 的 `src/test` | OkHttp MockWebServer | WebDAV PROPFIND/MKCOL/PUT/GET/DELETE、Basic 认证、`latest.json` 更新次序、AI 端点解析与失败回退 |
 | UI 测试 | `feature:*` 的 `androidTest` | Compose UI Test | 记账保存路径、搜索过滤、统计时间段切换 |
 
 ## 命名与写法
@@ -41,6 +41,14 @@
 ```
 
 新增业务逻辑但不带测试的改动，视为未完成。
+
+## 不可单测的外部依赖要留缝
+
+- **AndroidKeyStore 在 Robolectric 下不可用**：`EncryptedSettingsStore`（备份凭据存储）无法在 JVM 单测里跑。
+  测试要绕开它，而不是断言它——直接构造 `WebDavClient` / `SnapshotArchive`，不要经由会读 keystore 的
+  `BackupIoManager.settings()`。真机行为只能靠走查背书。
+- 需要证明「失败时没有破坏主库」的用例，断言必须落在**库的实际状态**上（行数不变、`getById(x)` 仍非空），
+  而不是「抛出了异常」——数据已经被写坏时，后者照样会通过。
 
 ## 模拟器走查（手工验收）
 
