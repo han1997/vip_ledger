@@ -1,0 +1,16 @@
+{"text":"午饭 牛肉面","categoryId":"cat-food"}
+{"text":"晚饭 米饭","categoryId":"cat-food"}
+{"text":"早餐 包子","categoryId":"cat-food"}
+{"text":"午饭 盖饭","categoryId":"cat-food"}
+{"text":"夜宵 烧烤","categoryId":"cat-food"}
+{"text":"午饭 快餐","categoryId":"cat-food"}
+{"text":"  STARBUCKS   Coffee ☕  ","categoryId":"cat-food"}
+{"text":"打车 回家","categoryId":"cat-transport"}
+{"text":"地铁 上班","categoryId":"cat-transport"}
+{"text":"公交 两元","categoryId":"cat-transport"}
+{"text":"打车 机场","categoryId":"cat-transport"}
+{"text":"高铁 车票","categoryId":"cat-transport"}
+{"text":"地铁 通勤","categoryId":"cat-transport"}
+{"text":"机票 北京","categoryId":"cat-travel"}
+{"text":"酒店 住宿","categoryId":"cat-travel"}
+{"text":"聚餐 火锅 🍲","categoryId":"cat-food"}

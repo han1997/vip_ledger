@@ -1,0 +1,8 @@
+{
+  "epochs": 20,
+  "learningRate": 0.5,
+  "minSamplesPerClass": 3,
+  "seed": 20260928,
+  "trainedAt": 1695800000000,
+  "tolerance": 0.0001
+}
