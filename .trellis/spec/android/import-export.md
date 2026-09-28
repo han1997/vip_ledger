@@ -75,13 +75,18 @@ LaunchedEffect(state.pendingExport) {
 - 导入全程包在一个事务或可回滚的分批写入中，失败不得留下半份数据。
 
 > **`Importer` 接口尚未落地（M5 现状）**：只有 `core:data` 的 `CsvLedgerImporter`（`object`，含
-> `preview` / `parse` / `presetMapping` / `fingerprint`）。支付宝/微信预设与通用映射都由它承担，
-> 「微信」「支付宝」目前只影响默认类型与表头探测的候选词。等到真要接第二种账单格式时再抽接口，
+> `preview` / `parse` / `presetMapping` / `fingerprint`）。支付宝/微信预设与通用映射都由它承担；
+> `preset` 参数目前**不参与解析**，表头探测与列匹配共用同一份 `HEADER_CANDIDATES`（见下）。
+> 等到真要接第二种账单格式时再抽接口，
 > 避免按猜测设计签名（与上一条「禁止凭猜测写解析」同源）。
 
 M5 落地的具体契约：
 
 - 必填字段只有三个：`TIME` / `AMOUNT` / `TITLE`（`CsvMapping.missingRequired()`）。`TITLE` 缺失时回落到备注。
+- 表头行探测（`headerIndex`）：按「一行命中多少个**不同**账单字段」打分（候选词即 `HEADER_CANDIDATES`），
+  取最高分行。真实微信/支付宝账单表头前的「起始时间/终止时间」元数据行只命中 1 个字段，不会顶替真表头；
+  最高分低于 `MIN_HEADER_MATCHES = 2` 时回退到旧的「任一单元格含 时间/日期/date」启发式，老文件不回归。
+  预览与解析必须认同一行，别只改一处。
 - 去重键实现为字符串 `"${occurredAt / 60_000}|$amountCents|$accountId|$title"` 的 SHA-1 十六进制。
   分钟粒度是规格的一部分，不要图省事改成秒级。
 - `TxnDao.existsImportHash` 是**全库**判定：`SELECT EXISTS(... WHERE import_hash = :hash)`，
@@ -112,6 +117,8 @@ M5 落地的具体契约（`core:data` 的 `backup/` 包）：
 - `FORMAT_VERSION = 1`；manifest 字段固定为 `formatVersion` / `createdAt` / `counts`（表名 → 行数）/ `sha256OfDb`。
 - `db.json` = `SnapshotJsonCodec` 的整库表数据 JSON（与用户 JSON 导出同构），
   表序固定为 `SnapshotArchive.TABLES`，导出时 `ORDER BY rowid`，保证同一份数据校验和稳定。
+  导出为**流式写盘**：按表序逐表、逐行把 JSON 直接写进目标文件，峰值内存受一行大小约束，
+  不构造整库内存对象、不生成整份 JSON 字符串；行内仍用 `org.json` 序列化以保证字节稳定。
 - 加密快照是「**先写 8 字节 MAGIC `VLENC001`，再写 16 字节 salt + 12 字节 IV，之后是 GCM 密文**」的单文件流。
   读侧靠 MAGIC 判定是否加密，所以 `restore` 不需要用户先声明「这份是加密的」。
 - PBKDF2-HMAC-SHA256 **150,000** 次（规格下限 12 万，留了余量），AES-256-GCM，128-bit tag。
