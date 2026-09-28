@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/android/import-export.md", "reason": "逐条核对 CSV/JSON 导出格式、去重键、导入报告、WebDAV latest.json 更新次序、加密参数与恢复安全边界"}
+{"file": ".trellis/spec/android/index.md", "reason": "spec 层索引"}
+{"file": ".trellis/spec/android/testing.md", "reason": "核对测试是否覆盖快照校验、加密正误口令、篡改文件、未知版本、导入去重与整批回滚"}
+{"file": ".trellis/spec/android/ui.md", "reason": "核对 Compose 页面是否符合一次性状态回传与 SAF 导出流程，以及已知坑"}
+{"file": ".trellis/spec/android/database.md", "reason": "核对恢复路径的事务性、外键校验与 Room 失效通知"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "核对所有失败路径都有用户可见反馈且不损坏主库"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "核对新增依赖是否合规，测试依赖是否放在正确模块"}
+{"file": ".trellis/spec/android/logging-guidelines.md", "reason": "核对无凭据/口令/账单内容进入日志"}

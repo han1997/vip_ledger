@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/android/import-export.md", "reason": "本任务的权威契约：CSV/JSON 导出格式、SAF CreateDocument 一次性状态回传流程、Importer 去重键与报告、WebDAV 远端布局/latest.json/加密参数/恢复安全边界"}
+{"file": ".trellis/spec/android/index.md", "reason": "spec 层索引与阅读顺序"}
+{"file": ".trellis/spec/android/architecture.md", "reason": "模块分层与 feature 之间不得互相依赖的约束，决定 UriWriter 这类 SAF 写盘助手放哪一层"}
+{"file": ".trellis/spec/android/database.md", "reason": "Room DAO/事务约定；恢复流程涉及原始 SQL 读写与事务边界"}
+{"file": ".trellis/spec/android/ui.md", "reason": "Compose 页面规范与已知坑（SavedStateHandle 缺参返回空串、一次性状态、remember 暂存导出内容）"}
+{"file": ".trellis/spec/android/testing.md", "reason": "单元/Robolectric 测试约定，快照校验、加密、导入去重与回滚测试必须遵守"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "Gradle 依赖矩阵与版本目录用法；需为 mockwebserver 选择正确模块"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "失败反馈与异常收敛约定，恢复失败不得破坏主库"}
+{"file": ".trellis/spec/android/directory-structure.md", "reason": "新增 feature/sync 文件应放置的目录结构"}
+{"file": ".trellis/spec/android/logging-guidelines.md", "reason": "PRD 要求凭据、口令、账单内容不得写入日志；备份日志文案需据此审查"}
