@@ -29,6 +29,10 @@ import com.han1997.vipledger.core.domain.usecase.recurring.ObserveRecurringRules
 import com.han1997.vipledger.core.domain.usecase.recurring.SaveRecurringRuleUseCase
 import com.han1997.vipledger.core.domain.usecase.recurring.SetRecurringRuleEnabledUseCase
 import com.han1997.vipledger.core.domain.usecase.reminder.ObserveRemindersUseCase
+import com.han1997.vipledger.core.domain.usecase.rule.DeleteMerchantRuleUseCase
+import com.han1997.vipledger.core.domain.usecase.rule.ObserveMerchantRulesUseCase
+import com.han1997.vipledger.core.domain.usecase.rule.SaveMerchantRuleUseCase
+import com.han1997.vipledger.core.domain.usecase.rule.SetMerchantRuleEnabledUseCase
 import com.han1997.vipledger.core.domain.usecase.search.SearchTxnsUseCase
 import com.han1997.vipledger.core.domain.usecase.stats.BuildTxnCsvUseCase
 import com.han1997.vipledger.core.domain.usecase.stats.ObserveStatsReportUseCase
@@ -347,4 +351,35 @@ object UseCaseModule {
         accountRepository: AccountRepository,
         timeProvider: TimeProvider,
     ) = ObserveRemindersUseCase(installmentRepository, accountRepository, timeProvider)
+
+    @Provides
+    @Singleton
+    fun provideObserveMerchantRulesUseCase(merchantRuleRepository: MerchantRuleRepository) =
+        ObserveMerchantRulesUseCase(merchantRuleRepository)
+
+    @Provides
+    @Singleton
+    fun provideSaveMerchantRuleUseCase(
+        merchantRuleRepository: MerchantRuleRepository,
+        categoryRepository: CategoryRepository,
+        timeProvider: TimeProvider,
+        idGenerator: IdGenerator,
+    ) = SaveMerchantRuleUseCase(
+        repository = merchantRuleRepository,
+        categoryRepository = categoryRepository,
+        timeProvider = timeProvider,
+        idGenerator = idGenerator,
+    )
+
+    @Provides
+    @Singleton
+    fun provideSetMerchantRuleEnabledUseCase(
+        merchantRuleRepository: MerchantRuleRepository,
+        timeProvider: TimeProvider,
+    ) = SetMerchantRuleEnabledUseCase(merchantRuleRepository, timeProvider)
+
+    @Provides
+    @Singleton
+    fun provideDeleteMerchantRuleUseCase(merchantRuleRepository: MerchantRuleRepository) =
+        DeleteMerchantRuleUseCase(merchantRuleRepository)
 }

@@ -39,6 +39,6 @@ fun VipLedgerApp(modifier: Modifier = Modifier) {
             onEditTxn = { ledgerId, txnId -> navController.navigate(LedgerRoutes.txnEdit(ledgerId, txnId)) },
         )
         backupGraph()
-        aiGraph()
+        aiGraph(navController)
     }
 }

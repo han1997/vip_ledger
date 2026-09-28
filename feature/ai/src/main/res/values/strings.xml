@@ -64,4 +64,56 @@
     <string name="ai_notice_discarded">已丢弃</string>
     <string name="ai_notice_saved">已保存</string>
     <string name="ai_notice_failed">操作失败</string>
+
+    <!-- 商户规则管理（PRD Requirement 9） -->
+    <string name="ai_rule_open">商户规则</string>
+    <string name="ai_rule_title">商户规则管理</string>
+    <string name="ai_rule_add">新建规则</string>
+    <string name="ai_rule_empty">还没有规则。新建一条，或用 AI 记账修正分类后会自动学习一条。</string>
+
+    <!-- 来源徽标 -->
+    <string name="ai_rule_source_user">手写</string>
+    <string name="ai_rule_source_builtin">内置</string>
+    <string name="ai_rule_source_learned">学习</string>
+
+    <!-- 匹配方式 / 字段 -->
+    <string name="ai_rule_match_contains">包含</string>
+    <string name="ai_rule_match_regex">正则</string>
+    <string name="ai_rule_match_equals">精确</string>
+    <string name="ai_rule_target_title">标题</string>
+    <string name="ai_rule_target_remark">备注</string>
+    <string name="ai_rule_target_any">标题或备注</string>
+
+    <!-- 行摘要 -->
+    <string name="ai_rule_summary">%1$s · %2$s · %3$s</string>
+    <string name="ai_rule_hit_count">命中 %1$d 次</string>
+    <string name="ai_rule_disabled">已停用</string>
+    <string name="ai_rule_priority_label">优先级 %1$d</string>
+    <string name="ai_rule_edit">编辑</string>
+    <string name="ai_rule_delete">删除</string>
+
+    <!-- 编辑框 -->
+    <string name="ai_rule_editor_create_title">新建规则</string>
+    <string name="ai_rule_editor_edit_title">编辑规则</string>
+    <string name="ai_rule_field_pattern">关键词</string>
+    <string name="ai_rule_field_match_type">匹配方式</string>
+    <string name="ai_rule_field_target_field">匹配字段</string>
+    <string name="ai_rule_field_category">目标分类</string>
+    <string name="ai_rule_field_priority">优先级（越小越先命中）</string>
+    <string name="ai_rule_field_enabled">启用此规则</string>
+    <string name="ai_rule_promote">提升为用户规则</string>
+    <string name="ai_rule_promote_hint">提升后来源变为「手写」，AI 学习不会再覆盖它。</string>
+    <string name="ai_rule_save">保存</string>
+    <string name="ai_rule_cancel">取消</string>
+    <string name="ai_rule_pick_category">选择分类</string>
+
+    <!-- 删除确认 -->
+    <string name="ai_rule_delete_title">删除规则</string>
+    <string name="ai_rule_delete_message">确定删除规则「%1$s」吗？</string>
+
+    <!-- 规则管理一次性提示 -->
+    <string name="ai_rule_notice_saved">规则已保存</string>
+    <string name="ai_rule_notice_deleted">规则已删除</string>
+    <string name="ai_rule_notice_toggled">规则已更新</string>
+    <string name="ai_rule_notice_failed">操作失败</string>
 </resources>

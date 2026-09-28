@@ -26,6 +26,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,6 +66,7 @@ import kotlinx.datetime.TimeZone
 @Composable
 fun AiEntryScreen(
     onBack: () -> Unit,
+    onOpenRules: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AiEntryViewModel = hiltViewModel(),
 ) {
@@ -73,6 +75,7 @@ fun AiEntryScreen(
         state = state,
         onAction = viewModel::onAction,
         onBack = onBack,
+        onOpenRules = onOpenRules,
         modifier = modifier,
     )
 }
@@ -82,6 +85,7 @@ internal fun AiEntryContent(
     state: AiEntryUiState,
     onAction: (AiAction) -> Unit,
     onBack: () -> Unit,
+    onOpenRules: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -96,7 +100,18 @@ internal fun AiEntryContent(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { VipLedgerTopBar(title = stringResource(R.string.ai_title), onBack = onBack) },
+        topBar = {
+            VipLedgerTopBar(
+                title = stringResource(R.string.ai_title),
+                onBack = onBack,
+                actions = {
+                    // 商户规则管理入口（PRD Requirement 9）；规则管理页收敛在 :feature:ai 内（PRD D2）。
+                    TextButton(onClick = onOpenRules) {
+                        Text(stringResource(R.string.ai_rule_open))
+                    }
+                },
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         LazyColumn(
@@ -519,6 +534,7 @@ private fun AiEntryContentPreview() {
             ),
             onAction = {},
             onBack = {},
+            onOpenRules = {},
         )
     }
 }
