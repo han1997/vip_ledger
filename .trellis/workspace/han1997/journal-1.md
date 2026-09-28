@@ -324,3 +324,37 @@ Added VipLedgerScaffold so every screen uses the warm theme background, and grou
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: Configure release signing, rewrite README, update build spec
+
+**Date**: 2026-09-28
+**Task**: Configure release signing, rewrite README, update build spec
+**Branch**: `master`
+
+### Summary
+
+Configured release APK signing via untracked keystore.properties; generated project keystore (keystore/vipledger-release.jks, alias vipledger); built and verified signed app-release.apk (apksigner CN=VipLedger); rewrote README with documentation rule, build commands, signing setup, and keytool/apksigner commands; updated android build-and-env.md spec (new signing convention, missing properties = unsigned-not-failing behavior, keystore backup rule) and index.md (README-as-you-work in pre-dev checklist and quality check). All acceptance criteria met; trellis-check passed (5 files consistent, no secret leaks, test assembleDebug green).
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d9cf572` | (see git log) |
+| `e304180` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
