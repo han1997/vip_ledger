@@ -76,6 +76,7 @@ fun NavGraphBuilder.ledgerGraph(
     navController: NavHostController,
     onOpenStats: (String) -> Unit,
     onOpenBackup: () -> Unit,
+    onOpenAi: () -> Unit,
 ) {
     composable(LedgerRoutes.HOME) {
         HomeScreen(
@@ -83,6 +84,7 @@ fun NavGraphBuilder.ledgerGraph(
             onOpenTxns = { ledgerId -> navController.navigate(LedgerRoutes.txnList(ledgerId)) },
             onOpenStats = onOpenStats,
             onOpenBackup = onOpenBackup,
+            onOpenAi = onOpenAi,
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
             onOpenAccounts = { ledgerId -> navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
             onOpenCategories = { ledgerId -> navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },

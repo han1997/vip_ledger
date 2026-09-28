@@ -65,6 +65,7 @@ fun HomeScreen(
     onOpenTxns: (String) -> Unit,
     onOpenStats: (String) -> Unit,
     onOpenBackup: () -> Unit,
+    onOpenAi: () -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
     onOpenCategories: (String) -> Unit,
@@ -84,6 +85,7 @@ fun HomeScreen(
         onOpenTxns = onOpenTxns,
         onOpenStats = onOpenStats,
         onOpenBackup = onOpenBackup,
+        onOpenAi = onOpenAi,
         onOpenLedgers = onOpenLedgers,
         onOpenAccounts = onOpenAccounts,
         onOpenCategories = onOpenCategories,
@@ -104,6 +106,7 @@ internal fun HomeContent(
     onOpenTxns: (String) -> Unit,
     onOpenStats: (String) -> Unit,
     onOpenBackup: () -> Unit,
+    onOpenAi: () -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
     onOpenCategories: (String) -> Unit,
@@ -134,6 +137,9 @@ internal fun HomeContent(
                     }
                     TextButton(onClick = onOpenBackup) {
                         Text(text = stringResource(R.string.home_backup))
+                    }
+                    TextButton(onClick = onOpenAi) {
+                        Text(text = stringResource(R.string.home_ai))
                     }
                     ManageMenu(
                         enabled = ledgerId != null,
@@ -599,6 +605,7 @@ private fun HomeContentPreview() {
             onOpenTxns = {},
             onOpenStats = {},
             onOpenBackup = {},
+            onOpenAi = {},
             onOpenLedgers = {},
             onOpenAccounts = {},
             onOpenCategories = {},

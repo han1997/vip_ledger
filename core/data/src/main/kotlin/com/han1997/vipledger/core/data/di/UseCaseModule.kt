@@ -4,6 +4,8 @@ import com.han1997.vipledger.core.domain.repository.AccountRepository
 import com.han1997.vipledger.core.domain.repository.CategoryRepository
 import com.han1997.vipledger.core.domain.repository.InstallmentRepository
 import com.han1997.vipledger.core.domain.repository.LedgerRepository
+import com.han1997.vipledger.core.domain.repository.MerchantRuleRepository
+import com.han1997.vipledger.core.domain.repository.MlSampleRepository
 import com.han1997.vipledger.core.domain.repository.RecurringRuleRepository
 import com.han1997.vipledger.core.domain.repository.TagRepository
 import com.han1997.vipledger.core.domain.repository.TxnRepository
@@ -30,6 +32,7 @@ import com.han1997.vipledger.core.domain.usecase.reminder.ObserveRemindersUseCas
 import com.han1997.vipledger.core.domain.usecase.search.SearchTxnsUseCase
 import com.han1997.vipledger.core.domain.usecase.stats.BuildTxnCsvUseCase
 import com.han1997.vipledger.core.domain.usecase.stats.ObserveStatsReportUseCase
+import com.han1997.vipledger.core.domain.usecase.txn.ConfirmAiEntryUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.ConfirmDraftUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.CreateTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.DeleteTxnUseCase
@@ -272,6 +275,26 @@ object UseCaseModule {
         transactionRunner: TransactionRunner,
         timeProvider: TimeProvider,
     ) = DiscardDraftUseCase(txnRepository, transactionRunner, timeProvider)
+
+    @Provides
+    @Singleton
+    fun provideConfirmAiEntryUseCase(
+        txnRepository: TxnRepository,
+        merchantRuleRepository: MerchantRuleRepository,
+        mlSampleRepository: MlSampleRepository,
+        transactionRunner: TransactionRunner,
+        balanceSyncer: AccountBalanceSyncer,
+        timeProvider: TimeProvider,
+        idGenerator: IdGenerator,
+    ) = ConfirmAiEntryUseCase(
+        txnRepository = txnRepository,
+        merchantRuleRepository = merchantRuleRepository,
+        mlSampleRepository = mlSampleRepository,
+        transactionRunner = transactionRunner,
+        balanceSyncer = balanceSyncer,
+        timeProvider = timeProvider,
+        idGenerator = idGenerator,
+    )
 
     @Provides
     @Singleton

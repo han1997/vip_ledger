@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      AI 自然语言记账模块文案。
+      所有条目加 `ai_` 前缀，避免与其他 library 模块合并资源时撞名
+      （见 .trellis/spec/android/architecture.md「资源名全局唯一」）。
+    -->
+
+    <string name="ai_title">AI 记账</string>
+    <string name="ai_input_label">说一句话记账</string>
+    <string name="ai_input_hint">例如：昨天午饭 35 块 微信</string>
+    <string name="ai_parse">解析</string>
+    <string name="ai_parsing">正在解析…本地大模型单次可能需 1 分钟以上，请稍候</string>
+    <string name="ai_drafts_title">待确认（%1$d）</string>
+    <string name="ai_empty_drafts">还没有解析结果。输入一句话后点「解析」。</string>
+    <string name="ai_unresolved_notice">有未能识别的字段，请先选择后再确认</string>
+    <string name="ai_unresolved_field">未能识别：%1$s</string>
+
+    <!-- 候选字段 -->
+    <string name="ai_field_amount">金额</string>
+    <string name="ai_field_type">类型</string>
+    <string name="ai_field_account">账户</string>
+    <string name="ai_field_to_account">目标账户</string>
+    <string name="ai_field_category">分类</string>
+    <string name="ai_field_title">标题</string>
+    <string name="ai_field_date">日期</string>
+    <string name="ai_source_ai">AI 解析</string>
+    <string name="ai_source_rule">规则匹配</string>
+    <string name="ai_confirm">确认入账</string>
+    <string name="ai_discard">丢弃</string>
+    <string name="ai_confirm_all">全部入账</string>
+
+    <!-- 未识别字段名 -->
+    <string name="ai_unresolved_amount">金额</string>
+    <string name="ai_unresolved_type">类型</string>
+    <string name="ai_unresolved_account">账户</string>
+    <string name="ai_unresolved_to_account">目标账户</string>
+    <string name="ai_unresolved_category">分类</string>
+    <string name="ai_unresolved_title">标题</string>
+    <string name="ai_unresolved_date">日期</string>
+    <string name="ai_unresolved_time">时间</string>
+
+    <!-- 解析告警 -->
+    <string name="ai_warning_ambiguous_type_cue">「还」有歧义，无法判断是收入还是还款</string>
+    <string name="ai_warning_missing_target_account">缺少转入/还款目标账户</string>
+    <string name="ai_warning_ratio_not_resolved">出现折扣/比例，未能算出折后价</string>
+    <string name="ai_warning_low_confidence_amount">金额没有货币单位，置信度较低</string>
+    <string name="ai_warning_bare_amount_dropped">句中有被丢弃的裸数字金额，可能少记一笔</string>
+
+    <!-- 设置 -->
+    <string name="ai_section_settings">云端解析设置</string>
+    <string name="ai_setting_base_url">服务地址</string>
+    <string name="ai_setting_base_url_hint">http://192.168.10.4:11434/v1</string>
+    <string name="ai_setting_api_key">API Key</string>
+    <string name="ai_setting_model">模型</string>
+    <string name="ai_setting_network">允许联网解析</string>
+    <string name="ai_setting_network_disclosure">打开后，规则层产出不足时会把你在本页输入的账目文字发送到上面填写的地址。规则层与端侧分类器始终只在设备上运行，不会上传。</string>
+    <string name="ai_setting_save">保存设置</string>
+
+    <!-- 一次性提示 -->
+    <string name="ai_notice_parsed">已解析出 %1$d 笔待确认草稿</string>
+    <string name="ai_notice_no_entry">没能从这句话里识别出账目，换个说法再试试</string>
+    <string name="ai_notice_confirmed">已入账</string>
+    <string name="ai_notice_discarded">已丢弃</string>
+    <string name="ai_notice_saved">已保存</string>
+    <string name="ai_notice_failed">操作失败</string>
+</resources>

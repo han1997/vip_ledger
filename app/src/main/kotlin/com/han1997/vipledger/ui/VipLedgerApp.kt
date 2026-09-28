@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import com.han1997.vipledger.feature.ai.navigation.AiRoutes
+import com.han1997.vipledger.feature.ai.navigation.aiGraph
 import com.han1997.vipledger.feature.ledger.navigation.LedgerRoutes
 import com.han1997.vipledger.feature.ledger.navigation.ledgerGraph
 import com.han1997.vipledger.feature.stats.navigation.StatsRoutes
@@ -30,11 +32,13 @@ fun VipLedgerApp(modifier: Modifier = Modifier) {
             navController = navController,
             onOpenStats = { ledgerId -> navController.navigate(StatsRoutes.stats(ledgerId)) },
             onOpenBackup = { navController.navigate(BackupRoutes.HOME) },
+            onOpenAi = { navController.navigate(AiRoutes.HOME) },
         )
         statsGraph(
             navController = navController,
             onEditTxn = { ledgerId, txnId -> navController.navigate(LedgerRoutes.txnEdit(ledgerId, txnId)) },
         )
         backupGraph()
+        aiGraph()
     }
 }

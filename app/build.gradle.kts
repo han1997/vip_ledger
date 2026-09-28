@@ -59,6 +59,7 @@ dependencies {
     implementation(project(":feature:ledger"))
     implementation(project(":feature:stats"))
     implementation(project(":feature:sync"))
+    implementation(project(":feature:ai"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
