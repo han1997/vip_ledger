@@ -291,3 +291,36 @@ Completed M7: a real on-device linear classifier (char 2-3 gram FNV-1a into 1<<1
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: Apply warm page background
+
+**Date**: 2026-09-28
+**Task**: Apply warm page background
+**Branch**: `master`
+
+### Summary
+
+Added VipLedgerScaffold so every screen uses the warm theme background, and grouped the home overview into quieter cards. Debug compile passed.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4ac3ad8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

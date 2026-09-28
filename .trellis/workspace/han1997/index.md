@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
+- **Total Sessions**: 9
 - **Last Active**: 2026-09-28
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~293 | Active |
+| `journal-1.md` | ~326 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-09-28 | Apply warm page background | `4ac3ad8` | `master` |
 | 8 | 2026-09-28 | M7 on-device classifier and training toolchain | `84a9c10`, `b6c2a18`, `f207c12`, `4c9b1a3`, `d44e7d5` | `master` |
 | 7 | 2026-09-28 | M6 AI natural-language entry | `83b31db`, `3db7506`, `e8d6820`, `c5f1c68`, `35cf09d`, `ed786a6`, `3f17907`, `39fa478` | `master` |
 | 6 | 2026-09-28 | M5 backup, WebDAV snapshots and import/export | `bc8a2a5`, `fcc9412`, `411ca61`, `beeed43`, `966b15f`, `93d24b5`, `c326351`, `634421c`, `fd94b66` | `master` |
