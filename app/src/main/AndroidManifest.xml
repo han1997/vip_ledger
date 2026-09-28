@@ -4,6 +4,10 @@
     <!-- 分期 / 信用卡到期提醒通知（API 33+ 需要运行时授权）。 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 备份/恢复与（后续的）AI 联网；WorkManager 的「仅 Wi-Fi」约束需要读取网络状态。 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:name=".VipLedgerApplication"
         android:allowBackup="false"

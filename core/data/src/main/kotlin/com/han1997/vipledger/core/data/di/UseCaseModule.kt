@@ -13,6 +13,7 @@ import com.han1997.vipledger.core.domain.support.IdGenerator
 import com.han1997.vipledger.core.domain.support.TransactionRunner
 import com.han1997.vipledger.core.domain.usecase.EnsureInitialDataUseCase
 import com.han1997.vipledger.core.domain.usecase.account.RecomputeAccountBalancesUseCase
+import com.han1997.vipledger.core.domain.usecase.backup.BuildBackupCsvUseCase
 import com.han1997.vipledger.core.domain.usecase.loan.DeleteInstallmentPlanUseCase
 import com.han1997.vipledger.core.domain.usecase.loan.GetInstallmentPlanDetailUseCase
 import com.han1997.vipledger.core.domain.usecase.loan.ObserveInstallmentPlansUseCase
@@ -174,6 +175,10 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideBuildTxnCsvUseCase(timeProvider: TimeProvider) = BuildTxnCsvUseCase(timeProvider)
+
+    @Provides
+    @Singleton
+    fun provideBuildBackupCsvUseCase(timeProvider: TimeProvider) = BuildBackupCsvUseCase(timeProvider)
     @Provides
     @Singleton
     fun provideSaveInstallmentPlanUseCase(
