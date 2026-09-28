@@ -8,6 +8,8 @@ import com.han1997.vipledger.feature.ledger.navigation.LedgerRoutes
 import com.han1997.vipledger.feature.ledger.navigation.ledgerGraph
 import com.han1997.vipledger.feature.stats.navigation.StatsRoutes
 import com.han1997.vipledger.feature.stats.navigation.statsGraph
+import com.han1997.vipledger.feature.sync.navigation.BackupRoutes
+import com.han1997.vipledger.feature.sync.navigation.backupGraph
 
 /**
  * 应用的导航根。
@@ -27,10 +29,12 @@ fun VipLedgerApp(modifier: Modifier = Modifier) {
         ledgerGraph(
             navController = navController,
             onOpenStats = { ledgerId -> navController.navigate(StatsRoutes.stats(ledgerId)) },
+            onOpenBackup = { navController.navigate(BackupRoutes.HOME) },
         )
         statsGraph(
             navController = navController,
             onEditTxn = { ledgerId, txnId -> navController.navigate(LedgerRoutes.txnEdit(ledgerId, txnId)) },
         )
+        backupGraph()
     }
 }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      备份 / 恢复 / 导入导出模块文案。
+      所有条目加 `backup_` 前缀，避免与其他 library 模块合并资源时撞名
+      （见 .trellis/spec/android/architecture.md「资源名全局唯一」）。
+    -->
+
+    <string name="backup_title">备份与导入导出</string>
+
+    <!-- WebDAV 配置 -->
+    <string name="backup_section_webdav">WebDAV 配置</string>
+    <string name="backup_endpoint">服务器地址</string>
+    <string name="backup_endpoint_hint">https://example.com/dav</string>
+    <string name="backup_path">远端目录</string>
+    <string name="backup_username">用户名</string>
+    <string name="backup_password">密码</string>
+    <string name="backup_passphrase">加密口令（可选）</string>
+    <string name="backup_encryption">启用快照加密</string>
+    <string name="backup_save">保存设置</string>
+    <string name="backup_test">测试连接</string>
+
+    <!-- 手动备份与恢复 -->
+    <string name="backup_section_snapshot">备份与恢复</string>
+    <string name="backup_now">立即备份</string>
+    <string name="backup_refresh">刷新远端快照</string>
+    <string name="backup_retention">保留份数</string>
+    <string name="backup_scheduled">定时备份</string>
+    <string name="backup_wifi_only">仅 Wi-Fi</string>
+    <string name="backup_snapshots_empty">暂无远端快照</string>
+    <string name="backup_snapshot_size">%1$s · %2$s</string>
+    <string name="backup_restore">恢复</string>
+    <string name="backup_delete">删除</string>
+    <string name="backup_restore_title">恢复这份备份？</string>
+    <string name="backup_restore_message">会先保存当前数据库副本，再用远端快照替换；失败时保留原库。</string>
+    <string name="backup_delete_title">删除远端快照？</string>
+    <string name="backup_delete_message">删除后无法找回。</string>
+    <string name="backup_action_confirm">确认</string>
+    <string name="backup_action_cancel">取消</string>
+
+    <!-- 自动备份记录 -->
+    <string name="backup_section_log">自动备份记录</string>
+    <string name="backup_log_empty">暂无自动备份记录</string>
+    <string name="backup_log_success">成功</string>
+    <string name="backup_log_failure">失败</string>
+
+    <!-- 导出 -->
+    <string name="backup_section_export">导出</string>
+    <string name="backup_export_csv">导出 CSV</string>
+    <string name="backup_export_json">导出 JSON</string>
+
+    <!-- 导入向导 -->
+    <string name="backup_section_import">导入 CSV</string>
+    <string name="backup_preset_wechat">微信</string>
+    <string name="backup_preset_alipay">支付宝</string>
+    <string name="backup_preset_generic">通用</string>
+    <string name="backup_pick_file">选择 CSV 文件</string>
+    <string name="backup_account">记入账户</string>
+    <string name="backup_mapping">列映射</string>
+    <string name="backup_preview">预览（最多 20 行）</string>
+    <string name="backup_preview_empty">选择文件后显示预览</string>
+    <string name="backup_missing_required">缺少必填列：%1$s</string>
+    <string name="backup_invalid_fields">部分样例行格式有误：%1$s</string>
+    <string name="backup_field_time">时间</string>
+    <string name="backup_field_amount">金额</string>
+    <string name="backup_field_type">类型</string>
+    <string name="backup_field_account">账户</string>
+    <string name="backup_field_title">标题</string>
+    <string name="backup_field_remark">备注</string>
+    <string name="backup_column_unset">未映射</string>
+    <string name="backup_import_start">开始导入</string>
+    <string name="backup_report">导入结果：新增 %1$d，重复 %2$d，失败 %3$d</string>
+    <string name="backup_report_failed_lines">失败行号：%1$s</string>
+    <string name="backup_loading">处理中…</string>
+
+    <!-- 一次性提示 -->
+    <string name="backup_notice_saved">设置已保存</string>
+    <string name="backup_notice_connection_ok">WebDAV 连接成功</string>
+    <string name="backup_notice_connection_failed">连接失败，请检查地址与凭据</string>
+    <string name="backup_notice_backup_done">备份完成：%1$s</string>
+    <string name="backup_notice_snapshots_refreshed">远端快照已更新</string>
+    <string name="backup_notice_restored">恢复完成</string>
+    <string name="backup_notice_snapshot_deleted">已删除远端快照</string>
+    <string name="backup_notice_import_done">导入完成</string>
+    <string name="backup_notice_import_preview_failed">CSV 格式无法识别</string>
+    <string name="backup_notice_exported">已导出</string>
+    <string name="backup_notice_export_failed">导出失败，请重试</string>
+    <string name="backup_notice_operation_failed">操作失败，请检查网络或文件设置</string>
+</resources>
