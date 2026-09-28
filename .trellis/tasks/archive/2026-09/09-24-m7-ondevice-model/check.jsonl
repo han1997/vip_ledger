@@ -1,0 +1,9 @@
+{"file": ".trellis/spec/android/ai-ml.md", "reason": "逐条核对分类器是否按 §7 规格实现、阈值是否仍只有 ranked() 一处口径、自动训练是否默认关、隐私红线是否守住"}
+{"file": ".trellis/spec/android/architecture.md", "reason": "核对 :ml:classifier 未引入 Android SDK、依赖方向正确、模型管理页未跨 feature 依赖"}
+{"file": ".trellis/spec/android/index.md", "reason": "spec 层索引"}
+{"file": ".trellis/spec/android/testing.md", "reason": "核对纯 JVM 模块的测试可运行、同构验证（同样本同超参下 Python 与 Kotlin 权重一致）有测试钉住"}
+{"file": ".trellis/spec/android/database.md", "reason": "核对 markTrained 的写入与训练原子性、Room 失效通知"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "核对训练/加载失败都有用户可见反馈且不抛异常"}
+{"file": ".trellis/spec/android/ui.md", "reason": "核对模型管理页的一次性状态与既有页面模式一致"}
+{"file": ".trellis/spec/android/logging-guidelines.md", "reason": "核对训练样本内容未进日志"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "核对未新增第三方依赖（D1/D2 的直接检验）"}

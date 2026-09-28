@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/android/ai-ml.md", "reason": "本任务的权威契约：端侧分类器的特征/模型/推理/在线训练规格、阈值只有 ranked() 一处口径、隐私红线（训练与推理全本地、不上传样本）、以及「M7 之前是占位实现、管线只程序到接口」的约定"}
+{"file": ".trellis/spec/android/architecture.md", "reason": "硬约束：:ml:classifier 是纯 JVM 模块禁止引入 Android SDK；:ml → :core:domain 的向内依赖方向；跨层能力「接口向内、实现向外」的落位表"}
+{"file": ".trellis/spec/android/index.md", "reason": "spec 层索引与阅读顺序"}
+{"file": ".trellis/spec/android/directory-structure.md", "reason": "新增 ml:classifier 源码、tools/trainer 脚本、feature:ai 模型管理页应放置的位置与命名"}
+{"file": ".trellis/spec/android/database.md", "reason": "Room/DAO 约定；训练闭环读 listUntrained、写 markTrained 的查询与事务边界"}
+{"file": ".trellis/spec/android/testing.md", "reason": "测试分层与命名；纯 JVM 模块的单测要求、同构验证的写法"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "依赖矩阵与 version catalog 用法；确认不新增第三方依赖（D2 纯标准库 / D1 排除 ONNX）"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "AppResult 约定；训练失败、模型加载失败不得抛异常到 UI"}
+{"file": ".trellis/spec/android/ui.md", "reason": "Compose 与 ViewModel 约定、一次性状态、模型管理页的展示规范"}
+{"file": ".trellis/spec/android/logging-guidelines.md", "reason": "红线：训练样本内容（账目文字）不得进日志"}
