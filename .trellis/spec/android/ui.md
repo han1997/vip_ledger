@@ -76,3 +76,9 @@
    ```
    只在 `drawWithContent` 里包一层 `graphicsLayer` 不会录制内容；`record`/`toImageBitmap` 在部分设备/版本上
    会抛异常，必须 `runCatching` 兜底并提示「导出失败，可改用导出 CSV」，不能崩（见 import-export.md）。
+
+## 设置页
+
+- 首页顶栏只保留账本切换和设置入口。统计、备份、AI、账户、分类、标签、周期记账、待确认、分期从 `SettingsScreen` 进入。
+- 设置页不持有 ViewModel，分组和启用状态由导航层传入；没有当前账本时，依赖账本的入口禁用。
+- 新增设置入口必须走 `strings.xml`，并放进现有分组，不在首页顶栏再加按钮。

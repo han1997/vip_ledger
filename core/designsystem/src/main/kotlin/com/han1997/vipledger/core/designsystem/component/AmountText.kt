@@ -1,4 +1,4 @@
-package com.han1997.vipledger.core.designsystem.component
+﻿package com.han1997.vipledger.core.designsystem.component
 
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.han1997.vipledger.core.designsystem.theme.amountColorOf
 import com.han1997.vipledger.core.model.TransactionType
@@ -33,7 +34,10 @@ fun AmountText(
     Text(
         text = text,
         modifier = modifier,
-        style = style.copy(fontFeatureSettings = "tnum"),
+        style = style.copy(
+            fontFeatureSettings = "tnum",
+            fontWeight = style.fontWeight ?: FontWeight.SemiBold,
+        ),
         color = color,
         textAlign = textAlign,
     )
@@ -55,7 +59,7 @@ fun SignedAmountText(
     Text(
         text = sign + amount.abs().toDisplayString(),
         modifier = modifier,
-        style = style.copy(fontFeatureSettings = "tnum"),
+        style = style.copy(fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold),
         color = amountColorOf(type),
         textAlign = TextAlign.End,
     )

@@ -16,6 +16,7 @@ import com.han1997.vipledger.feature.ledger.ui.manage.LedgerManageScreen
 import com.han1997.vipledger.feature.ledger.ui.manage.TagManageScreen
 import com.han1997.vipledger.feature.ledger.ui.recurring.RecurringEditScreen
 import com.han1997.vipledger.feature.ledger.ui.recurring.RecurringListScreen
+import com.han1997.vipledger.feature.ledger.ui.settings.SettingsScreen
 import com.han1997.vipledger.feature.ledger.ui.txnedit.TxnEditScreen
 import com.han1997.vipledger.feature.ledger.ui.txnlist.TxnListScreen
 
@@ -31,6 +32,7 @@ object LedgerRoutes {
     const val ARG_PLAN_ID: String = "planId"
 
     const val HOME: String = "ledger/home"
+    const val SETTINGS: String = "ledger/settings/{$ARG_LEDGER_ID}"
     const val LEDGER_MANAGE: String = "ledger/manage/ledgers"
 
     const val TXN_LIST: String = "ledger/txns/{$ARG_LEDGER_ID}"
@@ -70,6 +72,8 @@ object LedgerRoutes {
     fun loanDetail(ledgerId: String, planId: String): String = "ledger/loans/$ledgerId/detail/$planId"
 
     fun loanCreate(ledgerId: String): String = "ledger/loans/$ledgerId/create"
+
+    fun settings(ledgerId: String): String = "ledger/settings/$ledgerId"
 }
 
 fun NavGraphBuilder.ledgerGraph(
@@ -78,23 +82,41 @@ fun NavGraphBuilder.ledgerGraph(
     onOpenBackup: () -> Unit,
     onOpenAi: () -> Unit,
 ) {
+    composable(
+        route = LedgerRoutes.SETTINGS,
+        arguments = listOf(navArgument(LedgerRoutes.ARG_LEDGER_ID) { type = NavType.StringType }),
+    ) { entry ->
+        val ledgerId = entry.arguments?.getString(LedgerRoutes.ARG_LEDGER_ID).orEmpty()
+        val ready = ledgerId.isNotBlank() && ledgerId != "none"
+        SettingsScreen(
+            ledgerReady = ready,
+            onBack = { navController.popBackStack() },
+            onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
+            onOpenAccounts = { if (ready) navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
+            onOpenCategories = { if (ready) navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
+            onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
+            onOpenStats = { if (ready) onOpenStats(ledgerId) },
+            onOpenBackup = onOpenBackup,
+            onOpenAi = onOpenAi,
+            onOpenRecurring = { if (ready) navController.navigate(LedgerRoutes.recurringList(ledgerId)) },
+            onOpenDrafts = { if (ready) navController.navigate(LedgerRoutes.drafts(ledgerId)) },
+            onOpenLoans = { if (ready) navController.navigate(LedgerRoutes.loanList(ledgerId)) },
+        )
+    }
+
     composable(LedgerRoutes.HOME) {
         HomeScreen(
             onAddTxn = { ledgerId -> navController.navigate(LedgerRoutes.txnEdit(ledgerId)) },
             onOpenTxns = { ledgerId -> navController.navigate(LedgerRoutes.txnList(ledgerId)) },
-            onOpenStats = onOpenStats,
-            onOpenBackup = onOpenBackup,
-            onOpenAi = onOpenAi,
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
             onOpenAccounts = { ledgerId -> navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
-            onOpenCategories = { ledgerId -> navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
-            onOpenTags = { ledgerId -> navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
             onOpenRecurring = { ledgerId -> navController.navigate(LedgerRoutes.recurringList(ledgerId)) },
             onOpenDrafts = { ledgerId -> navController.navigate(LedgerRoutes.drafts(ledgerId)) },
             onOpenLoans = { ledgerId -> navController.navigate(LedgerRoutes.loanList(ledgerId)) },
             onOpenLoanDetail = { ledgerId, planId ->
                 navController.navigate(LedgerRoutes.loanDetail(ledgerId, planId))
             },
+            onOpenSettings = { ledgerId -> navController.navigate(LedgerRoutes.settings(ledgerId)) },
         )
     }
 

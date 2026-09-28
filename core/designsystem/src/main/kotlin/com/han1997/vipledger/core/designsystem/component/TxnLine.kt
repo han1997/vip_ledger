@@ -1,22 +1,29 @@
-package com.han1997.vipledger.core.designsystem.component
+﻿package com.han1997.vipledger.core.designsystem.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.han1997.vipledger.core.designsystem.R
 import com.han1997.vipledger.core.designsystem.format.timeLabel
+import com.han1997.vipledger.core.designsystem.theme.amountColorOf
 import com.han1997.vipledger.core.domain.model.Txn
 import kotlinx.datetime.TimeZone
 
@@ -49,6 +56,8 @@ fun TxnLine(
         if (tagNames.isNotEmpty()) add(tagNames.joinToString(separator = " "))
         if (showTime) add(timeLabel(txn.occurredAt, zone))
     }.joinToString(separator = " · ")
+    val mark = headline.trim().firstOrNull()?.toString() ?: "·"
+    val accent = amountColorOf(txn.type)
 
     Row(
         modifier = modifier
@@ -62,6 +71,20 @@ fun TxnLine(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(accent.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = mark,
+                style = MaterialTheme.typography.labelMedium,
+                color = accent,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -72,7 +95,8 @@ fun TxnLine(
             ) {
                 Text(
                     text = headline,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
@@ -89,7 +113,7 @@ fun TxnLine(
             if (subtitle.isNotEmpty()) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

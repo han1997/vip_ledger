@@ -15,7 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -63,17 +63,13 @@ import com.han1997.vipledger.feature.ledger.R
 fun HomeScreen(
     onAddTxn: (String) -> Unit,
     onOpenTxns: (String) -> Unit,
-    onOpenStats: (String) -> Unit,
-    onOpenBackup: () -> Unit,
-    onOpenAi: () -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
-    onOpenCategories: (String) -> Unit,
-    onOpenTags: (String) -> Unit,
     onOpenRecurring: (String) -> Unit,
     onOpenDrafts: (String) -> Unit,
     onOpenLoans: (String) -> Unit,
     onOpenLoanDetail: (String, String) -> Unit,
+    onOpenSettings: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -83,17 +79,13 @@ fun HomeScreen(
         onAction = viewModel::onAction,
         onAddTxn = onAddTxn,
         onOpenTxns = onOpenTxns,
-        onOpenStats = onOpenStats,
-        onOpenBackup = onOpenBackup,
-        onOpenAi = onOpenAi,
         onOpenLedgers = onOpenLedgers,
         onOpenAccounts = onOpenAccounts,
-        onOpenCategories = onOpenCategories,
-        onOpenTags = onOpenTags,
         onOpenRecurring = onOpenRecurring,
         onOpenDrafts = onOpenDrafts,
         onOpenLoans = onOpenLoans,
         onOpenLoanDetail = onOpenLoanDetail,
+        onOpenSettings = onOpenSettings,
         modifier = modifier,
     )
 }
@@ -104,17 +96,13 @@ internal fun HomeContent(
     onAction: (HomeAction) -> Unit,
     onAddTxn: (String) -> Unit,
     onOpenTxns: (String) -> Unit,
-    onOpenStats: (String) -> Unit,
-    onOpenBackup: () -> Unit,
-    onOpenAi: () -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
-    onOpenCategories: (String) -> Unit,
-    onOpenTags: (String) -> Unit,
     onOpenRecurring: (String) -> Unit,
     onOpenDrafts: (String) -> Unit,
     onOpenLoans: (String) -> Unit,
     onOpenLoanDetail: (String, String) -> Unit,
+    onOpenSettings: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ledgerId = state.ledgerId
@@ -129,24 +117,12 @@ internal fun HomeContent(
                         onAction = onAction,
                         onOpenLedgers = onOpenLedgers,
                     )
-                    TextButton(
-                        onClick = { ledgerId?.let(onOpenStats) },
-                        enabled = ledgerId != null,
-                    ) {
-                        Text(text = stringResource(R.string.home_stats))
+                    IconButton(onClick = { onOpenSettings(ledgerId ?: "none") }) {
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.settings_title),
+                        )
                     }
-                    TextButton(onClick = onOpenBackup) {
-                        Text(text = stringResource(R.string.home_backup))
-                    }
-                    TextButton(onClick = onOpenAi) {
-                        Text(text = stringResource(R.string.home_ai))
-                    }
-                    ManageMenu(
-                        enabled = ledgerId != null,
-                        onOpenAccounts = { ledgerId?.let(onOpenAccounts) },
-                        onOpenCategories = { ledgerId?.let(onOpenCategories) },
-                        onOpenTags = { ledgerId?.let { onOpenTags(it) } },
-                    )
                 },
             )
         },
@@ -414,35 +390,6 @@ private fun LedgerSwitcher(
     }
 }
 
-@Composable
-private fun ManageMenu(
-    enabled: Boolean,
-    onOpenAccounts: () -> Unit,
-    onOpenCategories: () -> Unit,
-    onOpenTags: () -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = true }, enabled = enabled) {
-            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.home_manage))
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(text = stringResource(R.string.account_manage_title)) },
-                onClick = { expanded = false; onOpenAccounts() },
-            )
-            DropdownMenuItem(
-                text = { Text(text = stringResource(R.string.category_manage_title)) },
-                onClick = { expanded = false; onOpenCategories() },
-            )
-            DropdownMenuItem(
-                text = { Text(text = stringResource(R.string.tag_manage_title)) },
-                onClick = { expanded = false; onOpenTags() },
-            )
-        }
-    }
-}
-
 private const val RECENT_PREVIEW: Int = 5
 private const val REMINDER_PREVIEW: Int = 3
 
@@ -603,17 +550,13 @@ private fun HomeContentPreview() {
             onAction = {},
             onAddTxn = {},
             onOpenTxns = {},
-            onOpenStats = {},
-            onOpenBackup = {},
-            onOpenAi = {},
             onOpenLedgers = {},
             onOpenAccounts = {},
-            onOpenCategories = {},
-            onOpenTags = {},
             onOpenRecurring = {},
             onOpenDrafts = {},
             onOpenLoans = {},
             onOpenLoanDetail = { _, _ -> },
+            onOpenSettings = {},
         )
     }
 }

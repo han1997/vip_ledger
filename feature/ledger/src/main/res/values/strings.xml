@@ -282,4 +282,9 @@
     <string name="weekday_short_fri">五</string>
     <string name="weekday_short_sat">六</string>
     <string name="weekday_short_sun">日</string>
+    <string name="settings_title">设置</string>
+    <string name="settings_group_ledger">账本</string>
+    <string name="settings_group_tools">工具</string>
+    <string name="settings_group_plans">计划</string>
 </resources>
+

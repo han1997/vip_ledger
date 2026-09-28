@@ -17,9 +17,12 @@
 ## 构建命令
 
 ```powershell
-.\gradlew.bat test assembleDebug
+.\gradlew.bat test assembleDebug assembleRelease
 .\gradlew.bat lintDebug
 ```
+
+- 以后用户说「编译」时，默认同时产出 debug 与 release：`assembleDebug assembleRelease`。
+  当前 release 没有正式签名配置，产物是 `app-release-unsigned.apk`；装到已连接的开发机前，用本机 debug keystore 签成 `app-release-debugsigned.apk` 再 `adb install -r`。不要把 keystore、密码或已签名 apk 提交进仓库。
 
 - 保持 `org.gradle.java.installations.auto-download=false`，否则构建会去 foojay 拉 JDK 并失败。
 - 若项目根再次出现 `gradle/gradle-daemon-jvm.properties`（AGP 9 产物），删掉它。
