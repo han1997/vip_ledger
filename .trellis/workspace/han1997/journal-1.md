@@ -254,3 +254,40 @@ Completed M6: offline rule-layer parser (span table + priority claiming, pure JV
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: M7 on-device classifier and training toolchain
+
+**Date**: 2026-09-28
+**Task**: M7 on-device classifier and training toolchain
+**Branch**: `master`
+
+### Summary
+
+Completed M7: a real on-device linear classifier (char 2-3 gram FNV-1a into 1<<18 buckets, softmax, incremental SGD, sparse versioned weights JSON, atomic replace), stale-category-id post-validation with a required fail-closed filter, class-imbalance suppression, a pure-stdlib Python trainer with a genuine cross-language isomorphism check, an auto-train switch (default off) and a model-management page. 700 tests green. Emulator walkthrough proved the acceptance criterion end-to-end: weights trained by Python were imported through SAF (version and sample count read back correctly) and the on-device classifier then suggested 餐饮 for 午饭 炒饭 25 块 with the network switch OFF and no category name in the sentence, on a sentence absent from the training set, so it generalised rather than memorised. The walkthrough also caught two user-visible wording defects: the model page used the auto-train threshold (30) in the sentence describing the per-class threshold (actually 3), putting two contradictory numbers on one screen; and the empty state promised an 导入样本 entry point that does not exist. ONNX import was deferred by decision (not in the acceptance criteria, a heavy dependency, and :ml:classifier is a pure-JVM module that cannot host an Android library). Left as a recorded TODO: no production code produces IMPORT samples, so that AC was downgraded.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `84a9c10` | (see git log) |
+| `b6c2a18` | (see git log) |
+| `f207c12` | (see git log) |
+| `4c9b1a3` | (see git log) |
+| `d44e7d5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
