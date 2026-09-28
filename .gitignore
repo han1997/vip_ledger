@@ -28,6 +28,7 @@ tmp/
 
 # Signing & secrets
 keystore.properties
+keystore/
 *.jks
 *.keystore
 
