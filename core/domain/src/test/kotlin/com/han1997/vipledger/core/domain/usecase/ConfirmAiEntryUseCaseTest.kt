@@ -8,6 +8,7 @@ import com.han1997.vipledger.core.domain.fake.FakeTransactionRunner
 import com.han1997.vipledger.core.domain.fake.FakeTxnRepository
 import com.han1997.vipledger.core.domain.fake.RecordingBalanceSyncer
 import com.han1997.vipledger.core.domain.fake.SequentialIdGenerator
+import com.han1997.vipledger.core.domain.ml.MlModelTrainer
 import com.han1997.vipledger.core.domain.model.MerchantRule
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.nlp.Confidence
@@ -46,6 +47,9 @@ class ConfirmAiEntryUseCaseTest {
     private val balanceSyncer = RecordingBalanceSyncer()
     private val timeProvider = FakeTimeProvider()
 
+    /** 记录被通知训练的账本 id，用于断言「修正后才触发、无修正不触发」（PRD Requirement 3）。 */
+    private val trainedLedgers = mutableListOf<String>()
+
     private val useCase = ConfirmAiEntryUseCase(
         txnRepository = txns,
         merchantRuleRepository = merchantRules,
@@ -54,6 +58,7 @@ class ConfirmAiEntryUseCaseTest {
         balanceSyncer = balanceSyncer,
         timeProvider = timeProvider,
         idGenerator = SequentialIdGenerator("id"),
+        modelTrainer = MlModelTrainer { ledgerId -> trainedLedgers += ledgerId },
     )
 
     private suspend fun seed(txnId: String, title: String, categoryId: String): Txn = Txn(
@@ -217,5 +222,31 @@ class ConfirmAiEntryUseCaseTest {
         val result = useCase(txn, parsed("c_food", "午饭"))
         assertFalse(result.isSuccess)
         assertNotNull(txns.getById("t1"))
+    }
+
+    @Test
+    fun correctionNotifiesModelTrainerAfterCommit() = runTest {
+        val txn = seed("t1", title = "午饭", categoryId = "c_old")
+        useCase(txn.copy(categoryId = "c_food"), parsed("c_old", "午饭"))
+
+        assertEquals(listOf(ledgerId), trainedLedgers, "修正写入样本后应通知自动训练触发点")
+    }
+
+    @Test
+    fun noCorrectionDoesNotNotifyModelTrainer() = runTest {
+        val txn = seed("t1", title = "午饭", categoryId = "c_food")
+        useCase(txn, parsed("c_food", "午饭"))
+
+        assertTrue(trainedLedgers.isEmpty(), "没有修正就没有样本，不应触发训练")
+    }
+
+    @Test
+    fun rejectedConfirmDoesNotNotifyModelTrainer() = runTest {
+        val txn = seed("t1", title = "午饭", categoryId = "c_food")
+            .copy(draftStatus = DraftStatus.CONFIRMED)
+        txns.update(txn)
+
+        useCase(txn, parsed("c_old", "午饭"))
+        assertTrue(trainedLedgers.isEmpty(), "确认失败不得触发训练")
     }
 }

@@ -67,6 +67,7 @@ import kotlinx.datetime.TimeZone
 fun AiEntryScreen(
     onBack: () -> Unit,
     onOpenRules: () -> Unit,
+    onOpenModel: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AiEntryViewModel = hiltViewModel(),
 ) {
@@ -76,6 +77,7 @@ fun AiEntryScreen(
         onAction = viewModel::onAction,
         onBack = onBack,
         onOpenRules = onOpenRules,
+        onOpenModel = onOpenModel,
         modifier = modifier,
     )
 }
@@ -86,6 +88,7 @@ internal fun AiEntryContent(
     onAction: (AiAction) -> Unit,
     onBack: () -> Unit,
     onOpenRules: () -> Unit,
+    onOpenModel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -105,6 +108,10 @@ internal fun AiEntryContent(
                 title = stringResource(R.string.ai_title),
                 onBack = onBack,
                 actions = {
+                    // 端侧模型管理入口（PRD Requirement 6）；与规则管理页一样收敛在 :feature:ai 内。
+                    TextButton(onClick = onOpenModel) {
+                        Text(stringResource(R.string.ai_model_open))
+                    }
                     // 商户规则管理入口（PRD Requirement 9）；规则管理页收敛在 :feature:ai 内（PRD D2）。
                     TextButton(onClick = onOpenRules) {
                         Text(stringResource(R.string.ai_rule_open))
@@ -535,6 +542,7 @@ private fun AiEntryContentPreview() {
             onAction = {},
             onBack = {},
             onOpenRules = {},
+            onOpenModel = {},
         )
     }
 }

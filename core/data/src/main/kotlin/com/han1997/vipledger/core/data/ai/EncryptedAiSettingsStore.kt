@@ -35,6 +35,7 @@ internal class EncryptedAiSettingsStore(context: Context) {
                 apiKey = json.optString("apiKey"),
                 model = json.optString("model", AiSettings.DEFAULT_MODEL),
                 networkEnabled = json.optBoolean("networkEnabled", false),
+                autoTrainEnabled = json.optBoolean("autoTrainEnabled", false),
             )
         }.getOrDefault(AiSettings())
     }
@@ -45,6 +46,7 @@ internal class EncryptedAiSettingsStore(context: Context) {
             .put("apiKey", settings.apiKey)
             .put("model", settings.model)
             .put("networkEnabled", settings.networkEnabled)
+            .put("autoTrainEnabled", settings.autoTrainEnabled)
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key())
         val sealed = cipher.iv + cipher.doFinal(json.toString().toByteArray(Charsets.UTF_8))

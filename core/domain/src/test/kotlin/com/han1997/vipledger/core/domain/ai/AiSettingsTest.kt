@@ -29,10 +29,18 @@ class AiSettingsTest {
             apiKey = "",
             model = "gemma3:4b",
             networkEnabled = true,
+            autoTrainEnabled = true,
         )
         assertEquals(
-            "AiSettings(baseUrl=http://192.168.10.4:11434/v1, apiKey=, model=gemma3:4b, networkEnabled=true)",
+            "AiSettings(baseUrl=http://192.168.10.4:11434/v1, apiKey=, model=gemma3:4b, " +
+                "networkEnabled=true, autoTrainEnabled=true)",
             settings.toString(),
         )
+    }
+
+    @Test
+    fun autoTrainDefaultsOff() {
+        // M7 验收：「自动训练」开关默认关闭，关闭时训练触发点不得发生任何训练。
+        assertFalse(AiSettings().autoTrainEnabled, "自动训练必须默认关闭")
     }
 }

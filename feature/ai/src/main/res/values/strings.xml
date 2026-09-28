@@ -116,4 +116,48 @@
     <string name="ai_rule_notice_deleted">规则已删除</string>
     <string name="ai_rule_notice_toggled">规则已更新</string>
     <string name="ai_rule_notice_failed">操作失败</string>
+
+    <!-- 端侧模型管理（PRD Requirement 6） -->
+    <string name="ai_model_open">模型</string>
+    <string name="ai_model_title">端侧模型</string>
+    <string name="ai_model_loading">正在处理…</string>
+    <string name="ai_model_none">还没有训练过的模型。修正分类或导入样本后，打开自动训练或点「立即训练」。</string>
+    <string name="ai_model_section_current">当前模型</string>
+    <string name="ai_model_version">版本</string>
+    <string name="ai_model_trained_at">上次训练</string>
+    <string name="ai_model_unknown">—</string>
+    <string name="ai_model_sample_count">训练样本数</string>
+    <string name="ai_model_label_count">分类标签数</string>
+    <string name="ai_model_feature_version">特征版本</string>
+    <string name="ai_model_section_skipped">样本不足被跳过的分类</string>
+    <string name="ai_model_skipped_hint">样本数低于阈值（%1$d）的分类不参与训练、也不出建议；攒够后会自动转为可训练。</string>
+    <string name="ai_model_skipped_empty">没有被跳过的分类。</string>
+    <string name="ai_model_skipped_row">%1$s · 样本 %2$d</string>
+    <string name="ai_model_section_autotrain">自动训练</string>
+    <string name="ai_model_autotrain_switch">修正后自动训练</string>
+    <string name="ai_model_autotrain_hint">开启后，每次修正写入样本、且未训练样本达到 %1$d 条时，会在设备上自动训练（全程本地、不联网）。</string>
+    <string name="ai_model_untrained">未训练样本：%1$d</string>
+    <string name="ai_model_train_now">立即训练</string>
+    <string name="ai_model_section_samples">训练样本</string>
+    <string name="ai_model_samples_total">样本总数</string>
+    <string name="ai_model_export_samples">导出样本（JSON Lines）</string>
+    <string name="ai_model_export_samples_hint">导出为 Python 训练脚本可直接读取的 JSON Lines，可在电脑上训练后用「导入模型」带回来。</string>
+    <string name="ai_model_section_file">模型文件</string>
+    <string name="ai_model_export_file">导出模型</string>
+    <string name="ai_model_import_file">导入模型</string>
+    <string name="ai_model_import_hint">导入会用模型文件格式严格校验；不兼容的文件会被拒绝并保留当前模型。</string>
+
+    <!-- 模型管理一次性提示 -->
+    <string name="ai_model_notice_trained">训练完成</string>
+    <string name="ai_model_notice_train_no_samples">没有未训练的样本</string>
+    <string name="ai_model_notice_train_failed">训练失败，样本保持未训练</string>
+    <string name="ai_model_notice_imported">模型已导入</string>
+    <string name="ai_model_notice_import_invalid">模型文件不兼容或已损坏，已拒绝</string>
+    <string name="ai_model_notice_import_failed">模型导入失败</string>
+    <string name="ai_model_notice_exported">导出完成</string>
+    <string name="ai_model_notice_export_failed">导出失败</string>
+    <string name="ai_model_notice_export_no_samples">没有可导出的样本</string>
+    <string name="ai_model_notice_export_no_model">还没有可导出的模型</string>
+    <string name="ai_model_notice_saved">已保存</string>
+    <string name="ai_model_notice_failed">操作失败</string>
 </resources>

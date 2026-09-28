@@ -3,8 +3,10 @@ package com.han1997.vipledger.core.domain.usecase.txn
 import com.han1997.vipledger.core.common.result.AppError
 import com.han1997.vipledger.core.common.result.AppResult
 import com.han1997.vipledger.core.common.result.isFailure
+import com.han1997.vipledger.core.common.result.isSuccess
 import com.han1997.vipledger.core.common.result.map
 import com.han1997.vipledger.core.common.time.TimeProvider
+import com.han1997.vipledger.core.domain.ml.MlModelTrainer
 import com.han1997.vipledger.core.domain.model.MerchantRule
 import com.han1997.vipledger.core.domain.model.MlTrainingSample
 import com.han1997.vipledger.core.domain.model.Txn
@@ -40,6 +42,9 @@ const val LEARNED_RULE_PRIORITY: Int = 110
  *    （pattern 取自标题；同商户复用已有 LEARNED 规则的 id，不产生重复规则）；
  * 4. 重算受影响账户余额（草稿此前不参与余额，确认后才计入）。
  *
+ * 事务提交、修正确实写入样本后，再以**即发即弃**方式通知 [MlModelTrainer]（PRD Requirement 3）：
+ * 自动训练开关默认关闭，关闭时不发生任何训练；训练失败不回滚修正、不上抛异常。
+ *
  * [updated] 是界面上用户最终确认的那笔（含可能的修正）；[parsed] 是解析层原始产出，
  * 两者比对即能判定「是否修正」。
  */
@@ -51,6 +56,7 @@ class ConfirmAiEntryUseCase(
     private val balanceSyncer: AccountBalanceSyncer,
     private val timeProvider: TimeProvider,
     private val idGenerator: IdGenerator,
+    private val modelTrainer: MlModelTrainer,
 ) {
 
     suspend operator fun invoke(updated: Txn, parsed: ParsedEntry): AppResult<Txn> {
@@ -65,7 +71,7 @@ class ConfirmAiEntryUseCase(
         val confirmed = updated.copy(draftStatus = DraftStatus.CONFIRMED, updatedAt = now)
         val corrected = isCorrected(parsed, confirmed)
 
-        return transactionRunner.inTransaction {
+        val result = transactionRunner.inTransaction {
             val updateResult = txnRepository.update(confirmed)
             if (updateResult.isFailure) return@inTransaction updateResult
 
@@ -96,6 +102,14 @@ class ConfirmAiEntryUseCase(
             balanceSyncer.syncBalances(listOfNotNull(confirmed.accountId, confirmed.toAccountId).distinct(), now)
             AppResult.success(Unit)
         }.map { confirmed }
+
+        // 修正已提交之后才触发自动训练（PRD Requirement 3）：开关关闭时不发生任何训练。
+        // 即发即弃——[MlModelTrainer] 的实现在应用级作用域里异步训练并吞掉异常，
+        // 训练失败既不会回滚这笔修正，也不会把异常抛到界面。
+        if (result.isSuccess && corrected && confirmed.categoryId != null) {
+            modelTrainer.onTrainingSampleWritten(confirmed.ledgerId)
+        }
+        return result
     }
 
     /**

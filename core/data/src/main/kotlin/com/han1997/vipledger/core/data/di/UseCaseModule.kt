@@ -1,5 +1,6 @@
 package com.han1997.vipledger.core.data.di
 
+import com.han1997.vipledger.core.domain.ml.MlModelTrainer
 import com.han1997.vipledger.core.domain.repository.AccountRepository
 import com.han1997.vipledger.core.domain.repository.CategoryRepository
 import com.han1997.vipledger.core.domain.repository.InstallmentRepository
@@ -290,6 +291,7 @@ object UseCaseModule {
         balanceSyncer: AccountBalanceSyncer,
         timeProvider: TimeProvider,
         idGenerator: IdGenerator,
+        modelTrainer: MlModelTrainer,
     ) = ConfirmAiEntryUseCase(
         txnRepository = txnRepository,
         merchantRuleRepository = merchantRuleRepository,
@@ -298,6 +300,7 @@ object UseCaseModule {
         balanceSyncer = balanceSyncer,
         timeProvider = timeProvider,
         idGenerator = idGenerator,
+        modelTrainer = modelTrainer,
     )
 
     @Provides

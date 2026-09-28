@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.han1997.vipledger.feature.ai.ui.entry.AiEntryScreen
+import com.han1997.vipledger.feature.ai.ui.model.ModelManageScreen
 import com.han1997.vipledger.feature.ai.ui.rules.MerchantRuleManageScreen
 
 /**
@@ -12,12 +13,14 @@ import com.han1997.vipledger.feature.ai.ui.rules.MerchantRuleManageScreen
  *
  * `:app` 只调用 [aiGraph] 与 [AiRoutes.HOME]，不关心模块内部结构；
  * 与 `feature:sync` 的 `backupGraph()` / `feature:stats` 的 `statsGraph()` 同一风格。
- * AI 首页没有自己的返回栈入口（返回交给系统返回分发器）；[AiRoutes.RULES] 是模块内的第二页，
- * 从首页进入、返回时弹栈，因此 [aiGraph] 接收 `:app` 的 `NavHostController` 以完成页内跳转。
+ * AI 首页没有自己的返回栈入口（返回交给系统返回分发器）；[AiRoutes.RULES]（商户规则）与
+ * [AiRoutes.MODEL]（端侧模型）是模块内的次级页，从首页进入、返回时弹栈，因此 [aiGraph]
+ * 接收 `:app` 的 `NavHostController` 以完成页内跳转。
  */
 object AiRoutes {
     const val HOME: String = "ai/home"
     const val RULES: String = "ai/rules"
+    const val MODEL: String = "ai/model"
 }
 
 fun NavGraphBuilder.aiGraph(navController: NavHostController) {
@@ -26,10 +29,15 @@ fun NavGraphBuilder.aiGraph(navController: NavHostController) {
         AiEntryScreen(
             onBack = { backOwner?.onBackPressedDispatcher?.onBackPressed() },
             onOpenRules = { navController.navigate(AiRoutes.RULES) },
+            onOpenModel = { navController.navigate(AiRoutes.MODEL) },
         )
     }
 
     composable(AiRoutes.RULES) {
         MerchantRuleManageScreen(onBack = { navController.popBackStack() })
+    }
+
+    composable(AiRoutes.MODEL) {
+        ModelManageScreen(onBack = { navController.popBackStack() })
     }
 }
