@@ -116,13 +116,23 @@ Compose Screen ◀──StateFlow<UiState>────────────�
 ## 7. 端侧分类器（`:ml:classifier`）
 
 - 特征：字符 2–3 gram → 哈希到 1<<18 桶的 TF 向量（纯 Kotlin，无模型下载）。
-- 模型：多项式逻辑回归（softmax），权重为 `FloatArray`，序列化为 JSON（含词表版本、分类标签表）。
-- 推理：`classify(text): List<CategoryScore>`，取 top-3 且置信度 > 阈值的候选。
-- 在线训练：`train(samples, epochs, lr)`，增量 SGD；触发条件为「自动训练」开关开启
-  （**默认关闭**）且样本数 ≥ 30；训练在 `Dispatchers.Default` 上跑，完成后原子替换权重文件。
-- 外部模型：支持导入 `.onnx`（M7 引入 ONNX Runtime Android），tokenizer 配置随模型文件一起导入；
-  导入后可设为默认推理后端，与线性模型共存切换。
-- 与 Python 脚本同构：`tools/trainer/` 用相同特征与模型结构训练，导出 ONNX + 词表 JSON。
+- 模型：多项式逻辑回归（softmax），权重为 `FloatArray`；落盘序列化为**稀疏** JSON
+  （含词表版本、分类标签表），密集序列化会是几十 MB。
+- 推理：`classify(title, remark)` 经 `ranked()` 取 top-3 且置信度 ≥ 阈值的候选；
+  单分类不出建议（单类 softmax 恒为 1.0）。
+- **训练有两个不同的阈值，不要混用**：**每类最小样本数默认 3**（分类样本不够就不参与训练、
+  也不出建议）与**自动训练触发量默认 30**（未训练样本总数达到才跑一次）。模型管理页曾把
+  30 写进「每类样本数」那句说明，造成同页两个数字互相矛盾。
+- 在线训练：`train(samples, epochs, lr)` 增量 SGD；受「自动训练」开关控制（**默认关闭**）
+  且未训练样本 ≥ 30；在 `Dispatchers.Default` 上跑（**进程内，非 WorkManager**），
+  完成后**原子替换**权重文件。
+- 分类 id 后校验：分类由用户增删改，而模型标签表在训练时固化，因此候选 id 必须对得上当前
+  真实分类，否则丢弃；过滤器缓存未就绪与账本切换瞬间都 fail-closed。
+- 与 Python 脚本同构：`tools/trainer/` 用相同特征、相同模型结构与相同权重格式训练
+  （纯标准库）。金样本由 Kotlin 侧生成，Python 的 `--selfcheck` 做跨语言比对。
+- **未交付（后续里程碑）**：外部模型支持——原计划 M7 引入 ONNX Runtime Android，现决定延后；
+  它是重型依赖且 `:ml:classifier` 是纯 JVM 模块禁止 Android SDK，需另开 Android 模块。
+  Python 脚本目前**不导出 ONNX**。
 
 ## 8. WebDAV 备份格式
 

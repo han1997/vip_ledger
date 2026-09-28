@@ -135,19 +135,80 @@ val date   = ruleEntry.date ?: trustCloudDate(parsed.opt("occurredAt"), context.
 >
 > 更干净的替代是让用户在网关侧放行 API 客户端，但那不改变「代码里必须能带上 UA」。
 
-## 端侧分类器
+## 端侧分类器（`:ml:classifier`，M7 已落地）
 
-- 特征：字符 2 至 3 gram 哈希到 1<<18 桶的 TF 向量；纯 Kotlin，不下载模型。
-- 模型：多项式逻辑回归（softmax），权重序列化为 JSON（含版本号与分类标签表）。
-- 推理：`classify(text)` 返回 top-3 候选与置信度。**阈值规则只在一处表达**
-  （`CategoryClassifier.ranked()`，`TOP_N=3`、`MIN_CONFIDENCE=0.5f`），不要在调用点各写一遍。
-- 在线训练：`train(samples, epochs, lr)` 增量 SGD；受「自动训练」开关控制，**默认关闭**；
-  样本数阈值 30；训练在后台线程完成后原子替换权重文件。
-- 外部模型：支持导入 ONNX（tokenizer 配置随模型一起导入），可与线性模型共存切换。
-- Python 训练脚本在 `tools/trainer/`，必须与 App 侧保持同构（同特征、同模型结构、同权重导出格式）。
+`LinearCategoryClassifier` 实现 `:core:domain` 的 `CategoryClassifier`；管线只程序到接口，
+接口与 `ranked()` 从未改动。
 
-> **M7 之前 `:ml:classifier` 里是占位实现**（返回空候选，`PLACEHOLDER = true`）。它必须一眼可辨，
-> 不得伪装成可用分类器。管线程序到 `:core:domain` 的接口，M7 只换实现、不动管线。
+- **特征**：字符 2–3 gram → FNV-1a 32 → `1 shl 18` 桶 → L1 归一 TF。契约六步：
+  `lowercase(Locale.ROOT)` → 折叠 ASCII 空白 `[ \t\n\r\u000B\f]+` → trim →
+  **按 Unicode 码点切** n-gram → 对每个 n-gram 的 **UTF-8 字节**算 FNV-1a
+  （`h=0x811C9DC5; h=((h^b)*16777619)&0xFFFFFFFF`）→ `bucket = h and (BUCKETS-1)`。
+  索引升序，浮点求和顺序也是契约的一部分。
+- **模型**：多项式逻辑回归（softmax）。内存里是密集 `FloatArray`，**落盘用稀疏 JSON**——
+  密集序列化会是几十 MB。
+- **推理**：经 `ranked()` 返回 top-3、置信度 ≥ `MIN_CONFIDENCE`。**阈值规则只在一处表达**
+  （`CategoryClassifier.ranked()`），不得在调用点各写一遍。
+- **确定性**：初始化用显式种子 + xorshift64*，更新顺序不依赖 `HashMap` 迭代序 ——
+  同样本同超参必须产出相同权重，Python 同构验证依赖这一点。
+
+> **Warning：这个功能有【两个】阈值，别混用 —— 混用造成过一个用户可见的文案 bug。**
+>
+> | 阈值 | 常量 | 默认 | 管什么 |
+> |---|---|---|---|
+> | 每类最小样本数 | `TrainingConfig.minSamplesPerClass` | **3** | 某个分类样本不够就**不参与训练、也不出建议**（D3#3） |
+> | 自动训练触发量 | `AutoTrainTrigger.AUTO_TRAIN_THRESHOLD` | **30** | **未训练样本总数**达到多少才跑一次自动训练（§7） |
+>
+> 模型管理页曾把 30 写进「每类样本数低于阈值」那句说明里，而同页另一处 30 是对的，
+> 于是同一页上出现两个互相矛盾的数字。**任何展示这些值的文案都必须从常量取，不许写字面量。**
+
+- **类别不平衡抑制**：按**累积**计数（已训练的 `labelCounts` + 待定的 `pendingCounts`）判定，
+  不是按当前批次——否则一个成熟分类每轮只收到一条新样本就会被踢出局。被跳过的分类要能在
+  模型管理页看到（含分类名与样本数），否则用户只看到「分类器没反应」而无从判断。
+- **单分类守卫**：`MIN_CLASSES_FOR_SUGGESTION = 2`。单类 softmax 恒为 1.0，会对任何输入都以
+  100% 置信度推荐那一类，必须挡住。
+- **分类 id 后校验**：模型的标签表在训练时固化，而分类是用户可删可改的。
+  `LinearCategoryClassifier` 的 **`CategoryIdFilter` 是必填构造参数**（曾默认 `ACCEPT_ALL`，
+  已被移除——忘了接线本该编译失败，而不是默默放行陈旧 id）。缓存未就绪、**账本切换瞬间**、
+  分类被删除时都必须 **fail-closed**（返回空候选）。生产路径**永远不许**传 `ACCEPT_ALL`。
+- **原子替换**：同目录临时文件 → `flush` → `fd.sync()` → `ATOMIC_MOVE`（带同目录
+  `REPLACE_EXISTING` 兜底）；失败时删临时文件、保留旧模型，中途写失败也不会被推理读到。
+- **训练触发**：`AiSettings.autoTrainEnabled` **默认关闭**并持久化；`ConfirmAiEntryUseCase`
+  在**事务提交之后**通知训练（不在事务内——否则 SGD 会占住事务，训练失败还会牵连用户那笔
+  已保存的修正）。训练跑在 `Dispatchers.Default`（进程内，**不是** WorkManager），
+  成功后以产出的版本号 `markTrained` 让下轮增量；失败时样本保持未训练、下次重试。
+  两种来源（`USER_CORRECTION` / `IMPORT`）都喂进去，不做来源加权。
+- **唯一实例**：`OnDeviceModelManager`（`:feature:ai` 的 `@Singleton`）持有唯一的
+  `LinearCategoryClassifier`，管线、训练触发、模型页共用——两个实例会导致「训 A 用 B」。
+
+### Python 训练脚本与同构验证（`tools/trainer/`）
+
+纯标准库（无 numpy），与 App 侧同构：同特征、同模型结构（含逐位复刻的 xorshift64* 洗牌）、
+同权重 JSON 格式。`python train.py --samples <jsonl> --output <model.json>`。
+
+- **输入契约**：JSON Lines，一行一个对象，UTF-8，空行忽略；
+  `{"text": <已拼接的「标题 + 备注」>, "categoryId": <非空白 string>}`。
+  `text` 口径同 `CharNgramFeaturizer.joinText` / `ml_training_sample.text` —— **不要把标题备注
+  拆成两个字段**。畸形行报错并非零退出，**不静默跳过**；纯空白 `categoryId` 会拒绝**整个文件**，
+  所以 App 侧的导出必须先过滤掉空分类。
+- **同构验证的分工是单向的**：金样本由 **Kotlin 侧生成**（设备侧才是格式的真相来源），
+  **Python 的 `--selfcheck` 是唯一的跨语言比对**，且差异恰为 `0.0` 时**硬失败**——
+  否则就是拿自己的输出跟自己比（曾经如此，报 0.0 差异，什么都没证明）。
+  Kotlin 侧改为**防漂移**守卫（同超参训两次字节相同 + 与金样本字节相等）。
+- **容差 `1e-4`**：Kotlin 用 float32、Python 标准库用 float64，无法 bit-exact。实测跨语言差
+  约 2–3e-7（float32 的 1 ULP 量级），而真实口径 bug 的差异在 1.6e-2（洗牌差一位）到 1.1
+  （只取 2-gram）之间，UTF-16 切片错为 2.9e-1 —— 容差低两三个数量级，不会掩盖真错。
+- **已知限制**：`--selfcheck` 是手动命令，**未接进 `gradlew test`**（让构建依赖 Python 解释器
+  超出本项目构建契约）。因此只跑 Gradle 的 CI **抓不到** Python↔Kotlin 漂移。
+
+### 未实现（后续里程碑）
+
+- **ONNX 导入与外部模型**：ARCHITECTURE §7 原本规划 M7 引入 ONNX Runtime Android，已决定
+  **延后**——验收标准不含它，它是十几 MB 级新依赖，且 `:ml:classifier` 是**纯 JVM 模块
+  禁止引入 Android SDK**，ONNX Runtime Android 装不进去，需要另开 Android 模块。
+  在那之前 §7 的「外部模型」一段应视为未交付。
+- 样本导出的 `ml_samples.jsonl`（M5 备份里预留但从未实现），以及 `IMPORT` 样本的**生产者**
+  （M5 的 CSV 导入器不写 `ml_training_sample`）：训练路径接受 IMPORT 样本，但当前没有代码产生它们。
 
 ## 隐私红线
 
