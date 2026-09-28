@@ -320,6 +320,23 @@ class OpenAiCompatibleLlmParserClientTest {
         assertNull(server.takeRequest().getHeader("Authorization"), "无 key 时不带 Authorization（本地服务器）")
     }
 
+    @Test
+    fun browserUserAgentSentOnEveryRequest() = runTest {
+        // 实测 api.kunyou.asia：无 UA（含 OkHttp 默认 okhttp/4.12.0）被 Cloudflare 403，
+        // 浏览器风格 UA 才 200 → 客户端必须显式带上，且首次请求与修复重试都要带。
+        server.enqueue(MockResponse().setResponseCode(400))
+        enqueueChat(entriesJson(entryJson()))
+
+        val entries = successEntries(client())
+
+        assertEquals(1, entries.size)
+        assertEquals(2, server.requestCount, "首次 + 修复重试各一次")
+        val firstUa = server.takeRequest().getHeader("User-Agent")
+        assertTrue(firstUa != null && firstUa.contains("Mozilla"), "首次请求必须带浏览器风格 User-Agent，实际 $firstUa")
+        val retryUa = server.takeRequest().getHeader("User-Agent")
+        assertTrue(retryUa != null && retryUa.contains("Mozilla"), "修复重试也必须带 User-Agent，实际 $retryUa")
+    }
+
     // ---- helpers ----
 
     private class FakeSettings(var value: AiSettings) : AiSettingsRepository {

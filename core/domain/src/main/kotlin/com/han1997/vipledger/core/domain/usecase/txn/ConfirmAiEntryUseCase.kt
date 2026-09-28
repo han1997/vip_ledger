@@ -115,15 +115,27 @@ class ConfirmAiEntryUseCase(
     private fun sampleText(txn: Txn): String =
         listOf(txn.title, txn.remark).filter { it.isNotBlank() }.joinToString(" ")
 
-    /** 同商户复用已有 LEARNED 规则，`upsert` 走主键 REPLACE 从而更新而非新增（PRD Requirement 7）。 */
+    /**
+     * 同商户的修正只沉淀一条规则（PRD Requirement 7）。
+     *
+     * 按 `pattern`（**不看来源**）去重，而不是只找已有 LEARNED 规则：学习规则被用户在管理页
+     * 「提升」为 `USER` 后来源不再是 LEARNED，若仍只按来源去重，下一次修正会再写一条同 pattern
+     * 的 LEARNED 规则——既违反「同一商户重复修正不得产生重复规则」，也与管理页「提升后 AI 学习
+     * 不会再覆盖它」的承诺相矛盾。
+     *
+     * - 已存在同 pattern 的 USER / BUILTIN 规则 → 用户已对该商户明确定规则，学习路径让位，
+     *   不写入重复规则（提升后的规则因此真正受保护）；
+     * - 已存在同 pattern 的 LEARNED 规则 → 复用其 id，`upsert` 走主键 REPLACE 更新而非新增。
+     */
     private suspend fun upsertLearnedRule(
         ledgerId: String,
         pattern: String,
         categoryId: String,
         now: Long,
     ): AppResult<Unit> {
-        val existing = merchantRuleRepository.listByLedger(ledgerId)
-            .firstOrNull { it.source == RuleSource.LEARNED && it.pattern == pattern }
+        val samePattern = merchantRuleRepository.listByLedger(ledgerId).filter { it.pattern == pattern }
+        if (samePattern.any { it.source != RuleSource.LEARNED }) return AppResult.success(Unit)
+        val existing = samePattern.firstOrNull()
         val rule = MerchantRule(
             id = existing?.id ?: idGenerator.newId(),
             ledgerId = ledgerId,

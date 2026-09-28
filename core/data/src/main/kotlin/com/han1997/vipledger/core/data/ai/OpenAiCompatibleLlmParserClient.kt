@@ -107,6 +107,9 @@ class OpenAiCompatibleLlmParserClient(
             if (jsonMode) body.put("response_format", JSONObject().put("type", "json_object"))
             val builder = Request.Builder()
                 .url(endpoint)
+                // 显式的浏览器风格 UA：部分网关在 Cloudflare 边缘按浏览器签名拦截，缺失或使用
+                // OkHttp 默认 UA 会被 403（见 USER_AGENT 注释）。首次请求与修复重试都经这里发出。
+                .header(USER_AGENT_HEADER, USER_AGENT)
                 .post(body.toString().toRequestBody(JSON_MEDIA))
             // 本地服务器常无需 key；有 key 才带 Authorization，绝不打印该头。
             if (config.apiKey.isNotBlank()) builder.header("Authorization", "Bearer ${config.apiKey}")
@@ -410,6 +413,19 @@ class OpenAiCompatibleLlmParserClient(
         private val EPOCH_SECONDS_RANGE = 1_000_000_000L..9_999_999_999L
         private val EPOCH_MILLIS_RANGE = 1_000_000_000_000L..9_999_999_999_999L
         private const val MAX_DAYS_FROM_TODAY = 366
+
+        /**
+         * 显式的浏览器风格 `User-Agent`（**不要删除**）。
+         *
+         * 部分 OpenAI 兼容网关（实测 `https://api.kunyou.asia/v1` + `MiniMax-M2`）在 Cloudflare
+         * 边缘按「浏览器签名」拦截客户端：不带此头（OkHttp 默认 `okhttp/4.12.0` 也是被拦的签名）
+         * 会收到 `HTTP 403 {"title":"Error 1010: Access denied"}`，带上浏览器风格 UA 才返回 200。
+         * 因此这不是可选优化，而是该链路能否连通的前提。头里不含 apiKey 或任何用户信息。
+         */
+        private const val USER_AGENT_HEADER = "User-Agent"
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) " +
+                "Chrome/124.0.0.0 Mobile Safari/537.36"
 
         private val RECOGNIZED_KEYS = arrayOf(
             "amountCents", "amount_cents", "amount", "cents", "type",

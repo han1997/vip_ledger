@@ -8,6 +8,7 @@ import com.han1997.vipledger.core.domain.fake.FakeTransactionRunner
 import com.han1997.vipledger.core.domain.fake.FakeTxnRepository
 import com.han1997.vipledger.core.domain.fake.RecordingBalanceSyncer
 import com.han1997.vipledger.core.domain.fake.SequentialIdGenerator
+import com.han1997.vipledger.core.domain.model.MerchantRule
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.nlp.Confidence
 import com.han1997.vipledger.core.domain.nlp.ParsedEntry
@@ -15,7 +16,9 @@ import com.han1997.vipledger.core.domain.usecase.txn.ConfirmAiEntryUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.LEARNED_RULE_PRIORITY
 import com.han1997.vipledger.core.model.DraftStatus
 import com.han1997.vipledger.core.model.MlSampleSource
+import com.han1997.vipledger.core.model.RuleMatchType
 import com.han1997.vipledger.core.model.RuleSource
+import com.han1997.vipledger.core.model.RuleTargetField
 import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.TxnSource
 import com.han1997.vipledger.core.model.money.Money
@@ -121,6 +124,68 @@ class ConfirmAiEntryUseCaseTest {
         assertEquals("午饭", rules.single().pattern)
         // 训练样本仍应每次修正各写一条
         assertEquals(2, samples.listByLedger(ledgerId).size)
+    }
+
+    @Test
+    fun promotedRuleIsNotDuplicatedByLaterLearning() = runTest {
+        // 学习规则在管理页被「提升」为 USER 后，同商户再修正不得再写一条重复的 LEARNED 规则，
+        // 否则「重复修正不得产生重复规则」被破坏、管理页出现两条同 pattern 规则（PR5 交互）。
+        merchantRules.upsert(
+            MerchantRule(
+                id = "r1",
+                ledgerId = ledgerId,
+                pattern = "午饭",
+                matchType = RuleMatchType.CONTAINS,
+                targetField = RuleTargetField.ANY,
+                categoryId = "c_food",
+                priority = LEARNED_RULE_PRIORITY,
+                source = RuleSource.USER,
+                enabled = true,
+                hitCount = 3,
+                createdAt = 111L,
+                updatedAt = 111L,
+            ),
+        )
+        seed("t1", title = "午饭", categoryId = "c_old")
+
+        useCase(txns.getById("t1")!!.copy(categoryId = "c_food"), parsed("c_old", "午饭"))
+
+        val rules = merchantRules.listByLedger(ledgerId)
+        assertEquals(1, rules.size, "提升后的规则不得被学习路径再写一条重复规则")
+        assertEquals(RuleSource.USER, rules.single().source, "学习路径不得把已提升规则改回 LEARNED")
+        assertEquals(3, rules.single().hitCount, "学习路径不得改动已提升规则的命中次数")
+        // 修正样本仍应写入（Requirement 4 与「学习规则」解耦）
+        assertEquals(1, samples.listByLedger(ledgerId).size)
+    }
+
+    @Test
+    fun learningUpdatesExistingLearnedRuleInPlace() = runTest {
+        merchantRules.upsert(
+            MerchantRule(
+                id = "r1",
+                ledgerId = ledgerId,
+                pattern = "午饭",
+                matchType = RuleMatchType.CONTAINS,
+                targetField = RuleTargetField.ANY,
+                categoryId = "c_old",
+                priority = LEARNED_RULE_PRIORITY,
+                source = RuleSource.LEARNED,
+                enabled = true,
+                hitCount = 4,
+                createdAt = 111L,
+                updatedAt = 111L,
+            ),
+        )
+        seed("t1", title = "午饭", categoryId = "c_old")
+
+        useCase(txns.getById("t1")!!.copy(categoryId = "c_food"), parsed("c_old", "午饭"))
+
+        val rules = merchantRules.listByLedger(ledgerId)
+        assertEquals(1, rules.size, "已存在的 LEARNED 规则应原地更新，不新增")
+        assertEquals("r1", rules.single().id)
+        assertEquals("c_food", rules.single().categoryId)
+        assertEquals(4, rules.single().hitCount, "原地更新不得重置命中次数")
+        assertEquals(111L, rules.single().createdAt)
     }
 
     @Test
