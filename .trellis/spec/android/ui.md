@@ -13,6 +13,22 @@
 
 - 主题只用 `core:designsystem` 的 `VipLedgerTheme`；禁止在屏幕里写死颜色值。
   语义色（支出红、收入绿、转账蓝）从 designsystem 取；图表配色用 `chartColorOf(index)`。
+- **V2 起必须走 designsystem 组件与 token，不再手写视觉模式**（V2 UI 设计系统任务确立）：
+  - 间距/圆角/边框/elevation/图标尺寸/动效时长/语义 alpha 一律取 `VipLedgerTokens`
+    （`Space1..Space8` 4dp 网格、`RadiusSmall..Full`、`ElevationLevel0..5`、`TouchTargetMin`、`Duration*`、`Alpha*`）；
+    LazyColumn 预留 FAB 的 `bottom = 96.dp` 这类布局常量可豁免。
+  - 强调色/装饰色从 `vipLedgerAccentColors()` 取（`accentMint/Coral/Amber` + hero 系）；禁止在 feature 里
+    `Color(0x…)` 字面量或对语义色做 alpha 变体。强调色是**有限装饰资源**：不进语义色、不进图表色板。
+  - 分组容器用 `GroupCard`，分组标题用 `SectionHeader`，可点击行用 `ActionRow`（自带 48dp 触摸目标、
+    禁用态、`Role.Button` 语义），按钮用 `PrimaryButton`/`SecondaryButton`/`DangerButton`，
+    不可逆操作确认用 `VipLedgerConfirmDialog(danger = true)`，snackbar 反馈用
+    `VipLedgerSnackbarHost`（Info/Success/Error），加载态用 `LoadingState`，状态标签用
+    `StatusBadge`（五档 `BadgeTone`，调用方不得自带颜色）。
+  - **HeroCard 上的文字必须显式取 `onHero`/`onHeroMuted`**：hero 是深绿渐变（深色模式退化为纯色），
+    默认 `onSurface` 在上面不可读；这是 V2 首页迁移时踩过的坑。
+  - 新增共享组件先查 `core/designsystem/component/` 是否已有（GroupCard/ActionRow/SectionHeader/
+    StatusBadge/VipLedgerButton/VipLedgerConfirmDialog/VipLedgerSnackbarHost/LoadingState/HeroCard），
+    不要在 feature 里重写同类视觉模式；组件一律无状态 + `@Preview` + 文案由调用方传入。
 - 金额展示统一 `Money.toDisplayString()`；列表里的金额右对齐、等宽数字，避免跳动。
 - 文案全部进 `strings.xml`；带参数的用占位符，不在 Kotlin 里拼中文。
   跨 feature 共用的文案放 `core:designsystem/src/main/res/values/strings.xml`，feature 自有文案加模块前缀。
@@ -76,6 +92,12 @@
    ```
    只在 `drawWithContent` 里包一层 `graphicsLayer` 不会录制内容；`record`/`toImageBitmap` 在部分设备/版本上
    会抛异常，必须 `runCatching` 兜底并提示「导出失败，可改用导出 CSV」，不能崩（见 import-export.md）。
+7. **彩色容器上的文字不能用默认 onSurface**：品牌绿渐变/容器（`HeroCard`、`primaryContainer` 系）上必须显式
+   取对应的 on 色（`onHero`/`onHeroMuted` 或 `onPrimaryContainer`），浅深两套都要核对对比度（≥4.5:1）。
+   `StatusBadge`、`VipLedgerSnackbarHost` 的配对色已内置，调用方不要再自行配色。
+8. **替换 material3 裸组件后要删干净 import**：`CircularProgressIndicator`/`SnackbarHost`/`ConfirmDialog`
+   换成 designsystem 版本后，残留的无用 import 不会报编译错但会混入下一次 grep 排查；
+   收尾时 `grep -rn "material3.SnackbarHost$\|material3.ConfirmDialog\|material3.CircularProgressIndicator$" feature/` 应零命中。
 
 ## 设置页
 
