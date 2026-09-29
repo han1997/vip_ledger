@@ -1,0 +1,8 @@
+{"file":".trellis/spec/android/index.md","reason":"Android pre-development checklist, required quality commands, resource-string and module constraints."}
+{"file":".trellis/spec/android/architecture.md","reason":"Module dependency direction, UI/domain boundaries, shared design-system placement, and no business-layer changes for this UI-only task."}
+{"file":".trellis/spec/android/directory-structure.md","reason":"Screen/component/package placement and naming conventions for shared UI migration."}
+{"file":".trellis/spec/android/ui.md","reason":"Compose state, theme, one-LazyColumn, accessibility, previews, strings, and existing UI pitfalls."}
+{"file":".trellis/spec/android/testing.md","reason":"Required JVM, Compose, boundary, and verification test conventions for UI changes."}
+{"file":".trellis/spec/android/charts.md","reason":"Preserve chart data/geometry contracts while restyling statistics screens."}
+{"file":".trellis/spec/android/import-export.md","reason":"Preserve SAF/export/import UI flows and error handling while restyling sync surfaces."}
+{"file":".trellis/spec/android/build-and-env.md","reason":"Locked Android/Gradle toolchain and build verification constraints."}

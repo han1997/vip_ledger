@@ -1,0 +1,7 @@
+{"file":".trellis/spec/android/index.md","reason":"Quality checklist and mandatory test/build/resource requirements for final verification."}
+{"file":".trellis/spec/android/architecture.md","reason":"Review UI-only scope, dependency direction, and protection against accidental domain/data changes."}
+{"file":".trellis/spec/android/ui.md","reason":"Review Compose conventions, theme/token reuse, accessibility, state handling, previews, and scroll-container rules."}
+{"file":".trellis/spec/android/testing.md","reason":"Review automated/UI test coverage and required boundary cases for the visual migration."}
+{"file":".trellis/spec/android/charts.md","reason":"Verify statistics visual changes do not alter chart geometry, data contracts, or aggregation meaning."}
+{"file":".trellis/spec/android/import-export.md","reason":"Verify backup/import/export and SAF behavior remains intact after sync UI migration."}
+{"file":".trellis/spec/android/build-and-env.md","reason":"Verify locked toolchain and expected Gradle/lint commands."}
