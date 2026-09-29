@@ -391,3 +391,38 @@ Completed final quality verification, marked M6 AI natural-language entry comple
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: V2 UI design system and full-screen migration
+
+**Date**: 2026-09-29
+**Task**: V2 UI design system and full-screen migration
+**Branch**: `master`
+
+### Summary
+
+Built V2 design system in core:designsystem (VipLedgerTokens 4dp grid, accent colors with WCAG-verified pairing, tnum typography with displayHero/displayAmount, 9 new stateless components with previews, token/accent unit tests). Migrated all 21 feature screens across ledger/stats/ai/sync: HeroCard gradient net-worth card, GroupCard/ActionRow/SectionHeader unification, VipLedgerConfirmDialog(danger) for all irreversible actions, VipLedgerSnackbarHost, LoadingState, StatusBadge; tokenized spacing and added rememberLazyListState. Behavior, ViewModels, navigation, stats aggregation, charts geometry and SAF flows unchanged. trellis-check passed 41 items with 19 self-fixes (18 stale imports, 1 missing a11y semantics for stats expand). Full test+lintDebug+assembleDebug green. Captured V2 design-system conventions into .trellis/spec/android/ui.md. Note: API 34 emulator page-by-page walkthrough remains as manual acceptance; sub-agent instability required main-session implementation for batches 2-4.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `183b6f4` | (see git log) |
+| `258bb0f` | (see git log) |
+| `68a9957` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
