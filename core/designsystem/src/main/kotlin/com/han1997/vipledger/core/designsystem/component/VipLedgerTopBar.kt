@@ -1,4 +1,4 @@
-﻿package com.han1997.vipledger.core.designsystem.component
+package com.han1997.vipledger.core.designsystem.component
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
@@ -12,15 +12,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.han1997.vipledger.core.designsystem.R
 
-/** 统一顶栏：标题 + 可选返回 + 右侧动作。 */
+/**
+ * 统一顶栏：标题 + 可选返回 + 右侧动作。
+ *
+ * V2 调整：返回键补上朗读语义（common_back），装饰性图标保持 null。
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VipLedgerTopBar(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    backContentDescription: String? = stringResource(R.string.common_back),
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
@@ -43,7 +50,7 @@ fun VipLedgerTopBar(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
+                        contentDescription = backContentDescription,
                     )
                 }
             }

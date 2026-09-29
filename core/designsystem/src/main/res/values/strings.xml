@@ -62,4 +62,5 @@
     <!-- 通用 -->
     <string name="common_uncategorized">未分类</string>
     <string name="common_draft_pending">待确认</string>
+    <string name="common_back">返回</string>
 </resources>
