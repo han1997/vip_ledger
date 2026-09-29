@@ -10,14 +10,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -36,19 +37,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
+import com.han1997.vipledger.core.designsystem.component.BadgeTone
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
+import com.han1997.vipledger.core.designsystem.component.HeroCard
+import com.han1997.vipledger.core.designsystem.component.LoadingState
+import com.han1997.vipledger.core.designsystem.component.SectionHeader
+import com.han1997.vipledger.core.designsystem.component.StatusBadge
 import com.han1997.vipledger.core.designsystem.component.TxnLine
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
 import com.han1997.vipledger.core.designsystem.theme.IncomeGreen
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.displayAmount
+import com.han1997.vipledger.core.designsystem.theme.displayHero
+import com.han1997.vipledger.core.designsystem.theme.vipLedgerAccentColors
 import com.han1997.vipledger.core.domain.model.HomeOverview
 import com.han1997.vipledger.core.domain.model.Ledger
 import com.han1997.vipledger.core.domain.model.Reminder
@@ -143,7 +155,7 @@ internal fun HomeContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
 
             state.overview == null -> Box(
@@ -196,13 +208,14 @@ private fun HomeBody(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
+        state = rememberLazyListState(),
         contentPadding = PaddingValues(
-            start = 16.dp,
-            end = 16.dp,
-            top = 8.dp,
+            start = VipLedgerTokens.Space4,
+            end = VipLedgerTokens.Space4,
+            top = VipLedgerTokens.Space2,
             bottom = 96.dp,
         ),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
     ) {
         item { NetWorthCard(overview) }
         item { MonthCard(overview) }
@@ -224,26 +237,14 @@ private fun HomeBody(
             }
         }
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = stringResource(R.string.home_recent_title),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                TextButton(onClick = onOpenTxns) {
-                    Text(text = stringResource(R.string.home_see_all))
-                }
-            }
+            SectionHeader(
+                title = stringResource(R.string.home_recent_title),
+                actionLabel = stringResource(R.string.home_see_all),
+                onActionClick = onOpenTxns,
+            )
         }
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            ) {
+            GroupCard {
                 if (overview.recentTxns.isEmpty()) {
                     EmptyState(message = stringResource(R.string.home_recent_empty))
                 } else {
@@ -269,71 +270,60 @@ private fun HomeBody(
 
 @Composable
 private fun NetWorthCard(overview: HomeOverview) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+    // hero 渐变底座上的文字色必须显式取 onHero 系（不能用默认 onSurface，否则深绿底上不可读）。
+    val accents = vipLedgerAccentColors()
+    HeroCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.home_net_worth),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = stringResource(R.string.home_account_count, overview.usableAccountCount),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-            AmountText(
-                amount = overview.netWorth,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            Text(
+                text = stringResource(R.string.home_net_worth),
+                style = MaterialTheme.typography.labelMedium,
+                color = accents.onHeroMuted,
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                LabeledAmount(
-                    label = stringResource(R.string.home_total_debt),
-                    amount = overview.totalDebt,
-                    modifier = Modifier.weight(1f),
-                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                LabeledAmount(
-                    label = stringResource(R.string.home_today_expense),
-                    amount = overview.todayExpense,
-                    color = ExpenseRed,
-                    modifier = Modifier.weight(1f),
-                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f),
-                )
-            }
+            Text(
+                text = stringResource(R.string.home_account_count, overview.usableAccountCount),
+                style = MaterialTheme.typography.labelMedium,
+                color = accents.onHeroMuted,
+            )
+        }
+        AmountText(
+            amount = overview.netWorth,
+            style = displayHero,
+            color = accents.onHero,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space4),
+        ) {
+            LabeledAmount(
+                label = stringResource(R.string.home_total_debt),
+                amount = overview.totalDebt,
+                modifier = Modifier.weight(1f),
+                labelColor = accents.onHeroMuted,
+                color = accents.onHero,
+            )
+            LabeledAmount(
+                label = stringResource(R.string.home_today_expense),
+                amount = overview.todayExpense,
+                color = accents.onHero,
+                modifier = Modifier.weight(1f),
+                labelColor = accents.onHeroMuted,
+            )
         }
     }
 }
 
 @Composable
 private fun MonthCard(overview: HomeOverview) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
+    GroupCard {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = VipLedgerTokens.Space4, vertical = VipLedgerTokens.Space5),
+            horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
         ) {
             LabeledAmount(
                 label = stringResource(R.string.home_month_income),
@@ -350,6 +340,7 @@ private fun MonthCard(overview: HomeOverview) {
             LabeledAmount(
                 label = stringResource(R.string.home_month_balance),
                 amount = overview.monthBalance,
+                style = displayAmount,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -363,10 +354,11 @@ private fun LabeledAmount(
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    style: TextStyle = MaterialTheme.typography.titleSmall,
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space1),
     ) {
         Text(
             text = label,
@@ -374,7 +366,7 @@ private fun LabeledAmount(
             color = labelColor,
             maxLines = 1,
         )
-        AmountText(amount = amount, color = color, style = MaterialTheme.typography.titleSmall)
+        AmountText(amount = amount, color = color, style = style)
     }
 }
 
@@ -430,7 +422,7 @@ private fun QuickEntries(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
     ) {
         QuickEntry(
             label = stringResource(R.string.home_recurring),
@@ -438,11 +430,8 @@ private fun QuickEntries(
             onClick = onOpenRecurring,
         )
         QuickEntry(
-            label = if (draftCount > 0) {
-                stringResource(R.string.draft_count, draftCount)
-            } else {
-                stringResource(R.string.draft_title)
-            },
+            label = stringResource(R.string.draft_title),
+            badgeText = if (draftCount > 0) stringResource(R.string.draft_count, draftCount) else null,
             modifier = Modifier.weight(1f),
             onClick = onOpenDrafts,
         )
@@ -455,15 +444,30 @@ private fun QuickEntries(
 }
 
 @Composable
-private fun QuickEntry(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Card(modifier = modifier, onClick = onClick) {
-        Box(
+private fun QuickEntry(
+    label: String,
+    modifier: Modifier = Modifier,
+    badgeText: String? = null,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = modifier,
+        onClick = onClick,
+        shape = RoundedCornerShape(VipLedgerTokens.RadiusMedium),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = VipLedgerTokens.ElevationLevel1),
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            contentAlignment = Alignment.Center,
+                .padding(vertical = VipLedgerTokens.Space4),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
         ) {
             Text(text = label, style = MaterialTheme.typography.bodyMedium)
+            if (badgeText != null) {
+                StatusBadge(text = badgeText, tone = BadgeTone.Warning)
+            }
         }
     }
 }
@@ -475,10 +479,10 @@ private fun ReminderCard(
     onOpenPlan: (String) -> Unit,
     onOpenAccount: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GroupCard {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(VipLedgerTokens.Space4),
+            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
         ) {
             Text(
                 text = stringResource(R.string.reminder_title),
@@ -489,9 +493,13 @@ private fun ReminderCard(
                 Text(
                     text = reminderText(reminder),
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.clickable {
-                        if (planId != null) onOpenPlan(planId) else onOpenAccount()
-                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (planId != null) onOpenPlan(planId) else onOpenAccount()
+                        }
+                        .padding(vertical = VipLedgerTokens.Space1),
                 )
             }
         }

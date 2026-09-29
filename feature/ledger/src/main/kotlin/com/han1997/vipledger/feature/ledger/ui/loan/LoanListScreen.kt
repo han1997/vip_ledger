@@ -14,13 +14,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,12 +34,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
+import com.han1997.vipledger.core.designsystem.component.BadgeTone
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
+import com.han1997.vipledger.core.designsystem.component.LoadingState
+import com.han1997.vipledger.core.designsystem.component.StatusBadge
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.InstallmentPlan
 import com.han1997.vipledger.core.domain.usecase.loan.InstallmentSummary
 import com.han1997.vipledger.core.model.InstallmentMethod
@@ -109,7 +113,7 @@ internal fun LoanListContent(
                 text = { Text(text = stringResource(R.string.loan_add)) },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
     ) { padding ->
         when {
             state.isLoading -> Box(
@@ -118,7 +122,7 @@ internal fun LoanListContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
 
             state.summaries.isEmpty() -> Box(
@@ -154,7 +158,7 @@ internal fun LoanListContent(
     }
 
     deleteTarget?.let { target ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.loan_delete_title),
             message = stringResource(R.string.loan_delete_message, target.plan.name),
             confirmLabel = stringResource(R.string.notice_deleted),
@@ -164,6 +168,7 @@ internal fun LoanListContent(
                 deleteTarget = null
             },
             onDismiss = { deleteTarget = null },
+            danger = true,
         )
     }
 }
@@ -177,8 +182,8 @@ private fun LoanSummaryCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(VipLedgerTokens.Space4),
+            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -187,11 +192,7 @@ private fun LoanSummaryCard(
             ) {
                 Text(text = summary.plan.name, style = MaterialTheme.typography.titleMedium)
                 if (summary.isClosed) {
-                    Text(
-                        text = stringResource(R.string.loan_closed),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                    StatusBadge(text = stringResource(R.string.loan_closed), tone = BadgeTone.Positive)
                 } else {
                     IconButton(onClick = onDelete) {
                         Icon(

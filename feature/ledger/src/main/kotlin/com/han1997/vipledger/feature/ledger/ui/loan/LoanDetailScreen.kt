@@ -12,10 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,10 +30,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
+import com.han1997.vipledger.core.designsystem.component.LoadingState
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.InstallmentPeriod
 import com.han1997.vipledger.core.domain.model.InstallmentPlan
 import com.han1997.vipledger.core.domain.usecase.loan.InstallmentPlanDetail
@@ -91,7 +93,7 @@ internal fun LoanDetailContent(
                 onBack = onBack,
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
     ) { padding ->
         val detail = state.detail
         when {
@@ -101,7 +103,7 @@ internal fun LoanDetailContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
 
             detail == null -> Box(
@@ -146,10 +148,10 @@ internal fun LoanDetailContent(
 
 @Composable
 private fun PlanHeader(detail: InstallmentPlanDetail) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GroupCard {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(VipLedgerTokens.Space4),
+            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
         ) {
             Text(
                 text = installmentMethodLabel(detail.plan.method),
@@ -184,11 +186,11 @@ private fun PeriodRow(
     repayEnabled: Boolean,
     onRepay: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GroupCard {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = VipLedgerTokens.Space4, vertical = VipLedgerTokens.Space3),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {

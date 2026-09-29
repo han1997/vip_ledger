@@ -15,13 +15,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,13 +34,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.LoadingState
+import com.han1997.vipledger.core.designsystem.component.SectionHeader
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.categoryKindLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.Category
 import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.model.CategoryKind
@@ -90,7 +93,7 @@ internal fun CategoryManageContent(
                 onBack = onBack,
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { onAction(CategoryManageAction.OpenCreateTop(CategoryKind.EXPENSE)) },
@@ -106,7 +109,7 @@ internal fun CategoryManageContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
         } else {
             LazyColumn(
@@ -123,21 +126,11 @@ internal fun CategoryManageContent(
                     val nodes = state.nodesOf(kind)
                     if (nodes.isEmpty()) return@forEach
                     item(key = "header-" + kind.name) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                text = categoryKindLabel(kind),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            TextButton(
-                                onClick = { onAction(CategoryManageAction.OpenCreateTop(kind)) },
-                            ) {
-                                Text(text = stringResource(R.string.category_manage_add_top))
-                            }
-                        }
+                        SectionHeader(
+                            title = categoryKindLabel(kind),
+                            actionLabel = stringResource(R.string.category_manage_add_top),
+                            onActionClick = { onAction(CategoryManageAction.OpenCreateTop(kind)) },
+                        )
                     }
                     items(
                         count = nodes.size,
@@ -156,7 +149,7 @@ internal fun CategoryManageContent(
 
     state.pendingDelete?.let { category ->
         val childCount = state.nodes.firstOrNull { it.id == category.id }?.children?.size ?: 0
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.manage_delete_category_title),
             message = if (childCount > 0) {
                 stringResource(R.string.manage_delete_category_top_message, category.name)
@@ -167,14 +160,15 @@ internal fun CategoryManageContent(
             dismissLabel = stringResource(R.string.common_cancel),
             onConfirm = { onAction(CategoryManageAction.ConfirmDelete) },
             onDismiss = { onAction(CategoryManageAction.DismissDelete) },
+            danger = true,
         )
     }
 }
 
 @Composable
 private fun CategoryCard(node: CategoryNode, onAction: (CategoryManageAction) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+    GroupCard {
+        Column(modifier = Modifier.padding(vertical = VipLedgerTokens.Space2)) {
             CategoryRow(
                 name = node.name,
                 trailing = stringResource(R.string.category_manage_child_count, node.children.size),

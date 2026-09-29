@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,12 +28,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
+import com.han1997.vipledger.core.designsystem.component.LoadingState
 import com.han1997.vipledger.core.designsystem.component.TxnLine
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.money.Money
@@ -101,7 +103,7 @@ internal fun DraftListContent(
                 },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
     ) { padding ->
         when {
             state.isLoading -> Box(
@@ -110,7 +112,7 @@ internal fun DraftListContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
 
             state.drafts.isEmpty() -> Box(
@@ -149,7 +151,7 @@ internal fun DraftListContent(
     }
 
     discardTarget?.let { target ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.draft_discard_title),
             message = stringResource(R.string.draft_discard_message),
             confirmLabel = stringResource(R.string.draft_discard),
@@ -159,6 +161,7 @@ internal fun DraftListContent(
                 discardTarget = null
             },
             onDismiss = { discardTarget = null },
+            danger = true,
         )
     }
 }
@@ -173,9 +176,9 @@ private fun DraftCard(
     onConfirm: () -> Unit,
     onDiscard: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GroupCard {
         Column(
-            modifier = Modifier.padding(vertical = 4.dp),
+            modifier = Modifier.padding(vertical = VipLedgerTokens.Space1),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             TxnLine(
@@ -187,7 +190,7 @@ private fun DraftCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                    .padding(horizontal = VipLedgerTokens.Space3),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {

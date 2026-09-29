@@ -12,14 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -40,7 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.LoadingState
+import com.han1997.vipledger.core.designsystem.component.PrimaryButton
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.accountTypeLabel
 import com.han1997.vipledger.core.designsystem.format.fromPickerUtcMillis
@@ -116,7 +116,7 @@ internal fun TxnEditContent(
                 },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
     ) { padding ->
         if (state.isLoading) {
             Box(
@@ -125,7 +125,7 @@ internal fun TxnEditContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
         } else {
             Column(
@@ -147,12 +147,11 @@ internal fun TxnEditContent(
                     onPickDate = { showDatePicker = true },
                 )
                 DetailSection(state, onAction)
-                Button(
+                PrimaryButton(
+                    text = stringResource(R.string.common_save),
                     onClick = { onAction(TxnEditAction.Save) },
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(text = stringResource(R.string.common_save))
-                }
+                )
             }
         }
     }

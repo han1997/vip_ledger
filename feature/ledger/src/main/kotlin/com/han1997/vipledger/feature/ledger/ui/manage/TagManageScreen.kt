@@ -14,11 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,12 +31,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.LoadingState
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.Tag
 import com.han1997.vipledger.feature.ledger.R
 import com.han1997.vipledger.feature.ledger.ui.common.manageNoticeMessage
@@ -84,7 +86,7 @@ internal fun TagManageContent(
                 onBack = onBack,
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { onAction(TagManageAction.OpenCreate) },
@@ -100,7 +102,7 @@ internal fun TagManageContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
         } else {
             LazyColumn(
@@ -151,24 +153,25 @@ internal fun TagManageContent(
     }
 
     state.pendingDelete?.let { tag ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.manage_delete_tag_title),
             message = stringResource(R.string.manage_delete_tag_message),
             confirmLabel = stringResource(R.string.common_delete),
             dismissLabel = stringResource(R.string.common_cancel),
             onConfirm = { onAction(TagManageAction.ConfirmDelete) },
             onDismiss = { onAction(TagManageAction.DismissDelete) },
+            danger = true,
         )
     }
 }
 
 @Composable
 private fun TagCard(tag: Tag, onAction: (TagManageAction) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GroupCard {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                .padding(start = VipLedgerTokens.Space4, end = VipLedgerTokens.Space2, top = VipLedgerTokens.Space1, bottom = VipLedgerTokens.Space1),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {

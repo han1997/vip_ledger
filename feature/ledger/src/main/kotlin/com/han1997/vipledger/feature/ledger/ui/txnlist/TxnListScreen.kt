@@ -12,12 +12,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,13 +31,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.LoadingState
 import com.han1997.vipledger.core.designsystem.component.TxnLine
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.dayHeaderLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.model.TxnDayGroup
 import com.han1997.vipledger.core.model.TransactionType
@@ -102,13 +103,13 @@ internal fun TxnListContent(
                             text = stringResource(R.string.txn_list_count, state.totalCount),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(end = 12.dp),
+                            modifier = Modifier.padding(end = VipLedgerTokens.Space3),
                         )
                     }
                 },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onAddTxn,
@@ -124,7 +125,7 @@ internal fun TxnListContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
 
             state.groups.isEmpty() -> Box(
@@ -173,7 +174,7 @@ internal fun TxnListContent(
     }
 
     pendingDelete?.let { txn ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.txn_delete_title),
             message = stringResource(R.string.txn_delete_message),
             confirmLabel = stringResource(R.string.common_delete),
@@ -183,6 +184,7 @@ internal fun TxnListContent(
                 onAction(TxnListAction.Delete(txn.id))
             },
             onDismiss = { pendingDelete = null },
+            danger = true,
         )
     }
 }
@@ -192,7 +194,7 @@ private fun DayHeader(group: TxnDayGroup) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = VipLedgerTokens.Space4, vertical = VipLedgerTokens.Space3),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

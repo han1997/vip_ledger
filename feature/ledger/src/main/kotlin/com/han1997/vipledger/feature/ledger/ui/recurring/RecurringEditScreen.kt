@@ -15,7 +15,6 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,13 +32,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.accountTypeLabel
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.format.transactionTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.model.GenerateMode
 import com.han1997.vipledger.core.model.MissedPolicy
 import com.han1997.vipledger.core.model.RecurrenceEndType
@@ -117,7 +119,7 @@ internal fun RecurringEditContent(
                 },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -187,10 +189,10 @@ internal fun RecurringEditContent(
 
             ScheduleSection(state, onAction)
 
-            Card(modifier = Modifier.fillMaxWidth()) {
+            GroupCard {
                 Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(VipLedgerTokens.Space3),
+                    verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
                 ) {
                     DateRow(
                         label = stringResource(R.string.recurring_start_date),

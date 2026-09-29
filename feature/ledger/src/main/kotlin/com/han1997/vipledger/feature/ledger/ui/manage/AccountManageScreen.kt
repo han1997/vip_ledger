@@ -19,13 +19,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -44,14 +42,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.LoadingState
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.accountTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.money.Money
@@ -99,7 +101,7 @@ internal fun AccountManageContent(
                 onBack = onBack,
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { onAction(AccountManageAction.OpenCreate) },
@@ -115,7 +117,7 @@ internal fun AccountManageContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
             return@VipLedgerScaffold
         }
@@ -150,13 +152,14 @@ internal fun AccountManageContent(
     }
 
     state.pendingDelete?.let { account ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.manage_delete_asset_title),
             message = stringResource(R.string.manage_delete_asset_message, account.name),
             confirmLabel = stringResource(R.string.common_delete),
             dismissLabel = stringResource(R.string.common_cancel),
             onConfirm = { onAction(AccountManageAction.ConfirmDelete) },
             onDismiss = { onAction(AccountManageAction.DismissDelete) },
+            danger = true,
         )
     }
 }
@@ -164,10 +167,10 @@ internal fun AccountManageContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AccountCard(account: Account, onAction: (AccountManageAction) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GroupCard {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(VipLedgerTokens.Space4),
+            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

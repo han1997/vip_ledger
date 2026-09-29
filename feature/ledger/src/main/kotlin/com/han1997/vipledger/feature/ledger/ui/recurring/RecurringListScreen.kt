@@ -13,12 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -35,13 +33,19 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
+import com.han1997.vipledger.core.designsystem.component.BadgeTone
 import com.han1997.vipledger.core.designsystem.component.EmptyState
+import com.han1997.vipledger.core.designsystem.component.GroupCard
+import com.han1997.vipledger.core.designsystem.component.LoadingState
+import com.han1997.vipledger.core.designsystem.component.StatusBadge
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.format.transactionTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.RecurringRule
 import com.han1997.vipledger.core.model.RecurrenceFrequency
 import com.han1997.vipledger.core.model.TransactionType
@@ -105,7 +109,7 @@ internal fun RecurringListContent(
                 },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onCreate,
@@ -121,7 +125,7 @@ internal fun RecurringListContent(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                LoadingState()
             }
             state.rules.isEmpty() -> Box(
                 modifier = Modifier
@@ -151,13 +155,14 @@ internal fun RecurringListContent(
     }
 
     state.pendingDelete?.let { rule ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.recurring_delete_title),
             message = stringResource(R.string.recurring_delete_message, rule.name),
             confirmLabel = stringResource(R.string.common_delete),
             dismissLabel = stringResource(R.string.common_cancel),
             onConfirm = { onAction(RecurringListAction.ConfirmDelete) },
             onDismiss = { onAction(RecurringListAction.DismissDelete) },
+            danger = true,
         )
     }
 }
@@ -172,12 +177,12 @@ private fun RecurringRuleCard(
 ) {
     Card(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(horizontal = VipLedgerTokens.Space4, vertical = VipLedgerTokens.Space3),
+            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -199,10 +204,12 @@ private fun RecurringRuleCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
+                StatusBadge(
                     text = recurrenceStatusText(rule),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tone = when {
+                        rule.enabled -> BadgeTone.Brand
+                        else -> BadgeTone.Neutral
+                    },
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Switch(checked = rule.enabled, onCheckedChange = { onToggle() })

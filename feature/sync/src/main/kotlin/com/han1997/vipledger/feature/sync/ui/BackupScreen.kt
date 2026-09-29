@@ -24,7 +24,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -52,10 +51,11 @@ import com.han1997.vipledger.core.data.importexport.CsvField
 import com.han1997.vipledger.core.data.importexport.CsvMapping
 import com.han1997.vipledger.core.data.importexport.CsvPreview
 import com.han1997.vipledger.core.data.importexport.ImportReport
-import com.han1997.vipledger.core.designsystem.component.ConfirmDialog
+import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
+import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.feature.sync.R
@@ -131,7 +131,7 @@ internal fun BackupContent(
     VipLedgerScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { VipLedgerTopBar(title = stringResource(R.string.backup_title), onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -197,7 +197,7 @@ internal fun BackupContent(
     }
 
     confirmRestore?.let { name ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.backup_restore_title),
             message = stringResource(R.string.backup_restore_message),
             confirmLabel = stringResource(R.string.backup_action_confirm),
@@ -207,10 +207,11 @@ internal fun BackupContent(
                 onAction(BackupAction.Restore(name))
             },
             onDismiss = { confirmRestore = null },
+            danger = true,
         )
     }
     confirmDelete?.let { name ->
-        ConfirmDialog(
+        VipLedgerConfirmDialog(
             title = stringResource(R.string.backup_delete_title),
             message = stringResource(R.string.backup_delete_message),
             confirmLabel = stringResource(R.string.backup_delete),
@@ -220,6 +221,7 @@ internal fun BackupContent(
                 onAction(BackupAction.DeleteSnapshot(name))
             },
             onDismiss = { confirmDelete = null },
+            danger = true,
         )
     }
 }

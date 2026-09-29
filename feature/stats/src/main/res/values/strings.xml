@@ -63,6 +63,8 @@
     <string name="stats_export_failed">导出失败，可改用导出 CSV</string>
     <string name="stats_time_all">不限时间</string>
     <string name="stats_uncategorized">未分类</string>
+    <string name="stats_expand_row">展开子分类</string>
+    <string name="stats_collapse_row">收起子分类</string>
 
     <!-- 下钻明细页 -->
     <string name="drill_title">统计明细</string>
