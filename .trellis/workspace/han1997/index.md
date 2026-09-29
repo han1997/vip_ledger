@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 10
-- **Last Active**: 2026-09-28
+- **Total Sessions**: 11
+- **Last Active**: 2026-09-29
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~360 | Active |
+| `journal-1.md` | ~393 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-09-29 | Finish VipLedger v1 mainline | `6817ed7` | `master` |
 | 10 | 2026-09-28 | Configure release signing, rewrite README, update build spec | `d9cf572`, `e304180` | `master` |
 | 9 | 2026-09-28 | Apply warm page background | `4ac3ad8` | `master` |
 | 8 | 2026-09-28 | M7 on-device classifier and training toolchain | `84a9c10`, `b6c2a18`, `f207c12`, `4c9b1a3`, `d44e7d5` | `master` |
