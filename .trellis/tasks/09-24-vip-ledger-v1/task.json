@@ -3,7 +3,7 @@
   "name": "vip-ledger-v1",
   "title": "VipLedger v1 总规划与开发主线",
   "description": "安卓记账 App v1 总任务：承接 docs/ 总规划，串联 M0-M7 里程碑子任务",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

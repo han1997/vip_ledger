@@ -1,1 +1,16 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file":".trellis/spec/android/index.md","reason":"Android project-wide conventions, pre-development checklist, and quality requirements."}
+{"file":".trellis/spec/android/architecture.md","reason":"Module boundaries and architectural conventions for the Android application."}
+{"file":".trellis/spec/android/build-and-env.md","reason":"Required local toolchain, Gradle commands, and environment constraints."}
+{"file":".trellis/spec/android/database.md","reason":"Room, schema, migration, repository, and data-layer quality rules."}
+{"file":".trellis/spec/android/testing.md","reason":"Testing strategy, required checks, and test quality expectations."}
+{"file":".trellis/spec/android/directory-structure.md","reason":"Expected source layout and package placement conventions."}
+{"file":".trellis/spec/android/error-handling.md","reason":"Error handling, validation, and resilience quality rules."}
+{"file":".trellis/spec/android/ui.md","reason":"UI quality and implementation conventions."}
+{"file":".trellis/spec/android/charts.md","reason":"Chart and statistics visualization quality conventions."}
+{"file":".trellis/spec/android/recurring-loans.md","reason":"Recurring transaction and loan/installment domain correctness rules."}
+{"file":".trellis/spec/android/import-export.md","reason":"Import/export and backup data correctness conventions."}
+{"file":".trellis/spec/android/ai-ml.md","reason":"AI/ML integration quality conventions for planned features."}
+{"file":"docs/PLAN.md","reason":"Milestone acceptance criteria and progress expectations."}
+{"file":"docs/ARCHITECTURE.md","reason":"Architecture and testing acceptance criteria."}
+{"file":"docs/DATA-MODEL.md","reason":"Data correctness, migration, aggregation, and deduplication criteria."}
+{"file":"docs/DEV-NOTES.md","reason":"Build and environment constraints for verification."}

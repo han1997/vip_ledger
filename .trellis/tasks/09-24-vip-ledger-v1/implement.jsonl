@@ -1,1 +1,16 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file":".trellis/spec/android/index.md","reason":"Android project-wide conventions, pre-development checklist, and quality requirements."}
+{"file":".trellis/spec/android/architecture.md","reason":"Module boundaries and architectural conventions for the Android application."}
+{"file":".trellis/spec/android/build-and-env.md","reason":"Required local toolchain, Gradle commands, and environment constraints."}
+{"file":".trellis/spec/android/database.md","reason":"Room, schema, migration, repository, and data-layer conventions."}
+{"file":".trellis/spec/android/testing.md","reason":"Testing strategy and verification expectations."}
+{"file":".trellis/spec/android/directory-structure.md","reason":"Repository directory and package placement conventions."}
+{"file":".trellis/spec/android/error-handling.md","reason":"Error handling and failure-reporting conventions."}
+{"file":".trellis/spec/android/ui.md","reason":"UI implementation conventions for Android screens and components."}
+{"file":".trellis/spec/android/charts.md","reason":"Chart and statistics visualization conventions."}
+{"file":".trellis/spec/android/recurring-loans.md","reason":"Recurring transaction and loan/installment domain rules."}
+{"file":".trellis/spec/android/import-export.md","reason":"Import/export and backup data handling conventions."}
+{"file":".trellis/spec/android/ai-ml.md","reason":"AI/ML integration conventions for the planned AI features."}
+{"file":"docs/PLAN.md","reason":"Authoritative v1 goals, milestone sequencing, scope, and progress board."}
+{"file":"docs/ARCHITECTURE.md","reason":"Authoritative technical architecture, module design, and test strategy."}
+{"file":"docs/DATA-MODEL.md","reason":"Authoritative data model, indexes, migrations, statistics, and deduplication rules."}
+{"file":"docs/DEV-NOTES.md","reason":"Authoritative local environment, dependency, version, and tooling constraints."}
