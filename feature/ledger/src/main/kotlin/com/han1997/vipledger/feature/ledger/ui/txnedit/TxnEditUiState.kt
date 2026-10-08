@@ -1,6 +1,7 @@
 package com.han1997.vipledger.feature.ledger.ui.txnedit
 
 import com.han1997.vipledger.core.domain.calculator.TxnValidator
+import com.han1997.vipledger.core.domain.nlp.ParsedEntry
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.domain.model.Tag
@@ -30,11 +31,28 @@ data class TxnEditUiState(
     val error: TxnEditError? = null,
     val saveFailureMessage: String? = null,
     val saved: Boolean = false,
+    val isSaving: Boolean = false,
+    val aiPendingTxnId: String? = null,
+    val aiMode: Boolean = false,
+    val aiInput: String = "",
+    val aiParsing: Boolean = false,
+    val aiError: TxnEditError? = null,
+    val aiParsed: ParsedEntry? = null,
 ) {
+    val isAiMode: Boolean get() = aiMode
+
     /** 当前类型对应的分类方向（支出 / 收入 / 转账各自成树）。 */
     val categoryKind: CategoryKind get() = TxnValidator.expectedKind(type)
 
     val selectedAccount: Account? get() = accounts.firstOrNull { it.id == accountId }
+
+    /** New entries keep their valid current choice, otherwise reuse the last ledger-specific account. */
+    fun resolvedAccountId(lastAccountId: String?): String? {
+        val availableIds = accounts.mapTo(mutableSetOf()) { it.id }
+        return accountId?.takeIf { it in availableIds }
+            ?: lastAccountId?.takeIf { it in availableIds }
+            ?: accounts.firstOrNull()?.id
+    }
 
     /**
      * 目标账户候选：不能是转出账户本身；还款只能挑负债账户。
@@ -67,7 +85,7 @@ data class TxnEditUiState(
 }
 
 /** 一次性提示，界面映射成 strings.xml 文案。 */
-enum class TxnEditError { INVALID_AMOUNT, SAVE_FAILED }
+enum class TxnEditError { INVALID_AMOUNT, SAVE_FAILED, AI_PARSE_FAILED, AI_MULTIPLE_ENTRIES }
 
 sealed interface TxnEditAction {
     data class SelectType(val type: TransactionType) : TxnEditAction
@@ -89,6 +107,18 @@ sealed interface TxnEditAction {
     data class UpdateExcludeFromStats(val exclude: Boolean) : TxnEditAction
 
     data class SelectDate(val millis: Long) : TxnEditAction
+
+    data class UpdateAiInput(val text: String) : TxnEditAction
+
+    data object EnterAiMode : TxnEditAction
+
+    data object ParseAi : TxnEditAction
+
+    data class ApplyAiEntry(val parsed: ParsedEntry) : TxnEditAction
+
+    data object ConfirmAiEntry : TxnEditAction
+
+    data object ExitAiMode : TxnEditAction
 
     data object Save : TxnEditAction
 

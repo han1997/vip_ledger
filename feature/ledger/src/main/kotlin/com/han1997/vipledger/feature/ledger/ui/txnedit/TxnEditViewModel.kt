@@ -6,22 +6,33 @@ import androidx.lifecycle.viewModelScope
 import com.han1997.vipledger.core.common.result.AppResult
 import com.han1997.vipledger.core.common.result.isSuccess
 import com.han1997.vipledger.core.common.time.TimeProvider
+import com.han1997.vipledger.core.domain.ai.AiSettingsRepository
 import com.han1997.vipledger.core.domain.calculator.TxnValidator
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.model.TxnDraft
+import com.han1997.vipledger.core.domain.nlp.NlEntryPipeline
+import com.han1997.vipledger.core.domain.nlp.ParsedEntry
+import com.han1997.vipledger.core.domain.nlp.CategoryClassifier
+import com.han1997.vipledger.core.domain.nlp.LlmParserClient
 import com.han1997.vipledger.core.domain.usecase.account.ObserveAccountsUseCase
 import com.han1997.vipledger.core.domain.usecase.category.ObserveCategoryTreeUseCase
 import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.CreateTxnUseCase
+import com.han1997.vipledger.core.domain.usecase.txn.ConfirmAiEntryUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.GetTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.UpdateTxnUseCase
+import com.han1997.vipledger.core.domain.support.LastAccountStore
 import com.han1997.vipledger.core.model.TransactionType
+import com.han1997.vipledger.core.model.DraftStatus
+import com.han1997.vipledger.core.model.TxnSource
 import com.han1997.vipledger.core.model.money.Money
 import com.han1997.vipledger.core.model.time.toLocalDate
+import com.han1997.vipledger.core.domain.ai.cloudClientFor
 import com.han1997.vipledger.feature.ledger.navigation.LedgerRoutes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -37,12 +48,17 @@ import com.han1997.vipledger.core.model.time.startOfDayEpochMillis
 @HiltViewModel
 class TxnEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    observeAccounts: ObserveAccountsUseCase,
-    observeCategoryTree: ObserveCategoryTreeUseCase,
+    private val observeAccounts: ObserveAccountsUseCase,
+    private val observeCategoryTree: ObserveCategoryTreeUseCase,
     observeTags: ObserveTagsUseCase,
     private val getTxn: GetTxnUseCase,
     private val createTxn: CreateTxnUseCase,
     private val updateTxn: UpdateTxnUseCase,
+    private val confirmAiEntry: ConfirmAiEntryUseCase,
+    private val lastAccountStore: LastAccountStore,
+    private val aiSettingsRepository: AiSettingsRepository,
+    private val llmClient: LlmParserClient,
+    private val classifier: CategoryClassifier,
     private val timeProvider: TimeProvider,
 ) : ViewModel() {
 
@@ -79,10 +95,10 @@ class TxnEditViewModel @Inject constructor(
         viewModelScope.launch {
             observeAccounts(ledgerId, includeArchived = false).collect { accounts ->
                 _uiState.update { state ->
-                    val current = state.accountId?.takeIf { id -> accounts.any { it.id == id } }
+                    val previous = lastAccountStore.getLastAccountId(ledgerId)
                     val next = state.copy(
                         accounts = accounts,
-                        accountId = current ?: accounts.firstOrNull()?.id,
+                        accountId = state.copy(accounts = accounts).resolvedAccountId(previous),
                         isLoading = state.isLoading && txnId != null,
                     )
                     next.copy(toAccountId = next.resolvedTargetAccountId())
@@ -168,14 +184,87 @@ class TxnEditViewModel @Inject constructor(
 
             is TxnEditAction.SelectDate -> _uiState.update { it.copy(occurredAt = action.millis) }
 
+            is TxnEditAction.UpdateAiInput -> _uiState.update {
+                it.copy(aiInput = action.text, aiError = null)
+            }
+
+            TxnEditAction.EnterAiMode -> _uiState.update {
+                it.copy(aiMode = true, aiInput = "", aiParsed = null, aiError = null)
+            }
+
+            TxnEditAction.ParseAi -> parseAi()
+
+            is TxnEditAction.ApplyAiEntry -> applyParsed(action.parsed)
+
+            TxnEditAction.ConfirmAiEntry -> {
+                _uiState.value.aiParsed?.let { parsed ->
+                    applyParsed(parsed)
+                    save()
+                }
+            }
+
+            TxnEditAction.ExitAiMode -> _uiState.update { state ->
+                state.copy(aiMode = false, aiInput = "", aiParsing = false, aiError = null, aiParsed = null)
+            }
+
             TxnEditAction.Save -> save()
 
             TxnEditAction.ConsumeError -> _uiState.update { it.copy(error = null, saveFailureMessage = null) }
         }
     }
 
+    private fun parseAi() {
+        val text = _uiState.value.aiInput.trim()
+        if (text.isBlank() || _uiState.value.aiParsing) return
+        _uiState.update { it.copy(aiParsing = true, aiError = null) }
+        viewModelScope.launch {
+            val accountList = observeAccounts(ledgerId, includeArchived = true).first()
+            val categoryNodes = observeCategoryTree(ledgerId).first()
+            val pipeline = NlEntryPipeline(
+                accounts = accountList,
+                categories = categoryNodes.flatMap { listOf(it.category) + it.children },
+                classifier = classifier,
+                cloud = cloudClientFor(aiSettingsRepository.settings(), llmClient),
+            )
+            val parsedEntries = runCatching {
+                pipeline.parse(text, timeProvider.nowMillis().toLocalDate(timeProvider.zone)).entries
+            }.getOrNull()
+            val parsed = parsedEntries?.singleOrNull()
+            _uiState.update { state ->
+                state.copy(
+                    aiParsing = false,
+                    aiError = when {
+                        parsed != null -> null
+                        parsedEntries.isNullOrEmpty() -> TxnEditError.AI_PARSE_FAILED
+                        else -> TxnEditError.AI_MULTIPLE_ENTRIES
+                    },
+                    aiParsed = parsed,
+                )
+            }
+        }
+    }
+
+    private fun applyParsed(parsed: ParsedEntry) {
+        _uiState.update { state ->
+            state.copy(
+                type = parsed.type,
+                amountInput = parsed.amount.toPlainString().removePrefix("-"),
+                title = parsed.title,
+                remark = parsed.remark,
+                accountId = parsed.accountId ?: state.accountId,
+                toAccountId = parsed.toAccountId ?: state.toAccountId,
+                categoryId = parsed.categoryId ?: state.categoryId,
+                occurredAt = parsed.date.startOfDayEpochMillis(timeProvider.zone),
+                aiMode = false,
+                aiInput = "",
+                aiError = null,
+            )
+        }
+    }
+
     private fun save() {
         val state = _uiState.value
+        if (state.isSaving) return
         val parsed = Money.parse(state.amountInput)
         val amountValid = when (state.type) {
             TransactionType.ADJUST -> parsed != null && !parsed.isZero
@@ -192,6 +281,7 @@ class TxnEditViewModel @Inject constructor(
             return
         }
 
+        _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             val result = original?.let { existing ->
                 updateTxn(
@@ -208,7 +298,9 @@ class TxnEditViewModel @Inject constructor(
                         excludeFromStats = state.excludeFromStats,
                     ),
                 )
-            } ?: createTxn(
+            } ?: if (state.aiParsed != null) {
+                saveAiEntry(state, amount, accountId, state.aiParsed)
+            } else createTxn(
                 TxnDraft(
                     ledgerId = ledgerId,
                     type = state.type,
@@ -224,13 +316,83 @@ class TxnEditViewModel @Inject constructor(
                 ),
             )
             if (result.isSuccess) {
-                _uiState.update { it.copy(saved = true, error = null, saveFailureMessage = null) }
+                runCatching { lastAccountStore.setLastAccountId(ledgerId, accountId) }
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        saved = true,
+                        error = null,
+                        saveFailureMessage = null,
+                        aiPendingTxnId = null,
+                    )
+                }
             } else {
                 // AppError.message 是领域层给用户看的说明（如「转账需要选择转入账户」），
                 // 直接带出来比笼统的「保存失败」有用（见 core:common AppError 注释）。
                 val reason = (result as? AppResult.Failure)?.error?.message
-                _uiState.update { it.copy(error = TxnEditError.SAVE_FAILED, saveFailureMessage = reason) }
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        error = TxnEditError.SAVE_FAILED,
+                        saveFailureMessage = reason,
+                    )
+                }
             }
         }
     }
+
+    private suspend fun saveAiEntry(
+        state: TxnEditUiState,
+        amount: Money,
+        accountId: String,
+        parsed: ParsedEntry,
+    ): AppResult<Txn> {
+        val draft = TxnDraft(
+            ledgerId = ledgerId,
+            type = state.type,
+            amount = amount,
+            accountId = accountId,
+            toAccountId = state.toAccountId.takeIf { state.type.requiresTargetAccount },
+            categoryId = state.categoryId,
+            occurredAt = state.occurredAt,
+            title = state.title.trim(),
+            remark = state.remark.trim(),
+            tagIds = state.selectedTagIds.toList(),
+            source = if (parsed.matchedRuleId != null) TxnSource.RULE else TxnSource.AI,
+            draftStatus = DraftStatus.PENDING,
+            excludeFromStats = state.excludeFromStats,
+        )
+        val now = timeProvider.nowMillis()
+        val proposed = Txn(
+            id = "",
+            ledgerId = draft.ledgerId,
+            type = state.type,
+            amount = amount,
+            accountId = accountId,
+            toAccountId = draft.toAccountId,
+            categoryId = state.categoryId,
+            occurredAt = requireNotNull(draft.occurredAt),
+            title = state.title.trim(),
+            remark = state.remark.trim(),
+            source = draft.source,
+            draftStatus = DraftStatus.PENDING,
+            tagIds = state.selectedTagIds.toList(),
+            excludeFromStats = state.excludeFromStats,
+            createdAt = now,
+            updatedAt = now,
+        )
+        TxnValidator.validate(
+            proposed,
+            state.accounts,
+            state.categoryNodes.flatMap { listOf(it.category) + it.children },
+        )?.let { return AppResult.failure(it) }
+        val pending = state.aiPendingTxnId?.let { getTxn(it) } ?: run {
+            val created = createTxn(draft)
+            val txn = (created as? AppResult.Success)?.value ?: return created
+            _uiState.update { it.copy(aiPendingTxnId = txn.id) }
+            txn
+        }
+        return confirmAiEntry(pending, parsed)
+    }
+
 }

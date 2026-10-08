@@ -13,7 +13,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.ledgerPreferences: DataStore<Preferences> by preferencesDataStore(name = "vip_ledger_prefs")
+internal val Context.ledgerPreferences: DataStore<Preferences> by preferencesDataStore(name = "vip_ledger_prefs")
 
 /** 「当前账本」用 DataStore 持久化，进程重启后仍停在上次使用的账本。 */
 @Singleton

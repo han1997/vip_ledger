@@ -6,6 +6,8 @@ import com.han1997.vipledger.core.model.TransactionType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * 目标账户的默认选中规则。
@@ -84,6 +86,24 @@ class TxnEditUiStateTest {
     fun typesWithoutTargetAccountStayNull() {
         val state = stateOf(TransactionType.EXPENSE, toAccountId = "cmb")
         assertNull(state.resolvedTargetAccountId())
+    }
+
+    @Test
+    fun aiModeCanBeActiveBeforeTheUserTypes() {
+        assertFalse(TxnEditUiState().isAiMode)
+        assertTrue(TxnEditUiState(aiMode = true).isAiMode)
+    }
+
+    @Test
+    fun newEntryRestoresLastAccountWhenStillAvailable() {
+        val state = stateOf(TransactionType.EXPENSE, accountId = null)
+        assertEquals("card", state.resolvedAccountId("card"))
+    }
+
+    @Test
+    fun newEntryFallsBackWhenLastAccountIsUnavailable() {
+        val state = stateOf(TransactionType.EXPENSE, accountId = null)
+        assertEquals("cash", state.resolvedAccountId("deleted"))
     }
 
     private companion object {

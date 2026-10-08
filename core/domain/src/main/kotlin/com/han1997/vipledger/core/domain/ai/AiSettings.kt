@@ -1,5 +1,7 @@
 package com.han1997.vipledger.core.domain.ai
 
+import com.han1997.vipledger.core.domain.nlp.LlmParserClient
+
 /**
  * 云端 AI 解析配置（PRD Requirement 5）。
  *
@@ -50,3 +52,7 @@ interface AiSettingsRepository {
 
     fun save(settings: AiSettings)
 }
+
+/** 决定是否把云端解析客户端暴露给管线；关闭网络时直接拿掉客户端，不发任何请求。 */
+fun cloudClientFor(settings: AiSettings, client: LlmParserClient?): LlmParserClient? =
+    if (settings.networkEnabled) client else null

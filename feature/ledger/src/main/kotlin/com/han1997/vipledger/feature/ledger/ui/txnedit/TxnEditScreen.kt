@@ -8,14 +8,22 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -31,14 +39,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
+import com.han1997.vipledger.core.designsystem.component.AmountText
+import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.LoadingState
 import com.han1997.vipledger.core.designsystem.component.PrimaryButton
+import com.han1997.vipledger.core.designsystem.component.SecondaryButton
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
@@ -85,17 +98,45 @@ internal fun TxnEditContent(
     // 日期选择器只认「UTC 零点」，设备时区的换算放在这里做（纯展示层互操作）。
     val zone = remember { TimeZone.currentSystemDefault() }
     val snackbarHostState = remember { SnackbarHostState() }
+    val amountFocusRequester = remember { FocusRequester() }
+    val aiInputFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     var showDatePicker by remember { mutableStateOf(false) }
     val invalidAmountMessage = stringResource(R.string.txn_edit_amount_invalid)
     val failedMessage = stringResource(R.string.common_error_unknown)
+    val aiNoEntryMessage = stringResource(R.string.txn_edit_ai_no_entry)
+    val aiMultipleEntriesMessage = stringResource(R.string.txn_edit_ai_multiple_entries)
 
     LaunchedEffect(state.saved) {
         if (state.saved) onBack()
+    }
+    LaunchedEffect(state.aiParsed) {
+        if (state.aiParsed != null) {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+        }
+    }
+    LaunchedEffect(state.isLoading, state.isEditing, state.isAiMode) {
+        if (!state.isLoading && !state.isEditing && state.isAiMode) {
+            aiInputFocusRequester.requestFocus()
+        } else if (!state.isLoading && !state.isEditing && !state.isAiMode) {
+            amountFocusRequester.requestFocus()
+        }
+    }
+    LaunchedEffect(state.aiError) {
+        when (state.aiError) {
+            TxnEditError.AI_PARSE_FAILED -> snackbarHostState.showSnackbar(aiNoEntryMessage)
+            TxnEditError.AI_MULTIPLE_ENTRIES -> snackbarHostState.showSnackbar(aiMultipleEntriesMessage)
+            else -> Unit
+        }
     }
     LaunchedEffect(state.error) {
         when (state.error) {
             TxnEditError.INVALID_AMOUNT -> snackbarHostState.showSnackbar(invalidAmountMessage)
             TxnEditError.SAVE_FAILED -> snackbarHostState.showSnackbar(state.saveFailureMessage ?: failedMessage)
+            TxnEditError.AI_PARSE_FAILED -> snackbarHostState.showSnackbar(aiNoEntryMessage)
+            TxnEditError.AI_MULTIPLE_ENTRIES -> snackbarHostState.showSnackbar(aiMultipleEntriesMessage)
             null -> Unit
         }
         if (state.error != null) onAction(TxnEditAction.ConsumeError)
@@ -110,8 +151,13 @@ internal fun TxnEditContent(
                 ),
                 onBack = onBack,
                 actions = {
-                    TextButton(onClick = { onAction(TxnEditAction.Save) }) {
-                        Text(text = stringResource(R.string.common_save))
+                    if (!state.isAiMode) {
+                        TextButton(
+                            onClick = { onAction(TxnEditAction.Save) },
+                            enabled = !state.isSaving,
+                        ) {
+                            Text(text = stringResource(R.string.common_save))
+                        }
                     }
                 },
             )
@@ -128,30 +174,79 @@ internal fun TxnEditContent(
                 LoadingState()
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
-            ) {
-                TypeSection(state, onAction)
-                AmountSection(state, onAction)
-                AccountSection(state, onAction)
-                CategorySection(state, onAction)
-                TagSection(state, onAction)
-                DateSection(
-                    state = state,
-                    onAction = onAction,
-                    onPickDate = { showDatePicker = true },
-                )
-                DetailSection(state, onAction)
-                PrimaryButton(
-                    text = stringResource(R.string.common_save),
-                    onClick = { onAction(TxnEditAction.Save) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            if (state.isAiMode) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                ) {
+                    LabeledTextField(
+                        label = stringResource(R.string.txn_edit_ai_input),
+                        value = state.aiInput,
+                        onValueChange = { onAction(TxnEditAction.UpdateAiInput(it)) },
+                        placeholder = stringResource(R.string.txn_edit_ai_input_placeholder),
+                        singleLine = false,
+                        textFieldModifier = Modifier
+                            .focusRequester(aiInputFocusRequester)
+                            .heightIn(min = 180.dp),
+                    )
+                    PrimaryButton(
+                        text = stringResource(R.string.txn_edit_ai_parse),
+                        onClick = { onAction(TxnEditAction.ParseAi) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.aiParsing,
+                    )
+                    if (state.aiParsing) LoadingState()
+                    if (state.aiParsed != null) {
+                        AiEntryPreview(state, state.aiParsed)
+                        PrimaryButton(
+                            text = stringResource(R.string.txn_edit_ai_confirm),
+                            onClick = { onAction(TxnEditAction.ConfirmAiEntry) },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.isSaving,
+                        )
+                        SecondaryButton(
+                            text = stringResource(R.string.txn_edit_ai_apply),
+                            onClick = { onAction(TxnEditAction.ApplyAiEntry(state.aiParsed)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    SecondaryButton(
+                        text = stringResource(R.string.txn_edit_ai_exit),
+                        onClick = { onAction(TxnEditAction.ExitAiMode) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                ) {
+                    TypeSection(state, onAction)
+                    AmountSection(state, onAction, amountFocusRequester)
+                    AccountSection(state, onAction)
+                    CategorySection(state, onAction)
+                    TagSection(state, onAction)
+                    DateSection(
+                        state = state,
+                        onAction = onAction,
+                        onPickDate = { showDatePicker = true },
+                    )
+                    DetailSection(state, onAction)
+                    PrimaryButton(
+                        text = stringResource(R.string.common_save),
+                        onClick = { onAction(TxnEditAction.Save) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.isSaving,
+                    )
+                }
             }
         }
     }
@@ -189,28 +284,92 @@ internal fun TxnEditContent(
 @Composable
 private fun TypeSection(state: TxnEditUiState, onAction: (TxnEditAction) -> Unit) {
     SectionLabel(stringResource(R.string.txn_edit_type))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TransactionType.entries.forEach { type ->
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        listOf(
+            TransactionType.EXPENSE,
+            TransactionType.INCOME,
+            TransactionType.TRANSFER,
+            TransactionType.DEBT_REPAY,
+            TransactionType.ADJUST,
+        ).forEach { type ->
             FilterChip(
+                modifier = Modifier.weight(1f),
                 selected = state.type == type,
                 onClick = { onAction(TxnEditAction.SelectType(type)) },
-                label = { Text(text = transactionTypeLabel(type)) },
+                label = {
+                    Text(
+                        text = transactionTypeLabel(type),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                },
             )
         }
     }
 }
 
 @Composable
-private fun AmountSection(state: TxnEditUiState, onAction: (TxnEditAction) -> Unit) {
-    LabeledTextField(
-        label = stringResource(R.string.txn_edit_amount),
-        value = state.amountInput,
-        onValueChange = { onAction(TxnEditAction.UpdateAmount(it)) },
-        placeholder = stringResource(R.string.txn_edit_amount_placeholder),
-        keyboardType = KeyboardType.Decimal,
-        isError = state.amountError,
-        supportingText = if (state.amountError) stringResource(R.string.txn_edit_amount_invalid) else null,
-    )
+private fun AmountSection(
+    state: TxnEditUiState,
+    onAction: (TxnEditAction) -> Unit,
+    focusRequester: FocusRequester,
+) {
+    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        IconButton(onClick = { onAction(TxnEditAction.EnterAiMode) }) {
+            Icon(
+                imageVector = Icons.Filled.AutoAwesome,
+                contentDescription = stringResource(R.string.txn_edit_ai_input),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        LabeledTextField(
+            label = stringResource(R.string.txn_edit_amount),
+            value = state.amountInput,
+            onValueChange = { onAction(TxnEditAction.UpdateAmount(it)) },
+            placeholder = stringResource(R.string.txn_edit_amount_placeholder),
+            keyboardType = KeyboardType.Decimal,
+            isError = state.amountError,
+            supportingText = if (state.amountError) stringResource(R.string.txn_edit_amount_invalid) else null,
+            modifier = Modifier.weight(1f),
+            textFieldModifier = Modifier.focusRequester(focusRequester),
+            textStyle = MaterialTheme.typography.headlineMedium,
+        )
+    }
+}
+
+@Composable
+private fun AiEntryPreview(state: TxnEditUiState, parsed: com.han1997.vipledger.core.domain.nlp.ParsedEntry) {
+    val account = parsed.accountId?.let { id -> state.accounts.firstOrNull { it.id == id }?.name }
+        ?: state.accountId?.let { id -> state.accounts.firstOrNull { it.id == id }?.name }
+        ?: stringResource(R.string.txn_edit_account_none)
+    val category = parsed.categoryId?.let { id ->
+        state.categoryNodes.firstNotNullOfOrNull { node ->
+            (listOf(node.category) + node.children).firstOrNull { it.id == id }?.name
+        }
+    } ?: stringResource(R.string.txn_edit_category_none)
+    val targetAccount = parsed.toAccountId?.let { id -> state.accounts.firstOrNull { it.id == id }?.name }
+    GroupCard {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = stringResource(R.string.txn_edit_ai_preview), style = MaterialTheme.typography.titleMedium)
+            Text(text = transactionTypeLabel(parsed.type), style = MaterialTheme.typography.bodyMedium)
+            AmountText(amount = parsed.amount, style = MaterialTheme.typography.headlineSmall)
+            Text(text = stringResource(R.string.txn_edit_ai_preview_account, account))
+            Text(text = stringResource(R.string.txn_edit_ai_preview_category, category))
+            if (targetAccount != null) {
+                Text(text = stringResource(R.string.txn_edit_ai_preview_target, targetAccount))
+            }
+            Text(text = stringResource(R.string.txn_edit_ai_preview_date, fullDateLabel(parsed.date)))
+            if (parsed.unresolved.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.txn_edit_ai_correction_hint),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -299,15 +458,17 @@ private fun CategorySection(state: TxnEditUiState, onAction: (TxnEditAction) -> 
     }
 
     val children = selectedParent?.children.orEmpty()
-    if (children.isNotEmpty()) {
-        SectionLabel(stringResource(R.string.txn_edit_category_second))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            children.forEach { child ->
-                FilterChip(
-                    selected = state.categoryId == child.id,
-                    onClick = { onAction(TxnEditAction.SelectCategory(child.id)) },
-                    label = { Text(text = child.name) },
-                )
+    AnimatedVisibility(visible = children.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SectionLabel(stringResource(R.string.txn_edit_category_second))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                children.forEach { child ->
+                    FilterChip(
+                        selected = state.categoryId == child.id,
+                        onClick = { onAction(TxnEditAction.SelectCategory(child.id)) },
+                        label = { Text(text = child.name) },
+                    )
+                }
             }
         }
     }
