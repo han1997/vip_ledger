@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 
@@ -25,6 +26,8 @@ fun LabeledTextField(
     singleLine: Boolean = true,
     isError: Boolean = false,
     supportingText: String? = null,
+    textFieldModifier: Modifier = Modifier,
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -38,12 +41,13 @@ fun LabeledTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = textFieldModifier.fillMaxWidth(),
             placeholder = placeholder?.let { { Text(text = it) } },
             singleLine = singleLine,
             isError = isError,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             supportingText = supportingText?.let { { Text(text = it) } },
+            textStyle = textStyle,
         )
     }
 }

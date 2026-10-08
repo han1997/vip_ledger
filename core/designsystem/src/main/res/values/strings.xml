@@ -63,4 +63,9 @@
     <string name="common_uncategorized">未分类</string>
     <string name="common_draft_pending">待确认</string>
     <string name="common_back">返回</string>
+
+    <!-- 底部导航 Tab（:app 底部栏用，跨 feature） -->
+    <string name="tab_home">首页</string>
+    <string name="tab_stats">统计</string>
+    <string name="tab_mine">我的</string>
 </resources>
