@@ -75,7 +75,7 @@ class PaymentAccessibilityService : AccessibilityService() {
                 if (bitmap == null) { screenshotBusy = false; return }
                 scope.launch {
                     try {
-                        val text = ocr.recognize(bitmap)
+                        val text = ocr.recognize(bitmap, app)
                         if (session == capturedSession && rootInActiveWindow?.packageName?.toString() == app.packageName) {
                             processor.submit(PaymentObservation(app, CaptureSource.OCR, capturedSession, System.currentTimeMillis(), text))
                         }

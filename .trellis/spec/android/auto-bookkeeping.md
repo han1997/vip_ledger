@@ -25,6 +25,9 @@ Room schema 2：`txn.refund_of_txn_id TEXT NULL` 与 `auto_config`、`auto_bindi
 
 ## 4. Validation & Error Matrix
 
+- 京东 `PaymentOcr.recognize(bitmap, app)` 使用 ML Kit line boundingBox 重排行：按垂直中心排序，同一行按 x 排序，以较小行高的一半作为中心偏差上限；不能直接拼接分列 textBlocks。该重排仅用于 JD，其他平台保留原输出。
+- JD + OCR 来源内仅纠正已取证标签：独立 `o完成`/图标噪声→完成、`支付时闻`→支付时间、实付款行内 `台计`→合计；不猜改数字。店铺优先取带「进店」动作的同一行，防止商品图片内旗舰店文本抢占主体；支付方式剔除末尾箭头。历史订单继续人工确认。
+
 - 京东 `com.jd.lib.ordercenter.taro.OrderDetailActivityTaro` 在 OPPO 实测控件树有 592 节点但文字为空（包含 not-important views 仍为空）。仅该精确应用/类名可在用户开启本机 OCR 后绕过“必须先读到支付文本”的截图门禁；订单列表、聊天、其他平台不得套用。相同空文本不应阻止新开启的 OCR，截图仍受会话/忙碌门禁限制。
 - 京东已完成订单模板要求“完成 + 实付款 + 支付时间 + 支付方式 + 订单号”；金额取 `实付款 … 合计` 的唯一值，不取共减/到手价/商品原价。页面/OCR 来源限定，历史订单始终 TIME/PENDING；支付时间仍按真实标签解析。
 

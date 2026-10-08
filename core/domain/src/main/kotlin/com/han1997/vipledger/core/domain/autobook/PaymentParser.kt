@@ -35,7 +35,16 @@ object PaymentParser {
 
     fun parse(observation: PaymentObservation): PaymentFacts? {
         val sourceText = observation.text.take(16_384).replace('\u00a0', ' ')
-        val text = if (observation.app == PaymentApp.PDD) sourceText.replace(Regex("实付[：:]?[,，\\s]+"), "实付 ") else sourceText
+        val text = when {
+            observation.app == PaymentApp.PDD -> sourceText.replace(Regex("实付[：:]?[,，\\s]+"), "实付 ")
+            observation.app == PaymentApp.JD && observation.source == CaptureSource.OCR -> sourceText
+                .replace(Regex("(?m)^[ \\t]*[oO0○][ \\t]*完成[ \\t]*$"), "完成")
+                .replace(Regex("(?m)^支付时闻(?=[：:\\s])"), "支付时间")
+                .lineSequence().joinToString("\n") { line ->
+                    if (line.trimStart().startsWith("实付款")) line.replace(Regex("台计(?=[：:\\s]*[¥￥0-9])"), "合计") else line
+                }
+            else -> sourceText
+        }
         val pddOrder = observation.app == PaymentApp.PDD && observation.source != CaptureSource.NOTIFICATION && isPddSignedOrder(text)
         val jdOrder = observation.app == PaymentApp.JD && observation.source != CaptureSource.NOTIFICATION && isJdCompletedOrder(text)
         if (!isPaymentPage(text) && !pddOrder && !jdOrder) return null
@@ -87,11 +96,17 @@ object PaymentParser {
         }.getOrNull() }
         val orderMerchant = if (pddOrder || jdOrder) Regex("(?m)^([^\\n:：,，]{1,120}(?:旗舰店|专卖店|专营店|自营店))(?:[ \\t]+进店)?[ \\t]*$")
             .findAll(text).map { it.groupValues[1].trim() }.distinct().singleOrNull() else null
+        val jdStoreHeader = if (jdOrder) Regex("(?m)^([^\\n:：,，]{1,120})[ \\t]+进店[ \\t>›]*$")
+            .findAll(text).map { it.groupValues[1].trim() }.distinct().singleOrNull() else null
         return PaymentFacts(
             type, amount, (merchantIdentity.find(text)?.groupValues?.get(1) ?: alipayHeader?.groupValues?.get(1)
-                ?: orderMerchant ?: merchantFallback.find(text)?.groupValues?.get(1))?.trim()?.take(120).orEmpty(),
+                ?: jdStoreHeader ?: orderMerchant ?: merchantFallback.find(text)?.groupValues?.get(1))?.trim()?.take(120).orEmpty(),
             token.find(text)?.groupValues?.get(1)?.let {
-                normalizeToken(if (observation.app == PaymentApp.ALIPAY) it.trim().removeSuffix("查看扣款顺序") else it)
+                normalizeToken(when (observation.app) {
+                    PaymentApp.ALIPAY -> it.trim().removeSuffix("查看扣款顺序")
+                    PaymentApp.JD -> it.trim().trimEnd('>', '›')
+                    else -> it
+                })
             },
             target.find(text)?.groupValues?.get(1)?.let(::normalizeToken),
             external.find(idText)?.groupValues?.get(1), originalMatch?.groupValues?.get(1), complete,
