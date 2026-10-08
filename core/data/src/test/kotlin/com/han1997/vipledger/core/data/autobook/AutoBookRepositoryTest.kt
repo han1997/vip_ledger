@@ -94,6 +94,16 @@ class AutoBookRepositoryTest {
         assertEquals(0, db.txnDao().countByLedger("l"))
         assertEquals(0, db.accountDao().getById("a")!!.currentBalanceCents)
     }
+    @Test fun repeatedIncompleteBillKeepsExistingRecordUntilAmountIsResolved() = runTest {
+        val repo = seed()
+        val incomplete = observation().copy(text = "支付成功\n交易单号：same-bill-123")
+        val first = assertNotNull(repo.capture(incomplete).getOrThrow())
+        assertEquals(ReviewReason.AMOUNT, first.reason)
+        assertNull(repo.capture(incomplete.copy(eventKey = "reopened", observedAt = 2000)).getOrThrow())
+        val records = repo.observeCandidates("l").first()
+        assertEquals(listOf(first), records)
+        assertEquals(0, db.txnDao().countByLedger("l"))
+    }
     @Test fun balanceFailureRollsBackFinancialMutationButRetainsCandidate() = runTest {
         seed()
         val failing = repository(object : AccountBalanceSyncer {

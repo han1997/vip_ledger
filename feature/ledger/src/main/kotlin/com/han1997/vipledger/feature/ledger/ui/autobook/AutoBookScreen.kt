@@ -62,6 +62,18 @@ private fun AutoBookContent(state: AutoBookUiState, onAction: (AutoBookAction) -
                 Text(stringResource(R.string.auto_permission_state, statusLabel(state.permissions.notifications), statusLabel(state.permissions.accessibility)))
                 Text(stringResource(R.string.auto_service_state, statusLabel(state.runtime.notificationConnected), statusLabel(state.runtime.accessibilityConnected)))
                 state.runtime.lastEventAt?.let { Text(stringResource(R.string.auto_last_event, java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it)))) }
+                    state.runtime.lastRecordAt?.let { Text(stringResource(R.string.auto_last_record, java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it)))) }
+                    state.runtime.lastCaptureOutcome?.let { outcome ->
+                        Text(stringResource(when (outcome) {
+                            CaptureOutcome.PROCESSING -> R.string.auto_capture_processing
+                            CaptureOutcome.UPDATED -> R.string.auto_capture_updated
+                            CaptureOutcome.UNCHANGED -> R.string.auto_capture_unchanged
+                            CaptureOutcome.FAILED -> R.string.auto_capture_failed
+                        }))
+                    }
+                    state.runtime.lastAmountRecognized?.let { recognized ->
+                        Text(stringResource(if (recognized) R.string.auto_amount_recognized else R.string.auto_amount_missing))
+                    }
                 if (state.runtime.issue != null) Text(stringResource(R.string.auto_runtime_issue), color = MaterialTheme.colorScheme.error)
             }
             item { SectionHeader(title = stringResource(R.string.auto_apps)); Text(stringResource(R.string.auto_validation_help)) }

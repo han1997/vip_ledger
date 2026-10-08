@@ -10,6 +10,8 @@ Keep this README current as you work: **important updates and necessary content 
 
 ## Features
 
+Capture status separates the latest processing attempt from the latest saved record. The permissions panel reports whether a capture updated a record, made no change, or failed, and whether an unambiguous amount was extracted. Reopening a known transaction does not necessarily create a new record.
+
 Payment captures that need review now also produce a notification (when Android notification permission is granted); tap it to open the review queue. WeChat bill details support the signed debit header and Chinese payment dates. Historical bills remain pending for confirmation and do not change balances automatically.
 
 - Multiple isolated ledgers

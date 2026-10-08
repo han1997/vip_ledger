@@ -25,6 +25,8 @@ Room schema 2：`txn.refund_of_txn_id TEXT NULL` 与 `auto_config`、`auto_bindi
 
 ## 4. Validation & Error Matrix
 
+- 运行时 `lastEventAt` 是「最近处理时间」，进入处理器即可更新；`lastRecordAt` 只有 `capture` 返回非空候选时更新，null/失败保留旧值。`CaptureOutcome` 明确 PROCESSING/UPDATED/UNCHANGED/FAILED；界面不得把一次尝试描述成新增记录。金额是否提取仅保留布尔值，不保留原文。
+
 - 微信账单独立负号金额仅在页面/OCR来源、微信应用、`当前状态 → 支付成功`、`支付时间` 和交易单号同时存在时适配；优先于原价/优惠，多个不同金额或与实付标签冲突时仍待确认。不可将该模板扩展至通知或任意平台。
 - `支付时间` 支持中文年月日与严格日期校验；历史时间传入仓库的 `TIME` 门禁，不能用采集时间覆盖后自动入账。
 - `PENDING` 与 `POSTED` 均可发无敏感字段的状态通知；忽略/关联或幂等返回 null 不发通知。通知权限未授予时，候选仍保存在页面队列。

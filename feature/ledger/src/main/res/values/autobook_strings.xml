@@ -12,7 +12,14 @@
     <string name="auto_oem_help">自行安装时，可能需要在应用详情菜单中允许受限设置。OPPO 请检查允许后台活动；小米检查自启动与省电策略；vivo 检查自启动与后台耗电管理。菜单随系统版本变化，可从应用详情进入。强行停止或撤销权限期间无法识别，需手动补记。</string>
     <string name="auto_permission_state">已授权：通知 %1$s · 无障碍 %2$s</string>
     <string name="auto_service_state">服务已连接：通知 %1$s · 无障碍 %2$s</string>
-    <string name="auto_last_event">最近识别事件：%1$s</string>
+    <string name="auto_last_event">最近处理时间：%1$s</string>
+    <string name="auto_last_record">最近记录更新时间：%1$s</string>
+    <string name="auto_capture_processing">本次结果：正在处理</string>
+    <string name="auto_capture_updated">本次结果：已保存或更新记录</string>
+    <string name="auto_capture_unchanged">本次结果：没有新增或更新记录（重复、已处理或未满足采集条件）</string>
+    <string name="auto_capture_failed">本次结果：保存失败，请稍后重试</string>
+    <string name="auto_amount_recognized">本次金额：已提取</string>
+    <string name="auto_amount_missing">本次金额：未提取出明确金额</string>
     <string name="auto_runtime_issue">识别服务中断、页面不可截图或处理失败。请检查权限及服务状态；未采集到的交易需要补记。</string>
     <string name="auto_apps">识别应用</string>
     <string name="auto_validation_help">各应用默认仅生成候选，尚未经过你的手机实测。先核对金额、账户、退款和重复识别；页面更新后可关闭自动入账。</string>

@@ -48,7 +48,11 @@ data class CandidateConfirmation(
 data class AutoBookRuntime(
     val notificationConnected: Boolean = false, val accessibilityConnected: Boolean = false,
     val lastEventAt: Long? = null, val issue: RuntimeIssue? = null,
+    val lastRecordAt: Long? = null, val lastCaptureOutcome: CaptureOutcome? = null,
+    val lastAmountRecognized: Boolean? = null,
 )
+enum class CaptureOutcome { PROCESSING, UPDATED, UNCHANGED, FAILED }
+
 enum class RuntimeIssue { DISCONNECTED, CAPTURE_BLOCKED, OCR_FAILED, STORAGE_FAILED }
 
 interface AutoBookRepository {
