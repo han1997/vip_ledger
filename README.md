@@ -10,6 +10,8 @@ Keep this README current as you work: **important updates and necessary content 
 
 ## Features
 
+JD's verified `OrderDetailActivityTaro` order-detail page can use the optional on-device OCR fallback even when its accessibility tree exposes no text. Completed orders require an order number, payment method and payment-time label; actual totals are read from `实付款 … 合计`, excluding discounts and product prices. Historical order results remain pending for review.
+
 Pinduoduo signed-for order details can create review candidates when actual payment, payment method, order number and order-time labels are present. Accessibility text such as `实付:,134元` is supported. These historical order pages always require time review; shipping or order placement time is not treated as payment time and balances are not changed automatically.
 
 Alipay accessibility can expose a displayed negative amount as `支出20元`. Bill parsing supports this text form and the full counterparty labels `收款方全称` / `付款方全称`; screenshot appearance alone is not used as evidence of the accessibility text format.

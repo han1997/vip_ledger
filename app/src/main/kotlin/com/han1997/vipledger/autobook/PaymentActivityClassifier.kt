@@ -19,4 +19,7 @@ object PaymentActivityClassifier {
             (app == PaymentApp.PDD && name == "com.xunmeng.pinduoduo.activity.NewPageActivity")
 
     fun isResultActivity(name: String): Boolean = resultContainer.containsMatchIn(name)
+
+    fun isVerifiedOrderOcrActivity(app: PaymentApp, name: String): Boolean =
+        app == PaymentApp.JD && name == "com.jd.lib.ordercenter.taro.OrderDetailActivityTaro"
 }

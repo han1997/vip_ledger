@@ -22,6 +22,19 @@ import kotlin.test.*
 
 @RunWith(AndroidJUnit4::class)
 class AutoBookRepositoryTest {
+    @Test fun completedJdOcrOrderRequiresReviewAndDeduplicatesByOrderId() = runTest {
+        val repo = seed()
+        repo.bind(AccountBinding("l", PaymentApp.JD, "白条", "a")).getOrThrow()
+        val page = PaymentObservation(PaymentApp.JD, CaptureSource.OCR, "jd-page", 1_791_417_600_000,
+            "完成\n测试数码旗舰店\n实付款\n共减¥50.02\n合计¥217.98\n订单编号\njd-order-123\n支付方式\n白条\n支付时间\n2026-09-28 09:26:03")
+        val first = assertNotNull(repo.capture(page).getOrThrow())
+        assertEquals(21798L, first.facts.amountCents)
+        assertEquals(ReviewReason.TIME, first.reason)
+        assertEquals(CandidateStatus.PENDING, first.status)
+        assertEquals(first.id, assertNotNull(repo.capture(page.copy(eventKey = "jd-reopen")).getOrThrow()).id)
+        assertEquals(1, repo.observeCandidates("l").first().size)
+        assertEquals(0, db.txnDao().countByLedger("l"))
+    }
     @Test fun signedPddOrderNeverPostsAutomaticallyEvenWithVerifiedAppAndBoundAccount() = runTest {
         val repo = seed()
         repo.bind(AccountBinding("l", PaymentApp.PDD, "微信支付", "a")).getOrThrow()

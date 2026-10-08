@@ -6,6 +6,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PaymentActivityClassifierTest {
+    @Test fun onlyVerifiedJdOrderDetailCanUseOcrWithoutReadablePaymentText() {
+        assertTrue(PaymentActivityClassifier.isVerifiedOrderOcrActivity(PaymentApp.JD, "com.jd.lib.ordercenter.taro.OrderDetailActivityTaro"))
+        assertFalse(PaymentActivityClassifier.isVerifiedOrderOcrActivity(PaymentApp.JD, "com.jd.lib.ordercenter.OrderListActivity"))
+        assertFalse(PaymentActivityClassifier.isVerifiedOrderOcrActivity(PaymentApp.JD, "com.jd.lib.chat.ChatActivity"))
+        assertFalse(PaymentActivityClassifier.isVerifiedOrderOcrActivity(PaymentApp.PDD, "com.jd.lib.ordercenter.taro.OrderDetailActivityTaro"))
+    }
     @Test fun verifiedPddOrderContainerAllowsTextButIsNotAnUnconditionalScreenshotTarget() {
         val page = "com.xunmeng.pinduoduo.activity.NewPageActivity"
         assertTrue(PaymentActivityClassifier.isPaymentActivity(PaymentApp.PDD, page))

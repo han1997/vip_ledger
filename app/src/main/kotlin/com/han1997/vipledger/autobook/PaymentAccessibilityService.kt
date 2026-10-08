@@ -38,7 +38,8 @@ class PaymentAccessibilityService : AccessibilityService() {
             if (PaymentActivityClassifier.isTrackedContainer(name)) {
                 container = name
                 paymentActivity = PaymentActivityClassifier.isPaymentActivity(app, name)
-                resultActivity = PaymentActivityClassifier.isResultActivity(name)
+                resultActivity = PaymentActivityClassifier.isResultActivity(name) ||
+                    PaymentActivityClassifier.isVerifiedOrderOcrActivity(app, name)
             }
         }
         if (captureSession.update(app, event.windowId, container)) lastText = null
@@ -52,9 +53,9 @@ class PaymentAccessibilityService : AccessibilityService() {
             val root = rootInActiveWindow ?: return@launch
             if (root.packageName?.toString() != app.packageName) return@launch
             val text = PaymentNodeTextReader.read(root)
-            if (text == lastText) return@launch
+            val changedText = text != lastText
             lastText = text
-            if (PaymentParser.isPaymentPage(text, app)) {
+            if (changedText && PaymentParser.isPaymentPage(text, app)) {
                 processor.submit(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, System.currentTimeMillis(), text))
             }
             if (config.ocrEnabled && Build.VERSION.SDK_INT >= 30 &&

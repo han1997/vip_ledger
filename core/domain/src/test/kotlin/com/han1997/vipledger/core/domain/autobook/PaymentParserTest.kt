@@ -4,6 +4,47 @@ import com.han1997.vipledger.core.model.TransactionType
 import kotlin.test.*
 
 class PaymentParserTest {
+    private val jdCompletedOrder = """
+        完成
+        测试数码旗舰店
+        测试电池
+        到手¥217.98
+        ¥268
+        退款/售后
+        实付款
+        共减¥50.02
+        合计¥217.98
+        订单编号
+        jd-order-123456
+        支付方式
+        白条
+        支付时间
+        2026-09-28 09:26:03
+        下单时间
+        2026-09-28 09:25:58
+    """.trimIndent()
+
+    @Test fun completedJdOrderUsesActualTotalRatherThanDiscountOrProductPrice() {
+        assertTrue(PaymentParser.isPaymentPage(jdCompletedOrder, PaymentApp.JD))
+        val facts = assertNotNull(PaymentParser.parse(PaymentObservation(PaymentApp.JD, CaptureSource.OCR, "jd", 1, jdCompletedOrder)))
+        assertEquals(21798L, facts.amountCents)
+        assertEquals("测试数码旗舰店", facts.merchant)
+        assertEquals("白条", facts.accountToken)
+        assertEquals("jd-order-123456", facts.externalId)
+        assertEquals(TransactionType.EXPENSE, facts.type)
+        assertNotNull(facts.paidAt)
+        assertEquals(ReviewReason.TIME, facts.reason)
+    }
+
+    @Test fun jdOrderTemplateDoesNotTreatGenericCompletionOrNotificationsAsPayment() {
+        assertFalse(PaymentParser.isPaymentPage(jdCompletedOrder))
+        assertFalse(PaymentParser.isPaymentPage(jdCompletedOrder, PaymentApp.ALIPAY))
+        assertFalse(PaymentParser.isPaymentPage(jdCompletedOrder.replace("订单编号", "商品编号"), PaymentApp.JD))
+        assertNull(parse(jdCompletedOrder, PaymentApp.JD))
+        assertNull(parseBill(jdCompletedOrder.replace("合计¥217.98", "合计待计算"), PaymentApp.JD).amountCents)
+        assertNull(parseBill("$jdCompletedOrder\n实付款 合计¥218.00", PaymentApp.JD).amountCents)
+    }
+
     private val pddSignedOrder = """
         拼多多
         已签收

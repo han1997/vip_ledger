@@ -25,6 +25,9 @@ Room schema 2：`txn.refund_of_txn_id TEXT NULL` 与 `auto_config`、`auto_bindi
 
 ## 4. Validation & Error Matrix
 
+- 京东 `com.jd.lib.ordercenter.taro.OrderDetailActivityTaro` 在 OPPO 实测控件树有 592 节点但文字为空（包含 not-important views 仍为空）。仅该精确应用/类名可在用户开启本机 OCR 后绕过“必须先读到支付文本”的截图门禁；订单列表、聊天、其他平台不得套用。相同空文本不应阻止新开启的 OCR，截图仍受会话/忙碌门禁限制。
+- 京东已完成订单模板要求“完成 + 实付款 + 支付时间 + 支付方式 + 订单号”；金额取 `实付款 … 合计` 的唯一值，不取共减/到手价/商品原价。页面/OCR 来源限定，历史订单始终 TIME/PENDING；支付时间仍按真实标签解析。
+
 - 拼多多 `com.xunmeng.pinduoduo.activity.NewPageActivity` 可读取文本，但不是无条件 OCR 结果页。`isPaymentPage(text, app)` 仅为 PDD 的页面路径追加「已签收 + 实付 + 支付方式 + 订单号 + 下单时间」模板，通知与其他平台不得套用。实际 `实付:,134元` 的逗号分隔只在 PDD 归一化；实付优先于单价/优惠。
 - 拼多多已签收历史订单即使金额明确、平台已验证、账户已绑定也保持 `TIME/PENDING`，下单/拼单/发货时间不写入 `paidAt`；同订单号重访不新增记录，不能因物流签收推断新支付并自动改余额。
 
