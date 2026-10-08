@@ -25,14 +25,15 @@ import com.han1997.vipledger.feature.ledger.R
 @Composable
 fun SettingsScreen(
     ledgerReady: Boolean,
-    onBack: () -> Unit,
+    pendingDraftCount: Int = 0,
+    onBack: (() -> Unit)?,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: () -> Unit,
     onOpenCategories: () -> Unit,
     onOpenTags: () -> Unit,
-    onOpenStats: () -> Unit,
     onOpenBackup: () -> Unit,
-    onOpenAi: () -> Unit,
+    onOpenAiModel: () -> Unit,
+    onOpenAiRules: () -> Unit,
     onOpenRecurring: () -> Unit,
     onOpenDrafts: () -> Unit,
     onOpenLoans: () -> Unit,
@@ -67,22 +68,36 @@ fun SettingsScreen(
             }
             item {
                 SettingsGroup(
-                    title = stringResource(R.string.settings_group_tools),
+                    title = stringResource(R.string.settings_group_plans),
                     rows = listOf(
-                        SettingsRow(stringResource(R.string.home_stats), onOpenStats, ledgerReady),
-                        SettingsRow(stringResource(R.string.home_backup), onOpenBackup),
-                        SettingsRow(stringResource(R.string.home_ai), onOpenAi),
+                        SettingsRow(stringResource(R.string.home_recurring), onOpenRecurring, ledgerReady),
+                        SettingsRow(
+                            label = stringResource(R.string.draft_title),
+                            onClick = onOpenDrafts,
+                            enabled = ledgerReady,
+                            badgeText = if (pendingDraftCount > 0) {
+                                stringResource(R.string.draft_count, pendingDraftCount)
+                            } else {
+                                null
+                            },
+                        ),
+                        SettingsRow(stringResource(R.string.home_loans), onOpenLoans, ledgerReady),
                     ),
                 )
             }
             item {
                 SettingsGroup(
-                    title = stringResource(R.string.settings_group_plans),
+                    title = stringResource(R.string.settings_group_ai),
                     rows = listOf(
-                        SettingsRow(stringResource(R.string.home_recurring), onOpenRecurring, ledgerReady),
-                        SettingsRow(stringResource(R.string.draft_title), onOpenDrafts, ledgerReady),
-                        SettingsRow(stringResource(R.string.home_loans), onOpenLoans, ledgerReady),
+                        SettingsRow(stringResource(R.string.settings_ai_model), onOpenAiModel),
+                        SettingsRow(stringResource(R.string.settings_ai_rules), onOpenAiRules, ledgerReady),
                     ),
+                )
+            }
+            item {
+                SettingsGroup(
+                    title = stringResource(R.string.settings_group_data),
+                    rows = listOf(SettingsRow(stringResource(R.string.home_backup), onOpenBackup)),
                 )
             }
         }
@@ -93,6 +108,7 @@ private data class SettingsRow(
     val label: String,
     val onClick: () -> Unit,
     val enabled: Boolean = true,
+    val badgeText: String? = null,
 )
 
 @Composable
@@ -109,6 +125,7 @@ private fun SettingsGroup(
                     title = row.label,
                     enabled = row.enabled,
                     onClick = row.onClick.takeIf { row.enabled },
+                    trailingText = row.badgeText,
                 )
             }
         }
@@ -126,9 +143,9 @@ private fun SettingsScreenPreview() {
             onOpenAccounts = {},
             onOpenCategories = {},
             onOpenTags = {},
-            onOpenStats = {},
             onOpenBackup = {},
-            onOpenAi = {},
+            onOpenAiModel = {},
+            onOpenAiRules = {},
             onOpenRecurring = {},
             onOpenDrafts = {},
             onOpenLoans = {},

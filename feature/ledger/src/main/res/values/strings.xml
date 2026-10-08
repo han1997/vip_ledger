@@ -273,6 +273,20 @@
     <string name="reminder_in_days">%1$d 天后</string>
     <string name="home_recurring">周期记账</string>
     <string name="home_loans">分期</string>
+    <string name="txn_edit_ai_input">AI 记账</string>
+    <string name="txn_edit_ai_input_placeholder">例如：早餐 12 元 现金</string>
+    <string name="txn_edit_ai_parse">解析</string>
+    <string name="txn_edit_ai_apply">填入手动表单</string>
+    <string name="txn_edit_ai_exit">返回手动记账</string>
+    <string name="txn_edit_ai_no_entry">未能识别可入账信息</string>
+    <string name="txn_edit_ai_multiple_entries">一次请描述一笔账目</string>
+    <string name="txn_edit_ai_preview">识别结果</string>
+    <string name="txn_edit_ai_confirm">确认并保存</string>
+    <string name="txn_edit_ai_preview_account">账户：%1$s</string>
+    <string name="txn_edit_ai_preview_category">分类：%1$s</string>
+    <string name="txn_edit_ai_preview_target">目标账户：%1$s</string>
+    <string name="txn_edit_ai_preview_date">日期：%1$s</string>
+    <string name="txn_edit_ai_correction_hint">识别结果可能不完整，可填入表单后调整</string>
 
     <!-- 星期缩写（周期规则选择用） -->
     <string name="weekday_short_mon">一</string>
@@ -282,9 +296,13 @@
     <string name="weekday_short_fri">五</string>
     <string name="weekday_short_sat">六</string>
     <string name="weekday_short_sun">日</string>
-    <string name="settings_title">设置</string>
+    <string name="settings_title">我的</string>
     <string name="settings_group_ledger">账本</string>
     <string name="settings_group_tools">工具</string>
     <string name="settings_group_plans">计划</string>
+    <string name="settings_group_ai">AI</string>
+    <string name="settings_group_data">数据</string>
+    <string name="settings_ai_model">模型管理</string>
+    <string name="settings_ai_rules">商户规则</string>
 </resources>
 

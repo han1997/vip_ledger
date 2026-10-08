@@ -15,10 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -43,13 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
-import com.han1997.vipledger.core.designsystem.component.BadgeTone
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.HeroCard
 import com.han1997.vipledger.core.designsystem.component.LoadingState
 import com.han1997.vipledger.core.designsystem.component.SectionHeader
-import com.han1997.vipledger.core.designsystem.component.StatusBadge
 import com.han1997.vipledger.core.designsystem.component.TxnLine
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
@@ -77,11 +71,7 @@ fun HomeScreen(
     onOpenTxns: (String) -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
-    onOpenRecurring: (String) -> Unit,
-    onOpenDrafts: (String) -> Unit,
-    onOpenLoans: (String) -> Unit,
     onOpenLoanDetail: (String, String) -> Unit,
-    onOpenSettings: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -93,11 +83,7 @@ fun HomeScreen(
         onOpenTxns = onOpenTxns,
         onOpenLedgers = onOpenLedgers,
         onOpenAccounts = onOpenAccounts,
-        onOpenRecurring = onOpenRecurring,
-        onOpenDrafts = onOpenDrafts,
-        onOpenLoans = onOpenLoans,
         onOpenLoanDetail = onOpenLoanDetail,
-        onOpenSettings = onOpenSettings,
         modifier = modifier,
     )
 }
@@ -110,11 +96,7 @@ internal fun HomeContent(
     onOpenTxns: (String) -> Unit,
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
-    onOpenRecurring: (String) -> Unit,
-    onOpenDrafts: (String) -> Unit,
-    onOpenLoans: (String) -> Unit,
     onOpenLoanDetail: (String, String) -> Unit,
-    onOpenSettings: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ledgerId = state.ledgerId
@@ -124,17 +106,11 @@ internal fun HomeContent(
             VipLedgerTopBar(
                 title = stringResource(R.string.home_title),
                 actions = {
-                    LedgerSwitcher(
-                        state = state,
-                        onAction = onAction,
-                        onOpenLedgers = onOpenLedgers,
-                    )
-                    IconButton(onClick = { onOpenSettings(ledgerId ?: "none") }) {
-                        Icon(
-                            Icons.Filled.Settings,
-                            contentDescription = stringResource(R.string.settings_title),
-                        )
-                    }
+                LedgerSwitcher(
+                    state = state,
+                    onAction = onAction,
+                    onOpenLedgers = onOpenLedgers,
+                )
                 },
             )
         },
@@ -174,15 +150,11 @@ internal fun HomeContent(
             else -> HomeBody(
                 overview = state.overview,
                 reminders = state.reminders,
-                pendingDraftCount = state.pendingDraftCount,
                 categoryNames = state.categoryNames,
                 accountNames = state.accountNames,
                 tagNames = state.tagNames,
                 modifier = Modifier.padding(padding),
                 onOpenTxns = { onOpenTxns(state.overview.ledgerId) },
-                onOpenRecurring = { ledgerId?.let(onOpenRecurring) },
-                onOpenDrafts = { ledgerId?.let(onOpenDrafts) },
-                onOpenLoans = { ledgerId?.let(onOpenLoans) },
                 onOpenLoanDetail = { planId -> ledgerId?.let { onOpenLoanDetail(it, planId) } },
                 onOpenAccounts = { ledgerId?.let(onOpenAccounts) },
             )
@@ -194,14 +166,10 @@ internal fun HomeContent(
 private fun HomeBody(
     overview: HomeOverview,
     reminders: List<Reminder>,
-    pendingDraftCount: Int,
     categoryNames: Map<String, String>,
     accountNames: Map<String, String>,
     tagNames: Map<String, String>,
     onOpenTxns: () -> Unit,
-    onOpenRecurring: () -> Unit,
-    onOpenDrafts: () -> Unit,
-    onOpenLoans: () -> Unit,
     onOpenLoanDetail: (String) -> Unit,
     onOpenAccounts: () -> Unit,
     modifier: Modifier = Modifier,
@@ -219,14 +187,6 @@ private fun HomeBody(
     ) {
         item { NetWorthCard(overview) }
         item { MonthCard(overview) }
-        item {
-            QuickEntries(
-                draftCount = pendingDraftCount,
-                onOpenRecurring = onOpenRecurring,
-                onOpenDrafts = onOpenDrafts,
-                onOpenLoans = onOpenLoans,
-            )
-        }
         if (reminders.isNotEmpty()) {
             item {
                 ReminderCard(
@@ -413,65 +373,6 @@ private const val RECENT_PREVIEW: Int = 5
 private const val REMINDER_PREVIEW: Int = 3
 
 /** 三个高频入口：周期记账 / 待确认 / 分期。 */
-@Composable
-private fun QuickEntries(
-    draftCount: Int,
-    onOpenRecurring: () -> Unit,
-    onOpenDrafts: () -> Unit,
-    onOpenLoans: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
-    ) {
-        QuickEntry(
-            label = stringResource(R.string.home_recurring),
-            modifier = Modifier.weight(1f),
-            onClick = onOpenRecurring,
-        )
-        QuickEntry(
-            label = stringResource(R.string.draft_title),
-            badgeText = if (draftCount > 0) stringResource(R.string.draft_count, draftCount) else null,
-            modifier = Modifier.weight(1f),
-            onClick = onOpenDrafts,
-        )
-        QuickEntry(
-            label = stringResource(R.string.home_loans),
-            modifier = Modifier.weight(1f),
-            onClick = onOpenLoans,
-        )
-    }
-}
-
-@Composable
-private fun QuickEntry(
-    label: String,
-    modifier: Modifier = Modifier,
-    badgeText: String? = null,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier = modifier,
-        onClick = onClick,
-        shape = RoundedCornerShape(VipLedgerTokens.RadiusMedium),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = VipLedgerTokens.ElevationLevel1),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = VipLedgerTokens.Space4),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
-        ) {
-            Text(text = label, style = MaterialTheme.typography.bodyMedium)
-            if (badgeText != null) {
-                StatusBadge(text = badgeText, tone = BadgeTone.Warning)
-            }
-        }
-    }
-}
-
 /** 提醒卡：分期临近 / 逾期 + 信用卡账单日 / 还款日，最多展示 [REMINDER_PREVIEW] 条。 */
 @Composable
 private fun ReminderCard(
@@ -587,11 +488,7 @@ private fun HomeContentPreview() {
             onOpenTxns = {},
             onOpenLedgers = {},
             onOpenAccounts = {},
-            onOpenRecurring = {},
-            onOpenDrafts = {},
-            onOpenLoans = {},
             onOpenLoanDetail = { _, _ -> },
-            onOpenSettings = {},
         )
     }
 }
