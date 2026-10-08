@@ -37,6 +37,7 @@ fun SettingsScreen(
     onOpenRecurring: () -> Unit,
     onOpenDrafts: () -> Unit,
     onOpenLoans: () -> Unit,
+    onOpenAutoBook: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     VipLedgerScaffold(
@@ -89,6 +90,7 @@ fun SettingsScreen(
                 SettingsGroup(
                     title = stringResource(R.string.settings_group_ai),
                     rows = listOf(
+                        SettingsRow(stringResource(R.string.auto_title), onOpenAutoBook),
                         SettingsRow(stringResource(R.string.settings_ai_model), onOpenAiModel),
                         SettingsRow(stringResource(R.string.settings_ai_rules), onOpenAiRules, ledgerReady),
                     ),

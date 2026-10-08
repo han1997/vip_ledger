@@ -22,6 +22,8 @@ class DeleteTxnUseCase(
         if (existing.deletedAt != null) return AppResult.success(Unit)
         val now = timeProvider.nowMillis()
         return transactionRunner.inTransaction {
+            com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = now), txnRepository.listByLedger(existing.ledgerId))
+                ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.softDelete(txnId, now)
             if (result.isSuccess) {
                 balanceSyncer.syncBalances(existing.affectedAccountIds(), now)
@@ -36,6 +38,8 @@ class DeleteTxnUseCase(
             ?: return AppResult.failure(AppError.NotFound("账目不存在"))
         val now = timeProvider.nowMillis()
         return transactionRunner.inTransaction {
+            com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = null), txnRepository.listByLedger(existing.ledgerId))
+                ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.restore(txnId, now)
             if (result.isSuccess) {
                 balanceSyncer.syncBalances(existing.affectedAccountIds(), now)

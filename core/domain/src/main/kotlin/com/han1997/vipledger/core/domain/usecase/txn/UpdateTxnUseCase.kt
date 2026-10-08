@@ -37,6 +37,8 @@ class UpdateTxnUseCase(
 
         val affected = (existing.affectedAccountIds() + updated.affectedAccountIds()).distinct()
         return transactionRunner.inTransaction {
+            com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(updated, txnRepository.listByLedger(updated.ledgerId))
+                ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.update(updated)
             if (result.isSuccess) {
                 balanceSyncer.syncBalances(affected, now)

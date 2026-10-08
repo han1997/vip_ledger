@@ -52,26 +52,28 @@ fun BarChart(
                 .height(height),
         ) {
             if (groups.isEmpty()) return@Canvas
-            val fractions = ChartGeometry.barFractions(
+            val (baseline, fractions) = ChartGeometry.signedBars(
                 groups.flatMap { listOf(it.incomeCents, it.expenseCents) },
             )
             val slot = size.width / groups.size
             val barWidth = (slot * BAR_WIDTH_RATIO).coerceAtLeast(1f)
             val radius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
+            val zeroY = baseline * size.height
+            drawLine(expenseColor, Offset(0f, zeroY), Offset(size.width, zeroY))
             groups.forEachIndexed { index, _ ->
                 val centerX = slot * index + slot / 2f
                 val incomeHeight = fractions[index * 2] * size.height
                 val expenseHeight = fractions[index * 2 + 1] * size.height
                 drawRoundRect(
                     color = incomeColor,
-                    topLeft = Offset(centerX - barWidth - BAR_GAP_PX, size.height - incomeHeight),
-                    size = Size(barWidth, incomeHeight),
+                    topLeft = Offset(centerX - barWidth - BAR_GAP_PX, zeroY - incomeHeight.coerceAtLeast(0f)),
+                    size = Size(barWidth, kotlin.math.abs(incomeHeight)),
                     cornerRadius = radius,
                 )
                 drawRoundRect(
                     color = expenseColor,
-                    topLeft = Offset(centerX + BAR_GAP_PX, size.height - expenseHeight),
-                    size = Size(barWidth, expenseHeight),
+                    topLeft = Offset(centerX + BAR_GAP_PX, zeroY - expenseHeight.coerceAtLeast(0f)),
+                    size = Size(barWidth, kotlin.math.abs(expenseHeight)),
                     cornerRadius = radius,
                 )
             }

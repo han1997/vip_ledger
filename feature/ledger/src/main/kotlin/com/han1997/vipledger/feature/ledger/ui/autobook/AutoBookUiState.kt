@@ -1,0 +1,42 @@
+package com.han1997.vipledger.feature.ledger.ui.autobook
+
+import com.han1997.vipledger.core.domain.autobook.*
+import com.han1997.vipledger.core.domain.model.*
+import com.han1997.vipledger.core.model.TransactionType
+import java.math.BigDecimal
+
+data class AutoBookUiState(
+    val config: AutoBookConfig = AutoBookConfig(), val ledgers: List<Ledger> = emptyList(),
+    val accounts: List<Account> = emptyList(), val bindings: List<AccountBinding> = emptyList(),
+    val candidates: List<AutoCandidate> = emptyList(), val txns: List<Txn> = emptyList(),
+    val runtime: AutoBookRuntime = AutoBookRuntime(), val permissions: CapturePermissions = CapturePermissions(),
+    val form: CandidateForm? = null, val busy: Boolean = false, val failed: Boolean = false,
+    val bindingApp: PaymentApp = PaymentApp.WECHAT, val bindingToken: String = "", val bindingAccount: String = "",
+)
+data class CandidateForm(
+    val id: String, val type: TransactionType, val amount: String, val accountId: String,
+    val targetId: String = "", val title: String, val refundId: String = "", val linkId: String = "",
+) {
+    fun confirmation(): CandidateConfirmation? {
+        val cents = runCatching { BigDecimal(amount).movePointRight(2).longValueExact() }.getOrNull() ?: return null
+        if (cents <= 0 || accountId.isBlank() || (type.requiresTargetAccount && (targetId.isBlank() || targetId == accountId))) return null
+        return CandidateConfirmation(type, cents, accountId, targetId.takeIf { type.requiresTargetAccount }, title,
+            refundId.takeIf { type == TransactionType.REFUND && it.isNotBlank() })
+    }
+}
+sealed interface AutoBookAction {
+    data class Config(val value: AutoBookConfig) : AutoBookAction
+    data class BindingApp(val value: PaymentApp) : AutoBookAction
+    data class BindingToken(val value: String) : AutoBookAction
+    data class BindingAccount(val value: String) : AutoBookAction
+    data object Bind : AutoBookAction
+    data class Unbind(val value: AccountBinding) : AutoBookAction
+    data class Select(val value: AutoCandidate) : AutoBookAction
+    data class Edit(val value: CandidateForm) : AutoBookAction
+    data object Confirm : AutoBookAction
+    data object Link : AutoBookAction
+    data class Ignore(val id: String) : AutoBookAction
+    data class OpenSetting(val value: CaptureSetting) : AutoBookAction
+    data object Refresh : AutoBookAction
+    data object DismissError : AutoBookAction
+}

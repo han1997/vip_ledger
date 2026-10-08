@@ -57,7 +57,7 @@ class StatsMatchesHomeOverviewTest {
     private val categories = FakeCategoryRepository(mutableListOf())
     private val tags = FakeTagRepository(mutableListOf())
 
-    /** 本月 3 笔计入 + 1 笔草稿 + 1 笔转账 + 1 笔上月，两边都应该给出同一个答案。 */
+    /** 本月收支与退款、草稿、转账和上月消费，两边必须采用同一口径。 */
     private val txns = FakeTxnRepository(
         mutableListOf(
             txn("t1", TransactionType.EXPENSE, 3800, dayOfMonth(5), categoryId = null),
@@ -66,6 +66,7 @@ class StatsMatchesHomeOverviewTest {
             txn("t4", TransactionType.EXPENSE, 9999, dayOfMonth(24), draftStatus = DraftStatus.PENDING),
             txn("t5", TransactionType.TRANSFER, 20000, dayOfMonth(24), toAccountId = "a2"),
             txn("t6", TransactionType.EXPENSE, 77777, lastMonthDay()),
+            txn("refund", TransactionType.REFUND, 1800, today.startOfDayEpochMillis(zone)).copy(refundOfTxnId = "t6"),
         ),
     )
 
@@ -82,7 +83,8 @@ class StatsMatchesHomeOverviewTest {
         assertEquals(overview.monthIncome, report.summary.income, "统计页与首页的本月收入必须一致")
         assertEquals(overview.monthExpense, report.summary.expense, "统计页与首页的本月支出必须一致")
         assertEquals(overview.monthCount, report.summary.count, "统计页与首页的本月笔数必须一致")
-        assertEquals(Money.ofCents(15800), report.summary.expense)
+        assertEquals(Money.ofCents(14000), report.summary.expense)
+        assertEquals(Money.ofCents(-1800), overview.todayExpense)
     }
 
     private fun txn(

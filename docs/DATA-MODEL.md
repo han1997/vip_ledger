@@ -110,19 +110,20 @@
 |---|---|---|
 | `id` | TEXT PK | |
 | `ledger_id` | TEXT FK | |
-| `type` | TEXT | `EXPENSE` / `INCOME` / `TRANSFER` / `DEBT_REPAY` / `ADJUST` |
+| `type` | TEXT | `EXPENSE` / `REFUND` / `INCOME` / `TRANSFER` / `DEBT_REPAY` / `ADJUST` |
 | `amount_cents` | INTEGER | 恒 > 0；唯 `ADJUST` 允许负值表示调减（见第 1 节） |
 | `account_id` | TEXT FK → account | 支出/收入的账户；转账的转出账户 |
 | `to_account_id` | TEXT NULL FK → account | 转账转入账户；`DEBT_REPAY` 的还款目标账户 |
 | `category_id` | TEXT NULL FK → category | 转账与调整可为空 |
 | `occurred_at` | INTEGER | 账目发生时间（统计归属依据） |
 | `title` / `remark` | TEXT | 标题、备注（搜索字段） |
-| `source` | TEXT | `MANUAL` / `RECURRING` / `AI` / `IMPORT` / `RULE` |
+| `source` | TEXT | `MANUAL` / `RECURRING` / `AI` / `IMPORT` / `RULE` / `AUTO` |
 | `draft_status` | TEXT | `CONFIRMED` / `PENDING`（待确认草稿）/ `DISCARDED` |
 | `exclude_from_stats` | INTEGER | 默认 0；为 1 时不参与统计（如账户互转） |
 | `recurring_rule_id` | TEXT NULL | 由哪条周期规则生成 |
 | `installment_plan_id` / `installment_period_no` | TEXT NULL / INTEGER NULL | 分期计划与期数 |
 | `import_hash` | TEXT NULL | 导入去重键，唯一索引 |
+| `refund_of_txn_id` | TEXT NULL | schema 2 新增，关联原消费；退款正数金额冲减发生当月支出 |
 | `created_at` / `updated_at` / `deleted_at` | INTEGER | |
 
 索引：`(ledger_id, occurred_at DESC)`、`(ledger_id, category_id, occurred_at)`、
@@ -213,10 +214,11 @@
 
 ## 5. 统计口径
 
-- 参与收支统计：`type in (EXPENSE, INCOME)` 且 `deleted_at IS NULL` 且 `draft_status = 'CONFIRMED'`
+- 参与收支统计：`type in (EXPENSE, REFUND, INCOME)` 且 `deleted_at IS NULL` 且 `draft_status = 'CONFIRMED'`
   且 `exclude_from_stats = 0`。
 - 不计入收支：`TRANSFER`、`DEBT_REPAY`、`ADJUST`（但都影响账户余额）。
 - `结余 = 收入合计 − 支出合计`（同一时间区间）。
+- `支出合计 = 消费 − 退款`，按各自发生时间归属；退款增加到账账户余额，不计收入。
 - 时间归属：按 `occurred_at` 换算到设备时区的 `LocalDate` 归属；跨时区后重算会导致归属变化，v1 不做历史重算。
 - 分类统计：默认按一级分类汇总，可展开到二级；未分类账目归入「未分类」。
 - 标签统计：一笔账的多标签各计一次全额（不做金额分摊），界面需标注口径。
@@ -231,3 +233,11 @@
 - 账户余额缓存：任何影响流水的写操作都在同一事务内更新 `account.current_balance_cents`；
   设置页提供「重算余额」工具，按流水全量重算并报告差异。
 - 恢复备份时：先校验 `manifest.counts` 与 `db.json` 行数一致，再写入；不一致则中止并提示。
+
+
+## 自动记账（schema 2）
+新增 REFUND 类型（正数金额、增加到账账户余额、发生当月冲减支出）与 AUTO 来源。
+`txn.refund_of_txn_id` 可空，关联原消费；不改变原消费历史发生时间。
+`auto_config` 保存固定账本与开关；`auto_binding` 保存支付方式到账户绑定；
+`auto_candidate` 保存独立待确认/已入账/忽略/关联候选；`auto_evidence` 保存幂等事件凭据。
+候选与凭据按账本隔离，原始通知和截图不落库。流水与候选确认、余额更新必须处于同一事务。

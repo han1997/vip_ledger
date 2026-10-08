@@ -10,6 +10,7 @@ class LedgerEnumsTest {
     fun onlyIncomeAndExpenseCountForStats() {
         assertTrue(TransactionType.EXPENSE.isAccountingForStats)
         assertTrue(TransactionType.INCOME.isAccountingForStats)
+        assertTrue(TransactionType.REFUND.isAccountingForStats)
         assertFalse(TransactionType.TRANSFER.isAccountingForStats)
         assertFalse(TransactionType.DEBT_REPAY.isAccountingForStats)
         assertFalse(TransactionType.ADJUST.isAccountingForStats)

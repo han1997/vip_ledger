@@ -53,7 +53,7 @@ fun SignedAmountText(
 ) {
     val sign = when (type) {
         TransactionType.EXPENSE -> "-"
-        TransactionType.INCOME -> "+"
+        TransactionType.INCOME, TransactionType.REFUND -> "+"
         TransactionType.TRANSFER, TransactionType.DEBT_REPAY, TransactionType.ADJUST -> ""
     }
     Text(

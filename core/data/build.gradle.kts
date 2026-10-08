@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
     implementation(libs.okhttp)
+    implementation(libs.mlkit.chinese)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

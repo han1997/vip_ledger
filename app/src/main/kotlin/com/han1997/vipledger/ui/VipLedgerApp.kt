@@ -43,8 +43,11 @@ import com.han1997.vipledger.feature.sync.navigation.backupGraph
  * 各 feature 模块自带 graph，`:app` 只负责把它们拼起来。
  */
 @Composable
-fun VipLedgerApp(modifier: Modifier = Modifier) {
+fun VipLedgerApp(modifier: Modifier = Modifier, openAutoBook: Boolean = false) {
     val navController = rememberNavController()
+    androidx.compose.runtime.LaunchedEffect(openAutoBook) {
+        if (openAutoBook) navController.navigate(LedgerRoutes.AUTO_BOOK) { launchSingleTop = true }
+    }
     val backStackEntries by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntries?.destination?.route
 

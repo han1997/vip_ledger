@@ -484,7 +484,9 @@ private fun StatisticsCard(
                     },
                 )
 
-                else -> PieChart(
+                else -> if (state.rows.any { it.cents < 0 }) BarChart(
+                    groups = state.rows.map { row -> BarGroup(row.label ?: uncategorized, 0, row.cents) },
+                ) else PieChart(
                     slices = state.rows.mapIndexed { index, row ->
                         PieSlice(
                             label = row.label ?: uncategorized,

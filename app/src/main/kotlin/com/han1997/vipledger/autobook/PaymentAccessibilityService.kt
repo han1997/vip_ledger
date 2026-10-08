@@ -1,0 +1,112 @@
+package com.han1997.vipledger.autobook
+
+import android.accessibilityservice.AccessibilityService
+import android.graphics.Bitmap
+import android.os.Build
+import android.view.Display
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import com.han1997.vipledger.core.data.autobook.PaymentOcr
+import com.han1997.vipledger.core.domain.autobook.*
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.*
+import java.util.UUID
+import javax.inject.Inject
+
+@AndroidEntryPoint
+class PaymentAccessibilityService : AccessibilityService() {
+    @Inject lateinit var processor: PaymentCaptureProcessor
+    @Inject lateinit var repository: AutoBookRepository
+    @Inject lateinit var control: AndroidAutoCaptureControl
+    @Inject lateinit var ocr: PaymentOcr
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var job: Job? = null
+    private var session = UUID.randomUUID().toString()
+    private var window = -1
+    private var paymentActivity = false
+    private var resultActivity = false
+    private var screenshotBusy = false
+    private var screenshotSession: String? = null
+    private var lastText: String? = null
+
+    override fun onServiceConnected() { control.update { it.copy(accessibilityConnected = true, issue = null) } }
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        val app = PaymentApp.fromPackage(event.packageName?.toString().orEmpty()) ?: return
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            val name = event.className?.toString().orEmpty()
+            if (name.contains("Activity") || name.endsWith("UI")) {
+                paymentActivity = Regex("Wallet|Pay|Trade|Order|Refund|Cashier", RegexOption.IGNORE_CASE).containsMatchIn(name)
+                resultActivity = Regex("(?:Pay|Trade|Refund).*(?:Success|Result)", RegexOption.IGNORE_CASE).containsMatchIn(name)
+                session = UUID.randomUUID().toString(); lastText = null
+            }
+        }
+        if (window != event.windowId) { window = event.windowId; session = UUID.randomUUID().toString(); lastText = null }
+        // Fail closed for chat / unadapted activities; never screenshot arbitrary app screens.
+        if (!paymentActivity) return
+        job?.cancel()
+        job = scope.launch {
+            delay(500)
+            val config = repository.config()
+            if (!config.enabled || app !in config.enabledApps) return@launch
+            val root = rootInActiveWindow ?: return@launch
+            if (root.packageName?.toString() != app.packageName) return@launch
+            val text = readText(root)
+            if (text == lastText) return@launch
+            lastText = text
+            if (PaymentParser.isPaymentPage(text)) {
+                processor.submit(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, System.currentTimeMillis(), text))
+            }
+            if (config.ocrEnabled && Build.VERSION.SDK_INT >= 30 &&
+                (resultActivity || PaymentParser.isPaymentPage(text)) &&
+                !Regex("支付密码|输入密码|验证码|身份证|银行卡号").containsMatchIn(text) &&
+                PaymentParser.parse(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, 0, text))?.amountCents == null &&
+                screenshotSession != session && !screenshotBusy) screenshot(app, session)
+        }
+    }
+    private fun readText(root: AccessibilityNodeInfo): String {
+        val result = StringBuilder()
+        val queue = ArrayDeque<AccessibilityNodeInfo>(); queue.add(root)
+        var count = 0
+        while (queue.isNotEmpty() && count++ < 300 && result.length < 16_384) {
+            val node = queue.removeFirst()
+            if (node.isVisibleToUser && !node.isPassword) {
+                node.text?.let { result.append(it).append('\n') }
+                node.contentDescription?.let { result.append(it).append('\n') }
+                for (i in 0 until node.childCount.coerceAtMost(80)) node.getChild(i)?.let(queue::addLast)
+            }
+        }
+        return result.toString()
+    }
+    @androidx.annotation.RequiresApi(30)
+    private fun screenshot(app: PaymentApp, capturedSession: String) {
+        screenshotBusy = true; screenshotSession = capturedSession
+        val callback = object : TakeScreenshotCallback {
+            override fun onSuccess(result: ScreenshotResult) {
+                val bitmap = Bitmap.wrapHardwareBuffer(result.hardwareBuffer, result.colorSpace)?.copy(Bitmap.Config.ARGB_8888, false)
+                result.hardwareBuffer.close()
+                if (bitmap == null) { screenshotBusy = false; return }
+                scope.launch {
+                    try {
+                        val text = ocr.recognize(bitmap)
+                        if (session == capturedSession && rootInActiveWindow?.packageName?.toString() == app.packageName) {
+                            processor.submit(PaymentObservation(app, CaptureSource.OCR, capturedSession, System.currentTimeMillis(), text))
+                        }
+                    } catch (e: CancellationException) { throw e
+                    } catch (e: Exception) { control.update { it.copy(issue = RuntimeIssue.OCR_FAILED) }
+                    } finally { bitmap.recycle(); screenshotBusy = false }
+                }
+            }
+            override fun onFailure(errorCode: Int) {
+                screenshotBusy = false
+                control.update { it.copy(issue = RuntimeIssue.CAPTURE_BLOCKED) }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= 34) takeScreenshotOfWindow(window, mainExecutor, callback)
+        else takeScreenshot(Display.DEFAULT_DISPLAY, mainExecutor, callback)
+    }
+    override fun onInterrupt() { control.update { it.copy(issue = RuntimeIssue.DISCONNECTED) } }
+    override fun onDestroy() {
+        control.update { it.copy(accessibilityConnected = false, issue = RuntimeIssue.DISCONNECTED) }
+        scope.cancel(); super.onDestroy()
+    }
+}

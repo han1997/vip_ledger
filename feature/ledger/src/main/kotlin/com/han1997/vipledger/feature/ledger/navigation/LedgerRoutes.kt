@@ -29,6 +29,7 @@ import com.han1997.vipledger.feature.ledger.ui.txnlist.TxnListScreen
  * 后续 `feature:stats` / `feature:sync` 各自提供自己的 graph。
  */
 object LedgerRoutes {
+    const val AUTO_BOOK = "ledger/auto-book"
 
     const val ARG_LEDGER_ID: String = "ledgerId"
     const val ARG_TXN_ID: String = "txnId"
@@ -87,6 +88,12 @@ fun NavGraphBuilder.ledgerGraph(
     onOpenAiModel: () -> Unit,
     onOpenAiRules: () -> Unit,
 ) {
+    composable(LedgerRoutes.AUTO_BOOK) {
+        com.han1997.vipledger.feature.ledger.ui.autobook.AutoBookScreen(
+            onBack = { navController.popBackStack() },
+            onEditTxn = { ledger, txn -> navController.navigate(LedgerRoutes.txnEdit(ledger, txn)) },
+        )
+    }
     // 「我的」Tab 根：SettingsScreen 无返回箭头，badge 由 navController 上层传入。
     composable(LedgerRoutes.SETTINGS_TAB) {
         val viewModel: SettingsTabViewModel = hiltViewModel()
@@ -103,6 +110,7 @@ fun NavGraphBuilder.ledgerGraph(
             onOpenCategories = { if (ready) navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
             onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
             onOpenBackup = onOpenBackup,
+            onOpenAutoBook = { navController.navigate(LedgerRoutes.AUTO_BOOK) },
             onOpenAiModel = onOpenAiModel,
             onOpenAiRules = onOpenAiRules,
             onOpenRecurring = { if (ready) navController.navigate(LedgerRoutes.recurringList(ledgerId)) },
@@ -125,6 +133,7 @@ fun NavGraphBuilder.ledgerGraph(
             onOpenCategories = { if (ready) navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
             onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
             onOpenBackup = onOpenBackup,
+            onOpenAutoBook = { navController.navigate(LedgerRoutes.AUTO_BOOK) },
             onOpenAiModel = onOpenAiModel,
             onOpenAiRules = onOpenAiRules,
             onOpenRecurring = { if (ready) navController.navigate(LedgerRoutes.recurringList(ledgerId)) },

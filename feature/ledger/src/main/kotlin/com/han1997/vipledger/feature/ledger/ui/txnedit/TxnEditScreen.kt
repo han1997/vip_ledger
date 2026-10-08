@@ -287,6 +287,7 @@ private fun TypeSection(state: TxnEditUiState, onAction: (TxnEditAction) -> Unit
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         listOf(
             TransactionType.EXPENSE,
+            TransactionType.REFUND,
             TransactionType.INCOME,
             TransactionType.TRANSFER,
             TransactionType.DEBT_REPAY,
@@ -539,7 +540,7 @@ private fun DetailSection(state: TxnEditUiState, onAction: (TxnEditAction) -> Un
         onValueChange = { onAction(TxnEditAction.UpdateRemark(it)) },
         singleLine = false,
     )
-    if (state.type == TransactionType.EXPENSE || state.type == TransactionType.INCOME) {
+    if (state.type.isAccountingForStats) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

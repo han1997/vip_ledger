@@ -20,7 +20,7 @@ object BalanceCalculator {
         if (txn.isDeleted || txn.draftStatus != DraftStatus.CONFIRMED) return null
         return when (txn.type) {
             TransactionType.EXPENSE -> if (txn.accountId == accountId) -txn.amount else null
-            TransactionType.INCOME -> if (txn.accountId == accountId) txn.amount else null
+            TransactionType.INCOME, TransactionType.REFUND -> if (txn.accountId == accountId) txn.amount else null
             TransactionType.TRANSFER, TransactionType.DEBT_REPAY -> when {
                 txn.accountId == accountId -> -txn.amount
                 txn.toAccountId == accountId -> txn.amount

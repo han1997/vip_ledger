@@ -103,11 +103,13 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
             }
             val manifestJson = JSONObject(manifestFile.readText(Charsets.UTF_8))
             val version = manifestJson.getInt("formatVersion")
-            require(version == FORMAT_VERSION) { "Unsupported backup format" }
+            require(version in 1..FORMAT_VERSION) { "Unsupported backup format" }
             val expected = manifestJson.getString("sha256OfDb")
             require(expected.equals(sha256(dbJson), ignoreCase = true)) { "Backup checksum mismatch" }
             val countsJson = manifestJson.getJSONObject("counts")
-            val counts = TABLES.associateWith { table -> countsJson.getInt(table) }
+            val counts = TABLES.associateWith { table ->
+                if (version == 1 && table.startsWith("auto_")) 0 else countsJson.getInt(table)
+            }
             val manifest = SnapshotManifest(version, manifestJson.getLong("createdAt"), counts, expected)
             validateWithTemporaryDatabase(dbJson, counts)
             createSafetyCopy()
@@ -158,6 +160,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
         try {
             TABLES.asReversed().forEach { db.execSQL("DELETE FROM `$it`") }
             SnapshotJsonCodec.insert(db, TABLES, file)
+            db.execSQL("UPDATE auto_config SET enabled = 0, verifiedApps = ''")
             check(!db.query("PRAGMA foreign_key_check").use { it.moveToNext() })
             db.setTransactionSuccessful()
         } finally {
@@ -228,7 +231,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
     }
 
     companion object {
-        const val FORMAT_VERSION = 1
+        const val FORMAT_VERSION = 2
         const val PBKDF2_ITERATIONS = 150_000
         const val SAFETY_COPY_DIR = "backups"
         const val SAFETY_COPY_PREFIX = "pre-restore-"
@@ -239,6 +242,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
         val TABLES = listOf(
             "ledger", "account", "category", "tag", "txn", "txn_tag", "recurring_rule",
             "installment_plan", "installment_period", "merchant_rule", "attachment", "ml_training_sample",
+            "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
         )
     }
 }

@@ -3,6 +3,7 @@ package com.han1997.vipledger.core.model
 /** 账目类型。金额恒为正数，资金方向由类型决定（docs/DATA-MODEL.md 3.5）。 */
 enum class TransactionType {
     EXPENSE,
+    REFUND,
     INCOME,
     TRANSFER,
     DEBT_REPAY,
@@ -12,7 +13,7 @@ enum class TransactionType {
     /** 是否参与收支统计：只有支出与收入计入，转账/还款/调整不计（docs/DATA-MODEL.md 第 5 节）。 */
     val isAccountingForStats: Boolean
         get() = when (this) {
-            EXPENSE, INCOME -> true
+            EXPENSE, REFUND, INCOME -> true
             TRANSFER, DEBT_REPAY, ADJUST -> false
         }
 
@@ -20,7 +21,7 @@ enum class TransactionType {
     val requiresTargetAccount: Boolean
         get() = when (this) {
             TRANSFER, DEBT_REPAY -> true
-            EXPENSE, INCOME, ADJUST -> false
+            EXPENSE, REFUND, INCOME, ADJUST -> false
         }
 }
 
@@ -58,4 +59,4 @@ enum class CategoryKind { INCOME, EXPENSE, TRANSFER }
 enum class DraftStatus { CONFIRMED, PENDING, DISCARDED }
 
 /** 账目来源，用于筛选与审计。 */
-enum class TxnSource { MANUAL, RECURRING, AI, IMPORT, RULE }
+enum class TxnSource { MANUAL, RECURRING, AI, IMPORT, RULE, AUTO }

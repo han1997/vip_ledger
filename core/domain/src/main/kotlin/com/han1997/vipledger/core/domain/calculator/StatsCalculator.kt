@@ -126,6 +126,7 @@ object StatsCalculator {
             when (txn.type) {
                 TransactionType.INCOME -> income[index] += txn.amount.cents
                 TransactionType.EXPENSE -> expense[index] += txn.amount.cents
+                TransactionType.REFUND -> expense[index] -= txn.amount.cents
                 else -> Unit
             }
             counts[index]++
@@ -146,7 +147,7 @@ object StatsCalculator {
             categoryId = categoryId,
             name = name,
             kind = kind,
-            total = Money.sum(list.map { it.amount }),
+            total = Money.sum(list.map { if (it.type == TransactionType.REFUND) -it.amount else it.amount }),
             count = list.size,
         )
 
@@ -162,8 +163,14 @@ object StatsCalculator {
         return if (byId.containsKey(parentId)) parentId else category.id
     }
 
-    private fun sumOfType(txns: List<Txn>, type: TransactionType): Money =
-        Money.sum(txns.filter { it.type == type }.map { it.amount })
+    fun sumOfType(txns: List<Txn>, type: TransactionType): Money =
+        Money.sum(txns.mapNotNull {
+            when {
+                it.type == type -> it.amount
+                type == TransactionType.EXPENSE && it.type == TransactionType.REFUND -> -it.amount
+                else -> null
+            }
+        })
 
     private fun bucketsOf(granularity: PeriodGranularity, range: DateRange): List<DateRange> = when (granularity) {
         PeriodGranularity.DAY -> generateSequence(range.start) { it.plus(1, DateTimeUnit.DAY) }

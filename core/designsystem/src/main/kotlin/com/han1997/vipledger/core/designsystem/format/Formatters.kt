@@ -94,6 +94,7 @@ fun Long.fromPickerUtcMillis(zone: TimeZone): Long = toDateColumnLocalDate().sta
 @Composable
 fun transactionTypeLabel(type: TransactionType): String = stringResource(
     when (type) {
+        TransactionType.REFUND -> R.string.txn_type_refund
         TransactionType.EXPENSE -> R.string.txn_type_expense
         TransactionType.INCOME -> R.string.txn_type_income
         TransactionType.TRANSFER -> R.string.txn_type_transfer

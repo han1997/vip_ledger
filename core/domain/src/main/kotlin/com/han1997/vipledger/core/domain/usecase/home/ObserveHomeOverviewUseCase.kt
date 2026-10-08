@@ -68,12 +68,9 @@ class ObserveHomeOverviewUseCase(
     }
 
     private fun todayExpense(txns: List<Txn>, today: LocalDate, zone: TimeZone): Money =
-        Money.sum(
-            txns.filter {
-                StatsCalculator.isCounted(it) &&
-                    it.type == TransactionType.EXPENSE &&
-                    it.occurredAt.toLocalDate(zone) == today
-            }.map { it.amount },
+        StatsCalculator.sumOfType(
+            txns.filter { StatsCalculator.isCounted(it) && it.occurredAt.toLocalDate(zone) == today },
+            TransactionType.EXPENSE,
         )
 
     companion object {

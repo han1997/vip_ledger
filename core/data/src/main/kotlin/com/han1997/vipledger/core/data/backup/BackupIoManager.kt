@@ -149,13 +149,20 @@ class BackupIoManager @Inject constructor(
         var duplicateCount = 0
         var insertedCount = 0
         val changedAccounts = mutableSetOf<String>()
+        val reviewLines = mutableListOf<Int>()
         return try {
             database.withTransaction {
+                val automatic = txnDao.listByLedger(ledgerId, true).filter { it.source == TxnSource.AUTO }
                 parsed.accepted.forEach { row ->
                     val hash = CsvLedgerImporter.fingerprint(row.occurredAt, row.amountCents, accountId, row.title)
                     // import_hash 是全库唯一索引：命中即重复，整批原子提交、失败回滚。
                     if (txnDao.existsImportHash(hash)) {
                         duplicateCount++
+                    } else if (automatic.any { it.accountId == accountId && it.type == row.type &&
+                            it.amountCents == row.amountCents && kotlin.math.abs(it.occurredAt - row.occurredAt) <= 120_000 }) {
+                        // CSV lacks a reliable common transaction identifier: do not silently
+                        // drop a legitimate second purchase or insert a duplicate expense.
+                        reviewLines += row.sourceLine
                     } else {
                         val now = System.currentTimeMillis()
                         txnDao.upsert(
@@ -181,7 +188,7 @@ class BackupIoManager @Inject constructor(
                 }
                 balanceSyncer.syncBalances(changedAccounts, System.currentTimeMillis())
             }
-            ImportReport(insertedCount, duplicateCount, parsed.failedLines)
+            ImportReport(insertedCount, duplicateCount, parsed.failedLines, reviewLines)
         } catch (_: Exception) {
             ImportReport(0, 0, (parsed.failedLines + parsed.accepted.map { it.sourceLine }).distinct().sorted())
         }

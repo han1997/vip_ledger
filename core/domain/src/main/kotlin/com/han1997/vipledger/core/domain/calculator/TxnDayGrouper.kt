@@ -30,5 +30,5 @@ object TxnDayGrouper {
 
     /** 只累加参与收支统计的账目（[StatsCalculator.isCounted]）。 */
     fun countedSum(txns: List<Txn>, type: TransactionType): Money =
-        Money.sum(txns.filter { StatsCalculator.isCounted(it) && it.type == type }.map { it.amount })
+        StatsCalculator.sumOfType(txns.filter(StatsCalculator::isCounted), type)
 }

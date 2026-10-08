@@ -57,6 +57,7 @@ class BuildBackupCsvUseCase(private val timeProvider: TimeProvider) {
     }
 
     private fun typeLabel(type: TransactionType): String = when (type) {
+        TransactionType.REFUND -> "退款"
         TransactionType.EXPENSE -> "支出"
         TransactionType.INCOME -> "收入"
         TransactionType.TRANSFER -> "转账"
@@ -70,6 +71,7 @@ class BuildBackupCsvUseCase(private val timeProvider: TimeProvider) {
         TxnSource.AI -> "AI"
         TxnSource.IMPORT -> "导入"
         TxnSource.RULE -> "规则"
+        TxnSource.AUTO -> "自动记账"
     }
 
     companion object {

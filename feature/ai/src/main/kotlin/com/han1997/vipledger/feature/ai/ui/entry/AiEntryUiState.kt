@@ -131,7 +131,7 @@ fun sourceOf(entry: ParsedEntry): TxnSource =
 
 /** 账目类型对应的分类方向（转账/还款/调整记在「转账」方向）。 */
 fun expectedCategoryKind(type: TransactionType): CategoryKind = when (type) {
-    TransactionType.EXPENSE -> CategoryKind.EXPENSE
+    TransactionType.EXPENSE, TransactionType.REFUND -> CategoryKind.EXPENSE
     TransactionType.INCOME -> CategoryKind.INCOME
     TransactionType.TRANSFER, TransactionType.DEBT_REPAY, TransactionType.ADJUST -> CategoryKind.TRANSFER
 }

@@ -54,6 +54,7 @@ data class TxnEntity(
     @ColumnInfo(name = "recurring_rule_id") val recurringRuleId: String? = null,
     @ColumnInfo(name = "installment_plan_id") val installmentPlanId: String? = null,
     @ColumnInfo(name = "installment_period_no") val installmentPeriodNo: Int? = null,
+    @ColumnInfo(name = "refund_of_txn_id") val refundOfTxnId: String? = null,
     @ColumnInfo(name = "import_hash") val importHash: String? = null,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,

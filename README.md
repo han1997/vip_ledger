@@ -11,12 +11,34 @@ Keep this README current as you work: **important updates and necessary content 
 ## Features
 
 - Multiple isolated ledgers
-- Income, expense, transfer, repayment, and balance adjustment
+- Income, expense, refund, transfer, repayment, and balance adjustment
 - Accounts, categories, and custom tags
 - Recurring entries and installment plans
 - Search, statistics, category share, and trends
 - On-device classifier, plus optional OpenAI-compatible natural-language entry
 - CSV and JSON import/export, with encrypted WebDAV snapshots
+- Offline payment capture with a separate review queue and account bindings
+
+## Automatic bookkeeping
+
+Open **Me → Automatic bookkeeping**, choose a fixed ledger, bind payment methods to accounts,
+and grant notification access or accessibility access in Android settings. Chinese OCR is optional
+and bundled for offline use; screenshots and raw notifications are not saved.
+
+WeChat, Alipay, JD, Pinduoduo, and Taobao are configured capture targets. Each starts in review mode:
+validate real payment samples before enabling automatic posting for that platform. Ambiguous amounts,
+accounts, direction, refunds, and possible duplicates remain pending. Posted entries can be edited or
+deleted through the record link while capture evidence remains available for deduplication.
+
+Refunds increase the receiving account balance and reduce expense in the month received. Partial
+refunds can reference an original expense. Database version 1 upgrades to version 2 without resetting
+data; version 1 snapshots remain readable. Restoring a snapshot disables capture and clears platform
+verification, so settings must be reviewed before capture is enabled again.
+
+OPPO X8 Ultra / ColorOS 17 and real payment capture across all five platforms still require device
+acceptance. Synthetic parser tests do not establish platform compatibility. Accessibility screenshots
+require Android 11 or later; protected windows cannot be captured. Android restricted settings and
+manufacturer background restrictions may require manual setup as described in the app.
 
 ## Requirements
 

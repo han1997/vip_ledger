@@ -72,6 +72,7 @@ class MigrationTest {
                 "merchant_rule",
                 "attachment",
                 "ml_training_sample",
+                "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
             ),
             tables,
         )
@@ -93,6 +94,52 @@ class MigrationTest {
             version,
             "schemaVersion 是 ${LedgerDatabase.SCHEMA_VERSION}，但迁移只覆盖到 $version",
         )
+    }
+
+    @Test
+    fun versionOneUpgradesWithoutLosingExistingRows() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val name = "migration-${System.nanoTime()}.db"
+        val assets = InstrumentationRegistry.getInstrumentation().context.assets
+        val old = Json.parseToJsonElement(assets.open("${LedgerDatabase::class.java.name}/1.json")
+            .bufferedReader().use { it.readText() }).jsonObject.getValue("database").jsonObject
+        val helper = androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory().create(
+            androidx.sqlite.db.SupportSQLiteOpenHelper.Configuration.builder(context).name(name)
+                .callback(object : androidx.sqlite.db.SupportSQLiteOpenHelper.Callback(1) {
+                    override fun onCreate(sql: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        old.getValue("entities").jsonArray.forEach { item ->
+                            val entity = item.jsonObject
+                            val table = entity.getValue("tableName").jsonPrimitive.content
+                            sql.execSQL(entity.getValue("createSql").jsonPrimitive.content.replace("\${TABLE_NAME}", table))
+                            entity.getValue("indices").jsonArray.forEach {
+                                sql.execSQL(it.jsonObject.getValue("createSql").jsonPrimitive.content.replace("\${TABLE_NAME}", table))
+                            }
+                        }
+                        old.getValue("setupQueries").jsonArray.forEach { sql.execSQL(it.jsonPrimitive.content) }
+                    }
+                    override fun onUpgrade(sql: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+                }).build(),
+        )
+        helper.writableDatabase.execSQL("INSERT INTO ledger(id,name,currency_code,sort_order,is_default,created_at,updated_at) VALUES('old','Old ledger','CNY',0,1,1,1)")
+        helper.writableDatabase.execSQL("INSERT INTO account(id,ledger_id,name,type,initial_balance_cents,current_balance_cents,include_in_net_worth,is_archived,sort_order,created_at,updated_at) VALUES('cash','old','Cash','CASH',10000,8766,1,0,0,1,1)")
+        helper.writableDatabase.execSQL("INSERT INTO txn(id,ledger_id,type,amount_cents,account_id,occurred_at,title,remark,source,draft_status,exclude_from_stats,created_at,updated_at) VALUES('purchase','old','EXPENSE',1234,'cash',1,'Lunch','','MANUAL','CONFIRMED',0,1,1)")
+        helper.close()
+        val upgraded = Room.databaseBuilder(context, LedgerDatabase::class.java, name)
+            .addMigrations(*ALL_MIGRATIONS).allowMainThreadQueries().build()
+        try {
+            upgraded.openHelper.writableDatabase.query("SELECT name FROM ledger WHERE id='old'").use {
+                assertTrue(it.moveToFirst()); assertEquals("Old ledger", it.getString(0))
+            }
+            upgraded.openHelper.writableDatabase.query("SELECT COUNT(*) FROM auto_candidate").use {
+                assertTrue(it.moveToFirst()); assertEquals(0, it.getInt(0))
+            }
+            upgraded.openHelper.writableDatabase.query("SELECT amount_cents, refund_of_txn_id FROM txn WHERE id='purchase'").use {
+                assertTrue(it.moveToFirst()); assertEquals(1234L, it.getLong(0)); assertTrue(it.isNull(1))
+            }
+            upgraded.openHelper.writableDatabase.query("SELECT current_balance_cents FROM account WHERE id='cash'").use {
+                assertTrue(it.moveToFirst()); assertEquals(8766L, it.getLong(0))
+            }
+        } finally { upgraded.close(); context.deleteDatabase(name) }
     }
 
     private fun exportedSchema(): Map<String, kotlinx.serialization.json.JsonElement> {

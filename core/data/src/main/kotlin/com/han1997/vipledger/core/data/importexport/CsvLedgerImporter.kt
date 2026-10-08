@@ -33,7 +33,7 @@ data class CsvPreview(
 )
 
 data class CsvParseResult(val accepted: List<ImportRow>, val failedLines: List<Int>)
-data class ImportReport(val inserted: Int, val duplicates: Int, val failedLines: List<Int>)
+data class ImportReport(val inserted: Int, val duplicates: Int, val failedLines: List<Int>, val reviewLines: List<Int> = emptyList())
 
 /**
  * 支付宝/微信/通用 CSV 解析。
@@ -156,6 +156,7 @@ object CsvLedgerImporter {
         val amount = parseAmount(value(values, mapping, CsvField.AMOUNT))
         val typeText = value(values, mapping, CsvField.TYPE)
         val type = when {
+            typeText.contains("退款") -> TransactionType.REFUND
             typeText.contains("收入") || typeText.contains("收款") || typeText.contains("转入") -> TransactionType.INCOME
             typeText.contains("转账") || typeText.contains("还款") -> throw IllegalArgumentException("Unsupported transaction kind")
             typeText.contains("支出") || typeText.contains("付款") || typeText.contains("消费") || typeText.contains("成功") ->

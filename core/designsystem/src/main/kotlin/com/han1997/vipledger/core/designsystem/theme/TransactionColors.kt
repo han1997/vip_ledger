@@ -12,7 +12,7 @@ import com.han1997.vipledger.core.model.TransactionType
 @Composable
 fun amountColorOf(type: TransactionType): Color = when (type) {
     TransactionType.EXPENSE -> ExpenseRed
-    TransactionType.INCOME -> IncomeGreen
+    TransactionType.INCOME, TransactionType.REFUND -> IncomeGreen
     TransactionType.TRANSFER, TransactionType.DEBT_REPAY -> TransferBlue
     TransactionType.ADJUST -> MaterialTheme.colorScheme.onSurfaceVariant
 }

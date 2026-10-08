@@ -79,6 +79,49 @@ class SnapshotArchiveTest {
     private fun tempSnapshot(name: String): File = File(context.cacheDir, "$name-${System.nanoTime()}.zip")
 
     @Test
+    fun restoreRetainsBindingsButDisablesCapture() = runTest {
+        seed()
+        db.autoBookDao().saveConfig(com.han1997.vipledger.core.database.entity.AutoConfigEntity(
+            ledgerId = "l1", enabled = true, ocrEnabled = true, enabledApps = "WECHAT", verifiedApps = "WECHAT"))
+        db.autoBookDao().bind(com.han1997.vipledger.core.database.entity.AutoBindingEntity("l1", "WECHAT", "Wallet", "a1"))
+        val file = tempSnapshot("capture")
+        try {
+            archive.create(file); archive.restore(file)
+            assertEquals(false, db.autoBookDao().config()!!.enabled)
+            assertEquals("", db.autoBookDao().config()!!.verifiedApps)
+            assertEquals(1, db.autoBookDao().bindings("l1").size)
+        } finally { file.delete() }
+    }
+
+    @Test
+    fun legacySnapshotWithoutAutomaticTablesStillRestores() = runTest {
+        seed()
+        val jsonFile = File(context.cacheDir, "legacy-${System.nanoTime()}.json")
+        val file = tempSnapshot("legacy")
+        try {
+            archive.exportDatabaseJson(jsonFile)
+            val document = JSONObject(jsonFile.readText()).apply { remove("schemaVersion") }
+            val tables = document.getJSONObject("tables")
+            SnapshotArchive.TABLES.filter { it.startsWith("auto_") }.forEach(tables::remove)
+            val rows = tables.getJSONArray("txn")
+            for (i in 0 until rows.length()) rows.getJSONObject(i).remove("refund_of_txn_id")
+            val bytes = document.toString().toByteArray()
+            val hash = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+            val counts = JSONObject()
+            tables.keys().forEach { counts.put(it, tables.getJSONArray(it).length()) }
+            val manifest = JSONObject().put("formatVersion", 1).put("createdAt", 1).put("counts", counts).put("sha256OfDb", hash)
+            ZipOutputStream(file.outputStream()).use {
+                it.putNextEntry(ZipEntry("manifest.json")); it.write(manifest.toString().toByteArray()); it.closeEntry()
+                it.putNextEntry(ZipEntry("db.json")); it.write(bytes); it.closeEntry()
+            }
+            db.txnDao().deleteHard("tx1")
+            archive.restore(file)
+            assertEquals(1000, db.txnDao().getById("tx1")!!.amountCents)
+            assertEquals(null, db.txnDao().getById("tx1")!!.refundOfTxnId)
+        } finally { file.delete(); jsonFile.delete() }
+    }
+
+    @Test
     fun plainRoundTripRestoresDeletedRows() = runTest {
         seed()
         val file = tempSnapshot("plain")
@@ -199,7 +242,7 @@ class SnapshotArchiveTest {
                 "id", "ledger_id", "type", "amount_cents", "account_id", "to_account_id",
                 "category_id", "occurred_at", "title", "remark", "source", "draft_status",
                 "exclude_from_stats", "recurring_rule_id", "installment_plan_id",
-                "installment_period_no", "import_hash", "created_at", "updated_at", "deleted_at",
+                "installment_period_no", "import_hash", "refund_of_txn_id", "created_at", "updated_at", "deleted_at",
             )
             assertEquals(expected, txnRow.keys().asSequence().toSet())
         } finally {
@@ -246,7 +289,7 @@ class SnapshotArchiveTest {
             val counts = SnapshotJsonCodec.export(raw, listOf("stream_fixture"), file)
             assertEquals(1, counts["stream_fixture"])
             assertEquals(
-                """{"tables":{"stream_fixture":[{"a":1,"b":"quote\"back\\slash","c":2.5,"d":"AP8="}]}}""",
+                """{"schemaVersion":2,"tables":{"stream_fixture":[{"a":1,"b":"quote\"back\\slash","c":2.5,"d":"AP8="}]}}""",
                 file.readText(Charsets.UTF_8),
             )
         } finally {
@@ -280,7 +323,7 @@ class SnapshotArchiveTest {
 
         assertEquals(rowCount, counts["stream_rows"])
         val output = recorder.text.toString()
-        assertTrue(output.startsWith("{\"tables\":{\"stream_rows\":["), "结构前缀必须稳定")
+        assertTrue(output.startsWith("{\"schemaVersion\":2,\"tables\":{\"stream_rows\":["), "结构前缀必须稳定")
         assertTrue(output.endsWith("]}}"), "结构后缀必须稳定")
         assertTrue(
             recorder.chunks.size > rowCount,
@@ -294,7 +337,7 @@ class SnapshotArchiveTest {
 
     /** 旧的整体构建实现的原样复刻，仅作字节级对照，不参与生产路径。 */
     private fun referenceWholeObjectExport(database: SupportSQLiteDatabase, tables: List<String>): String {
-        val json = JSONObject()
+        val json = JSONObject().put("schemaVersion", 2)
         val tableJson = JSONObject()
         tables.forEach { table ->
             val rows = JSONArray()

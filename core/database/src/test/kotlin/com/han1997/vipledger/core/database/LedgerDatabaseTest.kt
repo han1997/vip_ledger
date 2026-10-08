@@ -296,6 +296,7 @@ class LedgerDatabaseTest {
                 "merchant_rule",
                 "attachment",
                 "ml_training_sample",
+                "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
             ),
             tables - setOf("room_master_table", "android_metadata", "sqlite_sequence"),
         )

@@ -9,6 +9,14 @@ import kotlin.math.ceil
  * 但「占比 → 弧度」「金额 → 柱高比例」这类算术必须可验证。
  */
 object ChartGeometry {
+    /** Zero baseline and signed extents in [0, 1], calculated in Double to avoid Long overflow. */
+    fun signedBars(values: List<Long>): Pair<Float, List<Float>> {
+        val positive = values.maxOrNull()?.coerceAtLeast(0)?.toDouble() ?: 0.0
+        val negative = -(values.minOrNull()?.coerceAtMost(0)?.toDouble() ?: 0.0)
+        val span = positive + negative
+        if (span == 0.0) return 1f to values.map { 0f }
+        return (positive / span).toFloat() to values.map { (it.toDouble() / span).toFloat() }
+    }
 
     /** Compose 的角度以 3 点方向为 0°、顺时针为正；环图从 12 点方向开始画。 */
     const val START_ANGLE: Float = -90f

@@ -86,4 +86,5 @@
     <string name="backup_notice_exported">已导出</string>
     <string name="backup_notice_export_failed">导出失败，请重试</string>
     <string name="backup_notice_operation_failed">操作失败，请检查网络或文件设置</string>
+    <string name="backup_report_review_lines">以下行可能与自动记账重复，尚未导入，请核对后手动补记：%1$s</string>
 </resources>

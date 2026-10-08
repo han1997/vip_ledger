@@ -528,6 +528,9 @@ private fun ImportReportView(report: ImportReport) {
             text = stringResource(R.string.backup_report, report.inserted, report.duplicates, report.failedLines.size),
             style = MaterialTheme.typography.bodyMedium,
         )
+        if (report.reviewLines.isNotEmpty()) {
+            Text(text = stringResource(R.string.backup_report_review_lines, report.reviewLines.joinToString(", ")))
+        }
         if (report.failedLines.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.backup_report_failed_lines, report.failedLines.joinToString(", ")),

@@ -62,7 +62,7 @@ object TxnValidator {
     }
 
     fun expectedKind(type: TransactionType): CategoryKind = when (type) {
-        TransactionType.EXPENSE -> CategoryKind.EXPENSE
+        TransactionType.EXPENSE, TransactionType.REFUND -> CategoryKind.EXPENSE
         TransactionType.INCOME -> CategoryKind.INCOME
         TransactionType.TRANSFER, TransactionType.DEBT_REPAY, TransactionType.ADJUST -> CategoryKind.TRANSFER
     }

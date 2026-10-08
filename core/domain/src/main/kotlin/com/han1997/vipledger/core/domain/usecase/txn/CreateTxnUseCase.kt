@@ -33,6 +33,8 @@ class CreateTxnUseCase(
         TxnValidator.validate(txn, accounts, categories)?.let { return AppResult.failure(it) }
 
         return transactionRunner.inTransaction {
+            com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(txn, txnRepository.listByLedger(txn.ledgerId))
+                ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.insert(txn)
             if (result.isSuccess) {
                 balanceSyncer.syncBalances(txn.affectedAccountIds(), now)
@@ -60,6 +62,7 @@ internal fun TxnDraft.toTxn(id: String, now: Long): Txn = Txn(
     installmentPlanId = installmentPlanId,
     installmentPeriodNo = installmentPeriodNo,
     importHash = importHash,
+    refundOfTxnId = refundOfTxnId,
     tagIds = tagIds.distinct(),
     createdAt = now,
     updatedAt = now,

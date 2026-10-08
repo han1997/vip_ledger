@@ -29,6 +29,7 @@ data class Txn(
     val installmentPlanId: String? = null,
     val installmentPeriodNo: Int? = null,
     val importHash: String? = null,
+    val refundOfTxnId: String? = null,
     val tagIds: List<String> = emptyList(),
     val createdAt: Long,
     val updatedAt: Long,
@@ -58,6 +59,7 @@ data class TxnDraft(
     val installmentPlanId: String? = null,
     val installmentPeriodNo: Int? = null,
     val importHash: String? = null,
+    val refundOfTxnId: String? = null,
 )
 
 /** 搜索/列表的过滤条件（docs/DATA-MODEL.md 3.5）；空集合表示该维度不过滤。 */
