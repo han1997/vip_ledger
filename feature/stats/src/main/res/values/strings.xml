@@ -54,6 +54,7 @@
     <string name="stats_total">合计</string>
     <string name="stats_rank_count">%1$d 笔</string>
     <string name="stats_empty">这个时间段没有可统计的账目</string>
+    <string name="stats_no_ledger">请先在首页选择一个账本</string>
     <string name="stats_tag_share_note">一笔账有多个标签时，每个标签各计一次全额</string>
     <string name="stats_drill_hint">点击进入明细</string>
     <string name="stats_export">导出</string>
@@ -85,4 +86,5 @@
     <string name="stats_action_cancel">取消</string>
     <string name="stats_action_confirm">确定</string>
     <string name="stats_action_delete">删除</string>
+    <string name="stats_add_txn">记一笔</string>
 </resources>

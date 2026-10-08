@@ -1,6 +1,5 @@
 package com.han1997.vipledger.feature.stats.ui.stats
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.han1997.vipledger.core.common.time.TimeProvider
@@ -14,7 +13,7 @@ import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.model.TxnFilter
 import com.han1997.vipledger.core.domain.usecase.account.ObserveAccountsUseCase
 import com.han1997.vipledger.core.domain.usecase.category.ObserveCategoryTreeUseCase
-import com.han1997.vipledger.core.domain.usecase.ledger.ObserveLedgersUseCase
+import com.han1997.vipledger.core.domain.usecase.ledger.ObserveCurrentLedgerUseCase
 import com.han1997.vipledger.core.domain.usecase.stats.BuildTxnCsvUseCase
 import com.han1997.vipledger.core.domain.usecase.stats.ObserveStatsReportUseCase
 import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
@@ -25,7 +24,6 @@ import com.han1997.vipledger.core.model.money.Money
 import com.han1997.vipledger.core.model.time.DateRange
 import com.han1997.vipledger.core.model.time.DateRangePreset
 import com.han1997.vipledger.core.model.time.toLocalDate
-import com.han1997.vipledger.feature.stats.navigation.StatsRoutes
 import com.han1997.vipledger.feature.stats.ui.common.CsvExport
 import com.han1997.vipledger.feature.stats.ui.common.csvSuggestedFileName
 import com.han1997.vipledger.feature.stats.ui.common.imageSuggestedFileName
@@ -38,6 +36,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -48,22 +47,32 @@ import kotlinx.datetime.LocalDate
  * （与首页「本月收支」同一套口径，见 `StatsMatchesHomeOverviewTest`）。
  *
  * 时间段默认落在「本月」，与首页对得上；「今天」在订阅建立时确定，与首页的处理一致。
+ *
+ * V3 底部导航起 ledgerId 不再来自路由参数，而是观察当前账本；无账本时 `loaded=true`
+ * 且 `ledgerId` 为空，界面显示「请先选择账本」空态，不会卡在加载态。
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class StatsViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val observeCurrentLedger: ObserveCurrentLedgerUseCase,
     private val observeStatsReport: ObserveStatsReportUseCase,
     observeTxnList: ObserveTxnListUseCase,
     observeAccounts: ObserveAccountsUseCase,
     observeCategoryTree: ObserveCategoryTreeUseCase,
     observeTags: ObserveTagsUseCase,
-    observeLedgers: ObserveLedgersUseCase,
     private val buildCsv: BuildTxnCsvUseCase,
     private val timeProvider: TimeProvider,
 ) : ViewModel() {
 
-    private val ledgerId: String = savedStateHandle.get<String>(StatsRoutes.ARG_LEDGER_ID).orEmpty()
+    /** 当前账本 id；无账本时为 null。下游用它 flatMapLatest 切换数据源。 */
+    private val ledger: StateFlow<com.han1997.vipledger.core.domain.model.Ledger?> =
+        observeCurrentLedger()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS), null)
+
+    private val ledgerId: StateFlow<String> = ledger
+        .map { it?.id.orEmpty() }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS), "")
 
     private val today: LocalDate = timeProvider.nowMillis().toLocalDate(timeProvider.zone)
 
@@ -75,48 +84,67 @@ class StatsViewModel @Inject constructor(
 
     private val imageExport = MutableStateFlow<String?>(null)
 
-    private val report: StateFlow<StatsReport?> = selection
-        .map { it.resolvedRange(today) to it.granularity }
-        .distinctUntilChanged()
-        .flatMapLatest { (range, granularity) -> observeStatsReport(ledgerId, range, granularity) }
+    private val report: StateFlow<StatsReport?> = ledgerId
+        .flatMapLatest { id ->
+            selection
+                .map { it.resolvedRange(today) to it.granularity }
+                .distinctUntilChanged()
+                .flatMapLatest { (range, granularity) ->
+                    if (id.isEmpty()) flowOf() else observeStatsReport(id, range, granularity)
+                }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS), null)
 
     /** 导出 CSV 用的是「区间内的账目清单」，与搜索/下钻共用同一份列格式。 */
-    private val txns: StateFlow<List<Txn>> = selection
-        .map { it.resolvedRange(today) }
-        .distinctUntilChanged()
-        .flatMapLatest { range ->
-            observeTxnList(
-                TxnFilter(
-                    ledgerId = ledgerId,
-                    range = range,
-                    draftStatus = DraftStatus.CONFIRMED,
-                ),
-            )
+    private val txns: StateFlow<List<Txn>> = ledgerId
+        .flatMapLatest { id ->
+            selection
+                .map { it.resolvedRange(today) }
+                .distinctUntilChanged()
+                .flatMapLatest { range ->
+                    if (id.isEmpty()) {
+                        flowOf(emptyList())
+                    } else {
+                        observeTxnList(
+                            TxnFilter(
+                                ledgerId = id,
+                                range = range,
+                                draftStatus = DraftStatus.CONFIRMED,
+                            ),
+                        )
+                    }
+                }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS), emptyList())
 
-    private val names = combine(
-        observeAccounts(ledgerId, includeArchived = true),
-        observeCategoryTree(ledgerId, includeArchived = true),
-        observeTags(ledgerId),
-    ) { accounts, nodes, tags ->
-        StatsNames(
-            categoryNames = nodes.categoryNameMap(),
-            accountNames = accounts.accountNameMap(),
-            tagNames = tags.tagNameMap(),
-        )
-    }
+    private val names = ledgerId
+        .flatMapLatest { id ->
+            if (id.isEmpty()) {
+                flowOf(StatsNames())
+            } else {
+                combine(
+                    observeAccounts(id, includeArchived = true),
+                    observeCategoryTree(id, includeArchived = true),
+                    observeTags(id),
+                ) { accounts, nodes, tags ->
+                    StatsNames(
+                        categoryNames = nodes.categoryNameMap(),
+                        accountNames = accounts.accountNameMap(),
+                        tagNames = tags.tagNameMap(),
+                    )
+                }
+            }
+        }
 
     private val content: StateFlow<StatsContent> = combine(
         report,
         selection,
         names,
-        observeLedgers(),
-    ) { report, selection, names, ledgers ->
+        ledger,
+    ) { report, selection, names, ledger ->
         StatsContent(
-            ledgerId = ledgerId,
-            ledgerName = ledgers.firstOrNull { it.id == ledgerId }?.name.orEmpty(),
+            ledgerId = ledger?.id.orEmpty(),
+            ledgerName = ledger?.name.orEmpty(),
             today = today,
             selection = selection,
             range = report?.range,
@@ -130,7 +158,7 @@ class StatsViewModel @Inject constructor(
             categoryNames = names.categoryNames,
             accountNames = names.accountNames,
             tagNames = names.tagNames,
-            loaded = report != null,
+            loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS), StatsContent())
 
@@ -197,9 +225,9 @@ class StatsViewModel @Inject constructor(
     }
 
     private data class StatsNames(
-        val categoryNames: Map<String, String>,
-        val accountNames: Map<String, String>,
-        val tagNames: Map<String, String>,
+        val categoryNames: Map<String, String> = emptyMap(),
+        val accountNames: Map<String, String> = emptyMap(),
+        val tagNames: Map<String, String> = emptyMap(),
     )
 
     private data class StatsContent(

@@ -2,6 +2,7 @@ package com.han1997.vipledger.feature.ai.ui.entry
 
 import com.han1997.vipledger.core.common.result.AppResult
 import com.han1997.vipledger.core.domain.ai.AiSettings
+import com.han1997.vipledger.core.domain.ai.cloudClientFor
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.nlp.LlmParserClient
 import com.han1997.vipledger.core.domain.nlp.NlEntryPipeline

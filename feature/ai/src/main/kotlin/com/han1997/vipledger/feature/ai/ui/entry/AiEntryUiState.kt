@@ -140,8 +140,6 @@ fun expectedCategoryKind(type: TransactionType): CategoryKind = when (type) {
  * 隐私开关的落点（PRD D3）：开关关闭时对管线传 `null` 云端客户端，云端那一级**完全不可达**，
  * 不发起任何网络请求。这个转换是纯函数，便于单测钉住「关了就不联网」。
  */
-fun cloudClientFor(settings: AiSettings, client: LlmParserClient?): LlmParserClient? =
-    if (settings.networkEnabled) client else null
 
 /**
  * 改金额。`Long` 非空，赋值即代表「已有金额」，因此必须同时清掉 [ParsedField.AMOUNT]：

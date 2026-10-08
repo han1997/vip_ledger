@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -29,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -86,7 +88,8 @@ import kotlinx.datetime.TimeZone
 /** 统计：时间段 + 粒度 + 维度，占比环图 / 趋势柱状图 + 点一行下钻。 */
 @Composable
 fun StatsScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
+    onAddTxn: (ledgerId: String) -> Unit,
     onOpenSearch: (ledgerId: String) -> Unit,
     onOpenDrill: (DrillArgs) -> Unit,
     modifier: Modifier = Modifier,
@@ -97,6 +100,7 @@ fun StatsScreen(
         state = state,
         onAction = viewModel::onAction,
         onBack = onBack,
+        onAddTxn = onAddTxn,
         onOpenSearch = onOpenSearch,
         onOpenDrill = onOpenDrill,
         modifier = modifier,
@@ -108,7 +112,8 @@ fun StatsScreen(
 internal fun StatsContent(
     state: StatsUiState,
     onAction: (StatsAction) -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
+    onAddTxn: (ledgerId: String) -> Unit,
     onOpenSearch: (String) -> Unit,
     onOpenDrill: (DrillArgs) -> Unit,
     modifier: Modifier = Modifier,
@@ -171,6 +176,15 @@ internal fun StatsContent(
 
     VipLedgerScaffold(
         modifier = modifier.fillMaxSize(),
+        floatingActionButton = {
+            if (state.ledgerId.isNotBlank()) {
+                ExtendedFloatingActionButton(
+                    onClick = { onAddTxn(state.ledgerId) },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text(text = stringResource(R.string.stats_add_txn)) },
+                )
+            }
+        },
         topBar = {
             VipLedgerTopBar(
                 title = state.ledgerName.ifBlank { stringResource(R.string.stats_title) },
@@ -208,8 +222,8 @@ internal fun StatsContent(
         },
         snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
     ) { padding ->
-        if (state.isLoading) {
-            Box(
+        when {
+            state.isLoading -> Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
@@ -217,8 +231,18 @@ internal fun StatsContent(
             ) {
                 LoadingState()
             }
-        } else {
-            LazyColumn(
+
+            // Tab 化后无账本场景：不卡加载态，给明确空态（ledgerId 为空即未选账本）。
+            state.ledgerId.isBlank() -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center,
+            ) {
+                EmptyState(message = stringResource(R.string.stats_no_ledger))
+            }
+
+            else -> LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
@@ -674,6 +698,7 @@ private fun StatsContentPreview() {
             ),
             onAction = {},
             onBack = {},
+            onAddTxn = {},
             onOpenSearch = {},
             onOpenDrill = {},
         )

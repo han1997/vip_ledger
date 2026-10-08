@@ -8,6 +8,7 @@ import com.han1997.vipledger.core.common.result.getOrNull
 import com.han1997.vipledger.core.common.result.isSuccess
 import com.han1997.vipledger.core.common.time.TimeProvider
 import com.han1997.vipledger.core.domain.ai.AiSettingsRepository
+import com.han1997.vipledger.core.domain.ai.cloudClientFor
 import com.han1997.vipledger.core.domain.calculator.TxnValidator
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.Category
