@@ -33,6 +33,7 @@
 | [architecture.md](./architecture.md) | 模块划分、依赖方向、分层与 DI 约定、共享件下沉与资源名前缀 |
 | [directory-structure.md](./directory-structure.md) | 各模块内文件放哪儿、命名规则 |
 | [database.md](./database.md) | Room 实体、DAO、迁移与测试约定 |
+| [auto-bookkeeping.md](./auto-bookkeeping.md) | 支付采集、候选幂等、原子入账、退款、真实平台验收 |
 | [ui.md](./ui.md) | Compose 与 ViewModel 约定、主题、designsystem 组件与 token（V2）、预览、单屏单 `LazyColumn`、统计口径 |
 | [charts.md](./charts.md) | 自绘图表的几何契约、数据契约、边界与测试要求 |
 | [error-handling.md](./error-handling.md) | `AppResult` 与 `AppError` 使用方式 |

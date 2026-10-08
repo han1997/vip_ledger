@@ -56,7 +56,7 @@ fun percentLabel(fraction: Float): String   // 「12.0%」（Locale.US，保留�
 
 ## 数据契约
 
-- 金额一律传**分（`Long`，非负）**。不要让 `Money` 出现在图表数据类或几何函数签名里：
+- 金额一律传**分（`Long`）**；退款后的支出柱允许负数，以零轴为基准向下画。环图只适用于非负组成，有负数分组时展示带符号金额列表。不要让 `Money` 出现在图表数据类或几何函数签名里：
   `Money` 是 `@JvmInline value class`，不能当 lambda 参数类型（见 ui.md 的坑 2）。
   需要显示时在界面层 `Money(cents)` 包一层。
 - 颜色由调用方给出（`chartColorOf(index)` 或语义色），图表本身不做配色决策，也不写死色值。
