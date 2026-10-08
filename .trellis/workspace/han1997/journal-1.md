@@ -426,3 +426,43 @@ Built V2 design system in core:designsystem (VipLedgerTokens 4dp grid, accent co
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: UI/UX polish: bottom nav, home/stats/Me tabs, AI txn entry
+
+**Date**: 2026-10-08
+**Task**: UI/UX polish: bottom nav, home/stats/Me tabs, AI txn entry
+**Branch**: `master`
+
+### Summary
+
+Resumed in-progress ui-ux-polish task; verified build green (test assembleDebug lintDebug all passed), then committed 30 modified + 4 new files across 8 logical work commits: bottom navigation bar (Home/Stats/Me tabs), home screen redesign, settings migration to Me tab, txn-edit AI entry integration with last-account recall, stats entry FAB, AI pipeline wiring, designsystem LabeledTextField extension, and spec updates for bottom-nav conventions. Emulator walkthrough was documented in the PRD continuation record (all 10 Me-tab entries open and return, AI parse preview works, dark mode readable). AI persistence write not manually verified to avoid seeding test data.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5d01f05` | (see git log) |
+| `3a6a92c` | (see git log) |
+| `dedc0a5` | (see git log) |
+| `cff3c18` | (see git log) |
+| `615a73a` | (see git log) |
+| `720513b` | (see git log) |
+| `724a2fc` | (see git log) |
+| `0674853` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

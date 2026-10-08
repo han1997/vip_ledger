@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 12
-- **Last Active**: 2026-09-29
+- **Total Sessions**: 13
+- **Last Active**: 2026-10-08
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~428 | Active |
+| `journal-1.md` | ~468 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 13 | 2026-10-08 | UI/UX polish: bottom nav, home/stats/Me tabs, AI txn entry | `5d01f05`, `3a6a92c`, `dedc0a5`, `cff3c18`, `615a73a`, `720513b`, `724a2fc`, `0674853` | `master` |
 | 12 | 2026-09-29 | V2 UI design system and full-screen migration | `183b6f4`, `258bb0f`, `68a9957` | `master` |
 | 11 | 2026-09-29 | Finish VipLedger v1 mainline | `6817ed7` | `master` |
 | 10 | 2026-09-28 | Configure release signing, rewrite README, update build spec | `d9cf572`, `e304180` | `master` |
