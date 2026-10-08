@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/android/ui.md", "reason": "UI 层核心规范：Screen/VM/UiState/Action 分层、一屏一 LazyColumn、V2 组件约束、已踩坑清单（含 LaunchedEffect Composable、Money lambda、导航参数归一等）；本次 UI 重设计必须遵守。"}
+{"file": ".trellis/spec/android/architecture.md", "reason": "模块架构：:core:domain/:data/:designsystem 与各 feature 模块边界、依赖方向；底部导航和 AI 跨模块接入需先确认模块边界。"}
+{"file": ".trellis/spec/android/directory-structure.md", "reason": "目录结构约定：各模块 UI 代码位置、component 共享规范；新增底部导航和共享组件的放置位置参考。"}
+{"file": ".trellis/tasks/09-29-ui-ux-polish/research/yimu-ux-reference.md", "reason": "记账页对标基准：分类按需展开、类型置顶、1 下到达记账页；记账页重设计（Decision 7）以此为直接参考。"}
+{"file": ".trellis/spec/android/testing.md", "reason": "UiState 纯函数与 AI 模式变更的测试放置、命名和验证命令。"}

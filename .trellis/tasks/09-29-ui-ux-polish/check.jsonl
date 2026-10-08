@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/android/ui.md", "reason": "UI 层质量基准：组件使用规范、可测性要求、深浅色可读性、文案资源化；本次所有 UI 改动以此为检查依据。"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "错误提示规范：Domain 层 AppError 透出要求；记账页 AI 解析歧义的错误提示方式参考。"}
+{"file": ".trellis/spec/android/testing.md", "reason": "测试规范：UiState 纯函数、组件 Preview、Compose 测试要求；记账页重设计需补充对应测试。"}
+{"file": ".trellis/tasks/09-29-ui-ux-polish/research/yimu-ux-reference.md", "reason": "记账页对标基准：Decision 7 五项优化的验收对照。"}
