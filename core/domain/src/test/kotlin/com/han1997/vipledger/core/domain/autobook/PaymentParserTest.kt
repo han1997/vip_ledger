@@ -4,6 +4,51 @@ import com.han1997.vipledger.core.model.TransactionType
 import kotlin.test.*
 
 class PaymentParserTest {
+    @Test fun alipayAccessibilityDebitDescriptionAndFullRecipientLabelAreRecognized() {
+        // Sanitized device node text: the visible negative amount is exposed as "支出20元".
+        val text = """
+            扣费解读
+            测试公交服务有限公司
+            支出20元
+            交易成功
+            支付时间
+            2026-10-05 12:29:45
+            2026-10-05 12:29:45
+            付款方式
+            测试银行信用卡(1234) 查看扣款顺序
+            乘车时间
+            2026-10-05 10:29:40
+            收款方全称
+            测试公交服务有限公司
+            测试公交服务有限公司
+            交易详情
+            测试出行服务
+            订单备注
+            测试起点至测试终点
+            订单号
+            platform-transport-123
+            platform-transport-123
+            商家订单号
+            merchant-transport-456
+            账单管理
+            返回
+            账单详情
+            全部账单
+        """.trimIndent()
+        val facts = parseBill(text, PaymentApp.ALIPAY)
+        assertEquals("测试公交服务有限公司", facts.merchant)
+        assertEquals(2000L, facts.amountCents)
+        assertEquals(TransactionType.EXPENSE, facts.type)
+        assertEquals("测试银行信用卡(1234)", facts.accountToken)
+        assertEquals("platform-transport-123", facts.externalId)
+        assertNotNull(facts.paidAt)
+        assertEquals(ReviewReason.NONE, facts.reason)
+        assertEquals("测试公交服务有限公司", parseBill(text.replace("收款方全称", "其他字段"), PaymentApp.ALIPAY).merchant)
+        assertNull(parseBill(text.replace("支出20元", "收入20元"), PaymentApp.ALIPAY).type)
+        assertNull(parseBill(text.replace("支出20元", "支出0元"), PaymentApp.ALIPAY).amountCents)
+        assertNull(parseBill(text.replace("支出20元", "支出20.001元"), PaymentApp.ALIPAY).amountCents)
+    }
+
     private val alipayBill = """
         账单详情
         全部账单

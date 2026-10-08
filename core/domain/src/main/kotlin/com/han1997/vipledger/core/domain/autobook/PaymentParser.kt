@@ -13,7 +13,7 @@ object PaymentParser {
     private val currencyAmount = Regex("[¥￥]\\s*" + money + "|" + money + "\\s*元")
     private val token = Regex("(?:付款方式|支付方式|收款账户|到账账户|退款账户|转出账户)[：:\\s]*([^\\n;；]+)")
     private val target = Regex("(?:转入账户)[：:\\s]*([^\\n;；]+)")
-    private val merchantIdentity = Regex("(?:商户全称|商户名称|收款方|付款方)(?:[：:][ \\t]*|\\s+)([^\\n;；]+)")
+    private val merchantIdentity = Regex("(?:商户全称|商户名称|收款方全称|付款方全称|收款方|付款方)(?:[：:][ \\t]*|\\s+)([^\\n;；]+)")
     private val merchantFallback = Regex("(?:交易对方|商品名称|商家)(?:[：:][ \\t]*|\\s+)([^\\n;；]+)")
     private val external = Regex("(?:退款单号|交易单号|交易号|订单编号|订单号)[：:\\s]*([A-Za-z0-9_-]{6,80})")
     private val original = Regex("(?:原交易单号|原订单号)[：:\\s]*([A-Za-z0-9_-]{6,80})")
@@ -30,7 +30,7 @@ object PaymentParser {
             text.contains("账单详情") && text.contains("支付时间") && text.contains("付款方式")) {
             val lines = text.lineSequence().map(String::trim).filter(String::isNotEmpty).toList()
                 .fold(mutableListOf<String>()) { result, line -> result.apply { if (lastOrNull() != line) add(line) } }
-            Regex("(?m)^([^\\n]+)\\n[-−][ \\t]*([0-9]+(?:,[0-9]{3})*\\.[0-9]{2})\\n交易成功$")
+            Regex("(?m)^([^\\n]+)\\n(?:[-−][ \\t]*([0-9]+(?:,[0-9]{3})*\\.[0-9]{2})|支出[ \\t]*([0-9]+(?:,[0-9]{3})*(?:\\.[0-9]{1,2})?)[ \\t]*元)\\n交易成功$")
                 .find(lines.joinToString("\n"))
         } else null
         val complete = success.containsMatchIn(text) && !unfinished.containsMatchIn(text)
@@ -51,7 +51,7 @@ object PaymentParser {
             text.contains("支付时间") && external.containsMatchIn(text)
         val debitMatches = if (wechatBill) wechatDebit.findAll(text).toList() else emptyList()
         val debits = debitMatches.mapNotNull { cents(it.groupValues[1]) }
-        val alipayAmount = alipayHeader?.groupValues?.get(2)?.let(::cents)
+        val alipayAmount = alipayHeader?.let { cents(it.groupValues[2].ifBlank { it.groupValues[3] }) }
         val amounts = if (alipayHeader != null) listOfNotNull(alipayAmount) + labeled
             else if (debitMatches.isNotEmpty()) debits + labeled else if (labeledMatches.isNotEmpty()) labeled else currencyAmount.findAll(text)
             .mapNotNull { cents(it.groupValues[1].ifBlank { it.groupValues[2] }) }.toList()
