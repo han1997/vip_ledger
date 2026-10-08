@@ -19,3 +19,9 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
 <!-- TRELLIS:END -->
+
+## 用户偏好（持续有效）
+
+- 手机通过 ADB 连接时，构建/交付新版后直接用 `adb -s <真机序列号> install -r <最新 Release APK>` 覆盖安装到手机，无需再次询问，也不要只给安装包让用户手动安装。保留应用数据，禁止通过卸载重装处理安装失败。
+- 同时连接模拟器与真机时明确选择真机；多台真机且目标不明确时再确认设备。安装后核验结果。
+- 真机页面由用户操作；安装授权不代表可以自动点击或切换页面。
