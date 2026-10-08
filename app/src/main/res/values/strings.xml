@@ -17,5 +17,7 @@
     <string name="auto_channel">自动记账</string>
     <string name="auto_posted">已自动记账</string>
     <string name="auto_posted_body">点击查看记录，可修改或撤销。</string>
+    <string name="auto_pending">已识别支付，待确认</string>
+    <string name="auto_pending_body">点击查看并补全记录，确认前不会入账。</string>
     <string name="auto_accessibility_description">仅在启用的支付应用中读取支付页面，以识别金额和账户。开启截图识别后，在系统允许的支付页面进行本机文字识别；不保存截图，不执行点击或支付操作。</string>
 </resources>

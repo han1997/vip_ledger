@@ -83,6 +83,17 @@ class AutoBookRepositoryTest {
         assertEquals(ReviewReason.TIME, repo.capture(event).getOrThrow()!!.reason)
         assertEquals(0, db.txnDao().countByLedger("l"))
     }
+    @Test fun historicalWechatBillKeepsActualAmountWithoutChangingBalance() = runTest {
+        val repo = seed()
+        val event = PaymentObservation(PaymentApp.WECHAT, CaptureSource.ACCESSIBILITY, "bill", 1_791_417_600_000,
+            "-12.30\n原价 ¥12.70\n优惠 ¥0.40\n当前状态\n支付成功\n支付时间\n2025年1月1日 12:00:00\n支付方式\n微信零钱\n交易单号\nwechat-bill-123")
+        val result = assertNotNull(repo.capture(event).getOrThrow())
+        assertEquals(1230L, result.facts.amountCents)
+        assertEquals(CandidateStatus.PENDING, result.status)
+        assertEquals(ReviewReason.TIME, result.reason)
+        assertEquals(0, db.txnDao().countByLedger("l"))
+        assertEquals(0, db.accountDao().getById("a")!!.currentBalanceCents)
+    }
     @Test fun balanceFailureRollsBackFinancialMutationButRetainsCandidate() = runTest {
         seed()
         val failing = repository(object : AccountBalanceSyncer {

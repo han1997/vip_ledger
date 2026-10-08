@@ -4,6 +4,55 @@ import com.han1997.vipledger.core.model.TransactionType
 import kotlin.test.*
 
 class PaymentParserTest {
+    private val wechatBill = """
+        测试商店
+        -12.30
+        原价
+        ¥12.70
+        优惠
+        优惠¥0.40
+        当前状态
+        支付成功
+        支付时间
+        2026年10月7日 21:21:09
+        支付方式
+        测试储蓄卡(1234)
+        交易单号
+        test-order-123456
+    """.trimIndent()
+
+    private fun parseBill(text: String = wechatBill, app: PaymentApp = PaymentApp.WECHAT) =
+        assertNotNull(PaymentParser.parse(PaymentObservation(app, CaptureSource.ACCESSIBILITY, "bill", 1, text)))
+
+    @Test fun wechatBillUsesActualDebitAndPreservesHistoricalPaymentTime() {
+        val result = parseBill()
+        assertEquals(1230L, result.amountCents)
+        assertEquals(TransactionType.EXPENSE, result.type)
+        assertEquals("test-order-123456", result.externalId)
+        assertEquals("测试储蓄卡(1234)", result.accountToken)
+        assertEquals(java.time.LocalDateTime.of(2026, 10, 7, 21, 21, 9)
+            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli(), result.paidAt)
+        assertEquals(ReviewReason.NONE, result.reason)
+    }
+
+    @Test fun signedBillAmountRequiresWechatPageEvidenceAndUnambiguousValue() {
+        assertNull(parseBill(app = PaymentApp.ALIPAY).amountCents)
+        assertNull(parse(wechatBill)!!.amountCents) // Notification is not the verified bill layout.
+        assertNull(parseBill(wechatBill.replace("当前状态", "状态")).amountCents)
+        assertNull(parseBill(wechatBill.replace("交易单号", "其他编号")).amountCents)
+        assertNull(parseBill("-8.00\n$wechatBill").amountCents)
+        assertNull(parseBill("$wechatBill\n实付金额：8.00").amountCents)
+        assertNull(parseBill(wechatBill.replace("-12.30", "-0.00")).amountCents)
+        assertNull(parseBill(wechatBill.replace("-12.30", "-999999999999999999999.00")).amountCents)
+        assertNull(parseBill("$wechatBill\nUSD").amountCents)
+    }
+
+    @Test fun chinesePaymentDateIsStrictAndMalformedDatesRequireReview() {
+        assertEquals(ReviewReason.TIME, parseBill(wechatBill.replace("10月7日", "2月30日")).reason)
+        assertEquals(ReviewReason.TIME, parseBill(wechatBill.replace("2026年10月7日 21:21:09", "未知")).reason)
+        assertNotNull(parseBill(wechatBill.replace("2026年10月7日 21:21:09", "2026-10-07 21:21")).paidAt)
+    }
+
     private fun parse(text: String, app: PaymentApp = PaymentApp.WECHAT) =
         PaymentParser.parse(PaymentObservation(app, CaptureSource.NOTIFICATION, "event", 1, text))
 

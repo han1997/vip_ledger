@@ -29,7 +29,8 @@ class PaymentCaptureProcessor @Inject constructor(
             is AppResult.Failure -> control.update { it.copy(issue = RuntimeIssue.STORAGE_FAILED) }
             is AppResult.Success -> result.value?.let { candidate ->
                 control.update { it.copy(issue = null) }
-                if (candidate.status != CandidateStatus.POSTED) return@let
+                if (candidate.status != CandidateStatus.POSTED && candidate.status != CandidateStatus.PENDING) return@let
+                val pendingReview = candidate.status == CandidateStatus.PENDING
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return@let
                 val manager = context.getSystemService(NotificationManager::class.java)
                 manager.createNotificationChannel(NotificationChannel("autobook", context.getString(R.string.auto_channel), NotificationManager.IMPORTANCE_LOW))
@@ -37,9 +38,10 @@ class PaymentCaptureProcessor @Inject constructor(
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 val pending = PendingIntent.getActivity(context, 2002, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
                 manager.notify(2002, NotificationCompat.Builder(context, "autobook")
-                    .setSmallIcon(R.drawable.ic_launcher_foreground).setContentTitle(context.getString(R.string.auto_posted))
-                    .setContentText(context.getString(R.string.auto_posted_body)).setContentIntent(pending)
-                    .setAutoCancel(true).build())
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(context.getString(if (pendingReview) R.string.auto_pending else R.string.auto_posted))
+                    .setContentText(context.getString(if (pendingReview) R.string.auto_pending_body else R.string.auto_posted_body))
+                    .setContentIntent(pending).setOnlyAlertOnce(true).setAutoCancel(true).build())
             }
         }
     }

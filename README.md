@@ -10,6 +10,8 @@ Keep this README current as you work: **important updates and necessary content 
 
 ## Features
 
+Payment captures that need review now also produce a notification (when Android notification permission is granted); tap it to open the review queue. WeChat bill details support the signed debit header and Chinese payment dates. Historical bills remain pending for confirmation and do not change balances automatically.
+
 - Multiple isolated ledgers
 - Income, expense, refund, transfer, repayment, and balance adjustment
 - Accounts, categories, and custom tags

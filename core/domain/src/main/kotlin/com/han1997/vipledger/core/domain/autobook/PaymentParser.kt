@@ -16,7 +16,9 @@ object PaymentParser {
     private val merchant = Regex("(?:商户全称|商户名称|收款方|付款方|交易对方|商品名称|商家)[：:\\s]*([^\\n;；]+)")
     private val external = Regex("(?:退款单号|交易单号|交易号|订单编号|订单号)[：:\\s]*([A-Za-z0-9_-]{6,80})")
     private val original = Regex("(?:原交易单号|原订单号)[：:\\s]*([A-Za-z0-9_-]{6,80})")
-    private val paidTime = Regex("(?:交易时间|付款时间|到账时间|退款时间)[：:\\s]*([0-9]{4}[-/][0-9]{2}[-/][0-9]{2} [0-9]{2}:[0-9]{2}(?::[0-9]{2})?)")
+    private val paidTimeLabel = Regex("交易时间|付款时间|支付时间|到账时间|退款时间")
+    private val paidTime = Regex("(?:${paidTimeLabel.pattern})[：:\\s]*([0-9]{4}(?:[-/][0-9]{1,2}[-/][0-9]{1,2}|年[0-9]{1,2}月[0-9]{1,2}日)\\s+[0-9]{1,2}:[0-9]{2}(?::[0-9]{2})?)")
+    private val wechatDebit = Regex("(?m)^[ \\t]*[-−][ \\t]*([0-9]+(?:,[0-9]{3})*\\.[0-9]{2})[ \\t]*$")
 
     fun isPaymentPage(text: String): Boolean = success.containsMatchIn(text) || unfinished.containsMatchIn(text)
 
@@ -35,17 +37,27 @@ object PaymentParser {
         }
         val labeledMatches = labeledAmount.findAll(text).toList()
         val labeled = labeledMatches.mapNotNull { cents(it.groupValues[1]) }
-        val amounts = if (labeledMatches.isNotEmpty()) labeled else currencyAmount.findAll(text)
+        // Verified WeChat bill layout: the signed header is the actual debit; discounts are separate.
+        val wechatBill = observation.app == PaymentApp.WECHAT && observation.source != CaptureSource.NOTIFICATION &&
+            type == TransactionType.EXPENSE && Regex("当前状态[：:\\s]*支付成功").containsMatchIn(text) &&
+            text.contains("支付时间") && external.containsMatchIn(text)
+        val debitMatches = if (wechatBill) wechatDebit.findAll(text).toList() else emptyList()
+        val debits = debitMatches.mapNotNull { cents(it.groupValues[1]) }
+        val amounts = if (debitMatches.isNotEmpty()) debits + labeled else if (labeledMatches.isNotEmpty()) labeled else currencyAmount.findAll(text)
             .mapNotNull { cents(it.groupValues[1].ifBlank { it.groupValues[2] }) }.toList()
         val foreignCurrency = Regex("USD|HKD|EUR|JPY|美元|港币|港元|欧元|日元|US\\$", RegexOption.IGNORE_CASE).containsMatchIn(text)
-        val priceOnly = labeledMatches.isEmpty() && Regex("原价|优惠|订单金额|商品金额|应付").containsMatchIn(text)
-        val amount = amounts.distinct().singleOrNull().takeUnless { foreignCurrency || priceOnly || labeled.size != labeledMatches.size }
+        val priceOnly = labeledMatches.isEmpty() && debitMatches.isEmpty() && Regex("原价|优惠|订单金额|商品金额|应付").containsMatchIn(text)
+        val amount = amounts.distinct().singleOrNull().takeUnless {
+            foreignCurrency || priceOnly || labeled.size != labeledMatches.size || debits.size != debitMatches.size
+        }
         val originalMatch = original.find(text)
         val idText = if (originalMatch == null) text else text.removeRange(originalMatch.range)
         val paidAt = paidTime.find(text)?.groupValues?.get(1)?.let { value -> runCatching {
-            val format = java.time.format.DateTimeFormatter.ofPattern(if (value.length == 19) "uuuu-MM-dd HH:mm:ss" else "uuuu-MM-dd HH:mm")
+            val normalized = value.replace('/', '-').replace('年', '-').replace('月', '-').replace("日", "")
+                .replace(Regex("\\s+"), " ")
+            val format = java.time.format.DateTimeFormatter.ofPattern("uuuu-M-d H:mm[:ss]")
                 .withResolverStyle(java.time.format.ResolverStyle.STRICT)
-            java.time.LocalDateTime.parse(value.replace('/', '-'), format).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            java.time.LocalDateTime.parse(normalized, format).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         }.getOrNull() }
         return PaymentFacts(
             type, amount, merchant.find(text)?.groupValues?.get(1)?.trim()?.take(120).orEmpty(),
@@ -54,7 +66,7 @@ object PaymentParser {
             external.find(idText)?.groupValues?.get(1), originalMatch?.groupValues?.get(1), complete,
             when { !complete -> ReviewReason.NOT_SUCCESS; amount == null -> ReviewReason.AMOUNT
                 type == null -> ReviewReason.DIRECTION
-                paidAt == null && Regex("交易时间|付款时间|到账时间|退款时间").containsMatchIn(text) -> ReviewReason.TIME
+                paidAt == null && paidTimeLabel.containsMatchIn(text) -> ReviewReason.TIME
                 else -> ReviewReason.NONE }, paidAt,
         )
     }
