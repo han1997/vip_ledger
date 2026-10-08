@@ -58,7 +58,22 @@ class RoomAutoBookRepository @Inject constructor(
             val externalKey = facts.externalId?.let { externalKey(observation.app, facts.type, it) }
             val channel = if (observation.source == CaptureSource.NOTIFICATION) "notification" else "page"
             val eventKey = "event:${observation.app}:$channel:${hash(observation.eventKey)}:${facts.externalId.orEmpty()}"
-            val knownId = externalKey?.let { dao.evidence(config.ledgerId, it) } ?: dao.evidence(config.ledgerId, eventKey)
+            // A bill may initially hide its order number, or only say "transaction successful"
+            // without direction. Enrich that same observation instead of creating another row.
+            val directionlessId = if (facts.type == TransactionType.EXPENSE) {
+                facts.externalId?.let { dao.evidence(config.ledgerId, externalKey(observation.app, null, it)) }
+            } else null
+            val incompleteId = if (facts.externalId != null) {
+                dao.evidence(config.ledgerId, "event:${observation.app}:$channel:${hash(observation.eventKey)}:")
+                    ?.let { dao.candidate(it)?.domain() }?.takeIf {
+                        it.status == CandidateStatus.PENDING && it.facts.externalId == null &&
+                            facts.amountCents != null && it.facts.amountCents == facts.amountCents &&
+                            facts.paidAt != null && it.facts.paidAt == facts.paidAt &&
+                            (it.facts.type == null || it.facts.type == facts.type)
+                    }?.id
+            } else null
+            val knownId = externalKey?.let { dao.evidence(config.ledgerId, it) }
+                ?: directionlessId ?: dao.evidence(config.ledgerId, eventKey) ?: incompleteId
             val known = knownId?.let { dao.candidate(it)?.domain() }
             if (known != null && known.status != CandidateStatus.PENDING) {
                 remember(config.ledgerId, eventKey, known.id)

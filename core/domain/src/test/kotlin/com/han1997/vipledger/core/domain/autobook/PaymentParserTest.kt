@@ -4,6 +4,52 @@ import com.han1997.vipledger.core.model.TransactionType
 import kotlin.test.*
 
 class PaymentParserTest {
+    private val alipayBill = """
+        账单详情
+        全部账单
+        测试洗衣服务有限公司
+        -3.50
+        交易成功
+        支付时间
+        2026-10-07 15:28:55
+        付款方式
+        测试银行信用卡(1234)
+        支付奖励
+        立即领取2积分
+        交易详情
+        测试洗衣
+        订单号
+        platform-order-123
+        商家订单号
+        merchant-order-456
+    """.trimIndent()
+
+    @Test fun alipayBillHeaderProvidesMerchantDebitAndPaymentMethod() {
+        val facts = parseBill(alipayBill, PaymentApp.ALIPAY)
+        assertEquals(350L, facts.amountCents)
+        assertEquals(TransactionType.EXPENSE, facts.type)
+        assertEquals("测试洗衣服务有限公司", facts.merchant)
+        assertEquals("测试银行信用卡(1234)", facts.accountToken)
+        assertEquals("platform-order-123", facts.externalId)
+        assertNotNull(facts.paidAt)
+        assertEquals(ReviewReason.NONE, facts.reason)
+    }
+
+    @Test fun merchantOrderLabelIsNeverMistakenForMerchantName() {
+        assertEquals("", parse("支付成功\n实付金额：3.50\n商家订单号：merchant-order-456")!!.merchant)
+        assertEquals("小店", parse("支付成功\n实付金额：3.50\n商家：小店")!!.merchant)
+        assertEquals("", parse("支付成功\n实付金额：3.50\n付款方式：余额宝")!!.merchant)
+        assertEquals("小店", parse("支付成功\n实付金额：3.50\n付款方：小店")!!.merchant)
+        assertEquals("余额宝", parse("支付成功\n实付金额：3.50\n付款方式：余额宝查看扣款顺序", PaymentApp.ALIPAY)!!.accountToken)
+    }
+
+    @Test fun alipayHeaderDoesNotApplyToNotificationsOtherPlatformsOrConflictingAmounts() {
+        assertNull(parse(alipayBill, PaymentApp.ALIPAY)!!.amountCents)
+        assertNull(parseBill(alipayBill, PaymentApp.WECHAT).amountCents)
+        assertNull(parseBill("$alipayBill\n实付金额：4.00", PaymentApp.ALIPAY).amountCents)
+        assertNull(parseBill(alipayBill.replace("-3.50", "-0.00"), PaymentApp.ALIPAY).amountCents)
+    }
+
     private val wechatBill = """
         测试商店
         -12.30
@@ -63,6 +109,11 @@ class PaymentParserTest {
             assertEquals("微信零钱", result.accountToken)
             assertEquals(TransactionType.EXPENSE, result.type)
         }
+    }
+    @Test fun merchantIdentityLabelsBeatProductNameRegardlessOfOrder() {
+        val result = assertNotNull(parse("支付成功\n实付金额：10.00\n商品名称：纸巾\n商户名称：超市\n付款方式：余额"))
+        assertEquals("超市", result.merchant)
+        assertEquals("纸巾", assertNotNull(parse("支付成功\n实付金额：10.00\n商品名称：纸巾")).merchant)
     }
     @Test fun ambiguousAmountsAndOverflowNeverProduceAnAutomaticAmount() {
         assertNull(parse("支付成功\n¥10.00\n¥20.00")!!.amountCents)

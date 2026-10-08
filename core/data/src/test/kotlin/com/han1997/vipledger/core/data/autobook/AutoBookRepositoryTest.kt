@@ -22,6 +22,44 @@ import kotlin.test.*
 
 @RunWith(AndroidJUnit4::class)
 class AutoBookRepositoryTest {
+    @Test fun expandingOrderNumberEnrichesSameBillButDifferentOrdersStaySeparate() = runTest {
+        val repo = seed()
+        val initial = PaymentObservation(PaymentApp.ALIPAY, CaptureSource.ACCESSIBILITY, "same-window", 1_791_417_600_000,
+            "账单详情\n测试商户\n-3.50\n交易成功\n支付时间\n2025-01-01 12:00:00\n付款方式\n测试信用卡(1234)")
+        val first = assertNotNull(repo.capture(initial).getOrThrow())
+        assertNull(first.facts.externalId)
+        val expanded = initial.copy(text = initial.text + "\n订单号\nplatform-123456")
+        val enriched = assertNotNull(repo.capture(expanded).getOrThrow())
+        assertEquals(first.id, enriched.id)
+        assertEquals("platform-123456", enriched.facts.externalId)
+        assertEquals(1, repo.observeCandidates("l").first().size)
+        val second = assertNotNull(repo.capture(expanded.copy(text = expanded.text.replace("platform-123456", "platform-654321"))).getOrThrow())
+        assertNotEquals(first.id, second.id)
+        assertEquals(2, repo.observeCandidates("l").first().size)
+        assertEquals(0, db.txnDao().countByLedger("l"))
+    }
+
+    @Test fun reliableOrderEnrichesUnknownDirectionWithoutCreatingAnotherCandidate() = runTest {
+        val repo = seed()
+        val initial = observation(app = PaymentApp.ALIPAY).copy(text = "交易成功\n实付金额：3.50\n订单号：platform-123456")
+        val first = assertNotNull(repo.capture(initial).getOrThrow())
+        assertNull(first.facts.type)
+        val enriched = assertNotNull(repo.capture(initial.copy(eventKey = "new-window",
+            text = initial.text.replace("交易成功", "支付成功"))).getOrThrow())
+        assertEquals(first.id, enriched.id)
+        assertEquals(TransactionType.EXPENSE, enriched.facts.type)
+        assertEquals(1, repo.observeCandidates("l").first().size)
+    }
+    @Test fun ignoredDirectionlessOrderCannotBeRepostedWhenDirectionBecomesKnown() = runTest {
+        val repo = seed()
+        val initial = observation().copy(text = "交易成功\n实付金额：3.50\n订单号：ignored-order-123")
+        val first = assertNotNull(repo.capture(initial).getOrThrow())
+        repo.ignore(first.id).getOrThrow()
+        assertNull(repo.capture(initial.copy(text = initial.text.replace("交易成功", "支付成功"))).getOrThrow())
+        assertEquals(0, db.txnDao().countByLedger("l"))
+        assertEquals(CandidateStatus.IGNORED, repo.observeCandidates("l").first().single().status)
+    }
+
     private lateinit var db: LedgerDatabase
     private val time = object : TimeProvider {
         override fun nowMillis() = 1000L

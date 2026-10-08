@@ -13,7 +13,8 @@ object PaymentParser {
     private val currencyAmount = Regex("[¥￥]\\s*" + money + "|" + money + "\\s*元")
     private val token = Regex("(?:付款方式|支付方式|收款账户|到账账户|退款账户|转出账户)[：:\\s]*([^\\n;；]+)")
     private val target = Regex("(?:转入账户)[：:\\s]*([^\\n;；]+)")
-    private val merchant = Regex("(?:商户全称|商户名称|收款方|付款方|交易对方|商品名称|商家)[：:\\s]*([^\\n;；]+)")
+    private val merchantIdentity = Regex("(?:商户全称|商户名称|收款方|付款方)(?:[：:][ \\t]*|\\s+)([^\\n;；]+)")
+    private val merchantFallback = Regex("(?:交易对方|商品名称|商家)(?:[：:][ \\t]*|\\s+)([^\\n;；]+)")
     private val external = Regex("(?:退款单号|交易单号|交易号|订单编号|订单号)[：:\\s]*([A-Za-z0-9_-]{6,80})")
     private val original = Regex("(?:原交易单号|原订单号)[：:\\s]*([A-Za-z0-9_-]{6,80})")
     private val paidTimeLabel = Regex("交易时间|付款时间|支付时间|到账时间|退款时间")
@@ -25,13 +26,20 @@ object PaymentParser {
     fun parse(observation: PaymentObservation): PaymentFacts? {
         val text = observation.text.take(16_384).replace('\u00a0', ' ')
         if (!isPaymentPage(text)) return null
+        val alipayHeader = if (observation.app == PaymentApp.ALIPAY && observation.source != CaptureSource.NOTIFICATION &&
+            text.contains("账单详情") && text.contains("支付时间") && text.contains("付款方式")) {
+            val lines = text.lineSequence().map(String::trim).filter(String::isNotEmpty).toList()
+                .fold(mutableListOf<String>()) { result, line -> result.apply { if (lastOrNull() != line) add(line) } }
+            Regex("(?m)^([^\\n]+)\\n[-−][ \\t]*([0-9]+(?:,[0-9]{3})*\\.[0-9]{2})\\n交易成功$")
+                .find(lines.joinToString("\n"))
+        } else null
         val complete = success.containsMatchIn(text) && !unfinished.containsMatchIn(text)
         val type = when {
             risky.containsMatchIn(text) -> null
             Regex("退款成功|退款到账|已退款").containsMatchIn(text) -> TransactionType.REFUND
             target.containsMatchIn(text) && Regex("转账成功|提现成功|充值成功").containsMatchIn(text) -> TransactionType.TRANSFER
             Regex("收款到账|收款成功|已收款|转账到账").containsMatchIn(text) -> TransactionType.INCOME
-            Regex("支付成功|付款成功").containsMatchIn(text) -> TransactionType.EXPENSE
+            Regex("支付成功|付款成功").containsMatchIn(text) || alipayHeader != null -> TransactionType.EXPENSE
             // “转账成功” alone does not establish whether the recipient is another own account.
             else -> null
         }
@@ -43,12 +51,15 @@ object PaymentParser {
             text.contains("支付时间") && external.containsMatchIn(text)
         val debitMatches = if (wechatBill) wechatDebit.findAll(text).toList() else emptyList()
         val debits = debitMatches.mapNotNull { cents(it.groupValues[1]) }
-        val amounts = if (debitMatches.isNotEmpty()) debits + labeled else if (labeledMatches.isNotEmpty()) labeled else currencyAmount.findAll(text)
+        val alipayAmount = alipayHeader?.groupValues?.get(2)?.let(::cents)
+        val amounts = if (alipayHeader != null) listOfNotNull(alipayAmount) + labeled
+            else if (debitMatches.isNotEmpty()) debits + labeled else if (labeledMatches.isNotEmpty()) labeled else currencyAmount.findAll(text)
             .mapNotNull { cents(it.groupValues[1].ifBlank { it.groupValues[2] }) }.toList()
         val foreignCurrency = Regex("USD|HKD|EUR|JPY|美元|港币|港元|欧元|日元|US\\$", RegexOption.IGNORE_CASE).containsMatchIn(text)
-        val priceOnly = labeledMatches.isEmpty() && debitMatches.isEmpty() && Regex("原价|优惠|订单金额|商品金额|应付").containsMatchIn(text)
+        val priceOnly = alipayHeader == null && labeledMatches.isEmpty() && debitMatches.isEmpty() && Regex("原价|优惠|订单金额|商品金额|应付").containsMatchIn(text)
         val amount = amounts.distinct().singleOrNull().takeUnless {
-            foreignCurrency || priceOnly || labeled.size != labeledMatches.size || debits.size != debitMatches.size
+            foreignCurrency || priceOnly || labeled.size != labeledMatches.size || debits.size != debitMatches.size ||
+                (alipayHeader != null && alipayAmount == null)
         }
         val originalMatch = original.find(text)
         val idText = if (originalMatch == null) text else text.removeRange(originalMatch.range)
@@ -60,8 +71,11 @@ object PaymentParser {
             java.time.LocalDateTime.parse(normalized, format).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         }.getOrNull() }
         return PaymentFacts(
-            type, amount, merchant.find(text)?.groupValues?.get(1)?.trim()?.take(120).orEmpty(),
-            token.find(text)?.groupValues?.get(1)?.let(::normalizeToken),
+            type, amount, (merchantIdentity.find(text)?.groupValues?.get(1) ?: alipayHeader?.groupValues?.get(1)
+                ?: merchantFallback.find(text)?.groupValues?.get(1))?.trim()?.take(120).orEmpty(),
+            token.find(text)?.groupValues?.get(1)?.let {
+                normalizeToken(if (observation.app == PaymentApp.ALIPAY) it.trim().removeSuffix("查看扣款顺序") else it)
+            },
             target.find(text)?.groupValues?.get(1)?.let(::normalizeToken),
             external.find(idText)?.groupValues?.get(1), originalMatch?.groupValues?.get(1), complete,
             when { !complete -> ReviewReason.NOT_SUCCESS; amount == null -> ReviewReason.AMOUNT

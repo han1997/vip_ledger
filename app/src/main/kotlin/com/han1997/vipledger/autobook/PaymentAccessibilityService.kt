@@ -5,12 +5,10 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
-import android.view.accessibility.AccessibilityNodeInfo
 import com.han1997.vipledger.core.data.autobook.PaymentOcr
 import com.han1997.vipledger.core.domain.autobook.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import java.util.UUID
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -21,8 +19,9 @@ class PaymentAccessibilityService : AccessibilityService() {
     @Inject lateinit var ocr: PaymentOcr
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var job: Job? = null
-    private var session = UUID.randomUUID().toString()
-    private var window = -1
+    private val captureSession = PaymentWindowSession()
+    private val session get() = captureSession.id
+    private val window get() = captureSession.windowId
     private var paymentActivity = false
     private var resultActivity = false
     private var screenshotBusy = false
@@ -32,15 +31,17 @@ class PaymentAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() { control.update { it.copy(accessibilityConnected = true, issue = null) } }
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val app = PaymentApp.fromPackage(event.packageName?.toString().orEmpty()) ?: return
+        if (captureSession.app != app) { paymentActivity = false; resultActivity = false }
+        var container: String? = null
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val name = event.className?.toString().orEmpty()
             if (name.contains("Activity") || name.endsWith("UI")) {
+                container = name
                 paymentActivity = Regex("Wallet|Pay|Trade|Order|Refund|Cashier", RegexOption.IGNORE_CASE).containsMatchIn(name)
                 resultActivity = Regex("(?:Pay|Trade|Refund).*(?:Success|Result)", RegexOption.IGNORE_CASE).containsMatchIn(name)
-                session = UUID.randomUUID().toString(); lastText = null
             }
         }
-        if (window != event.windowId) { window = event.windowId; session = UUID.randomUUID().toString(); lastText = null }
+        if (captureSession.update(app, event.windowId, container)) lastText = null
         // Fail closed for chat / unadapted activities; never screenshot arbitrary app screens.
         if (!paymentActivity) return
         job?.cancel()
@@ -50,7 +51,7 @@ class PaymentAccessibilityService : AccessibilityService() {
             if (!config.enabled || app !in config.enabledApps) return@launch
             val root = rootInActiveWindow ?: return@launch
             if (root.packageName?.toString() != app.packageName) return@launch
-            val text = readText(root)
+            val text = PaymentNodeTextReader.read(root)
             if (text == lastText) return@launch
             lastText = text
             if (PaymentParser.isPaymentPage(text)) {
@@ -62,20 +63,6 @@ class PaymentAccessibilityService : AccessibilityService() {
                 PaymentParser.parse(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, 0, text))?.amountCents == null &&
                 screenshotSession != session && !screenshotBusy) screenshot(app, session)
         }
-    }
-    private fun readText(root: AccessibilityNodeInfo): String {
-        val result = StringBuilder()
-        val queue = ArrayDeque<AccessibilityNodeInfo>(); queue.add(root)
-        var count = 0
-        while (queue.isNotEmpty() && count++ < 300 && result.length < 16_384) {
-            val node = queue.removeFirst()
-            if (node.isVisibleToUser && !node.isPassword) {
-                node.text?.let { result.append(it).append('\n') }
-                node.contentDescription?.let { result.append(it).append('\n') }
-                for (i in 0 until node.childCount.coerceAtMost(80)) node.getChild(i)?.let(queue::addLast)
-            }
-        }
-        return result.toString()
     }
     @androidx.annotation.RequiresApi(30)
     private fun screenshot(app: PaymentApp, capturedSession: String) {

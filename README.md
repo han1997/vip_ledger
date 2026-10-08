@@ -10,6 +10,8 @@ Keep this README current as you work: **important updates and necessary content 
 
 ## Features
 
+Alipay bill-detail capture supports the merchant header, signed expense amount, payment time and payment method. Field labels must match completely (`付款方` must not match `付款方式`), and the payment-method action `查看扣款顺序` is excluded. Repeated events in one payment window share a session; revealing an order number can enrich the pending record when its amount and payment time match. Existing records without reliable shared identity are not automatically deleted or merged.
+
 Capture status separates the latest processing attempt from the latest saved record. The permissions panel reports whether a capture updated a record, made no change, or failed, and whether an unambiguous amount was extracted. Reopening a known transaction does not necessarily create a new record.
 
 Payment captures that need review now also produce a notification (when Android notification permission is granted); tap it to open the review queue. WeChat bill details support the signed debit header and Chinese payment dates. Historical bills remain pending for confirmation and do not change balances automatically.
