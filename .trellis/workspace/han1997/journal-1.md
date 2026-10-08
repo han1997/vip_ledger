@@ -466,3 +466,37 @@ Resumed in-progress ui-ux-polish task; verified build green (test assembleDebug 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: Automatic bookkeeping implementation and verification
+
+**Date**: 2026-10-08
+**Task**: Automatic bookkeeping implementation and verification
+**Branch**: `master`
+
+### Summary
+
+Completed offline payment capture, account bindings, review queue, atomic posting and deduplication, refund accounting, schema 1-to-2 migration and legacy backup compatibility. Fixed Kotlin paidAt smart-cast compilation and updated versioned JSON assertions; added migration, historical-payment and cross-month refund regressions. Full test/assembleDebug/assembleRelease/lintDebug passed; final test/lintDebug passed with 538 tests and no failures or skips. Release signature verified and API 34 emulator entry/settings/dark-mode checks passed. Archived at the user's explicit finish-work request. OPPO X8 Ultra/Android 17/ColorOS 17 and real payment/refund samples from all five platforms remain unverified; archive does not imply device acceptance.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6f3b58d` | (see git log) |
+| `d5a2546` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
