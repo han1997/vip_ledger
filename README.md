@@ -10,6 +10,8 @@ Keep this README current as you work: **important updates and necessary content 
 
 ## Features
 
+Pinduoduo signed-for order details can create review candidates when actual payment, payment method, order number and order-time labels are present. Accessibility text such as `实付:,134元` is supported. These historical order pages always require time review; shipping or order placement time is not treated as payment time and balances are not changed automatically.
+
 Alipay accessibility can expose a displayed negative amount as `支出20元`. Bill parsing supports this text form and the full counterparty labels `收款方全称` / `付款方全称`; screenshot appearance alone is not used as evidence of the accessibility text format.
 
 Alipay bill-detail capture supports the merchant header, signed expense amount, payment time and payment method. Field labels must match completely (`付款方` must not match `付款方式`), and the payment-method action `查看扣款顺序` is excluded. Repeated events in one payment window share a session; revealing an order number can enrich the pending record when its amount and payment time match. Existing records without reliable shared identity are not automatically deleted or merged.

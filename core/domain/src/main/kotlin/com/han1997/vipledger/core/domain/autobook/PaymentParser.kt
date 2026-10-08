@@ -21,11 +21,18 @@ object PaymentParser {
     private val paidTime = Regex("(?:${paidTimeLabel.pattern})[：:\\s]*([0-9]{4}(?:[-/][0-9]{1,2}[-/][0-9]{1,2}|年[0-9]{1,2}月[0-9]{1,2}日)\\s+[0-9]{1,2}:[0-9]{2}(?::[0-9]{2})?)")
     private val wechatDebit = Regex("(?m)^[ \\t]*[-−][ \\t]*([0-9]+(?:,[0-9]{3})*\\.[0-9]{2})[ \\t]*$")
 
-    fun isPaymentPage(text: String): Boolean = success.containsMatchIn(text) || unfinished.containsMatchIn(text)
+    fun isPaymentPage(text: String, app: PaymentApp? = null): Boolean =
+        success.containsMatchIn(text) || unfinished.containsMatchIn(text) || (app == PaymentApp.PDD && isPddSignedOrder(text))
+
+    private fun isPddSignedOrder(text: String): Boolean =
+        Regex("(?m)^[ \\t]*已签收[ \\t]*$").containsMatchIn(text) && text.contains("实付") &&
+            text.contains("下单时间") && token.containsMatchIn(text) && external.containsMatchIn(text)
 
     fun parse(observation: PaymentObservation): PaymentFacts? {
-        val text = observation.text.take(16_384).replace('\u00a0', ' ')
-        if (!isPaymentPage(text)) return null
+        val sourceText = observation.text.take(16_384).replace('\u00a0', ' ')
+        val text = if (observation.app == PaymentApp.PDD) sourceText.replace(Regex("实付[：:]?[,，\\s]+"), "实付 ") else sourceText
+        val pddOrder = observation.app == PaymentApp.PDD && observation.source != CaptureSource.NOTIFICATION && isPddSignedOrder(text)
+        if (!isPaymentPage(text) && !pddOrder) return null
         val alipayHeader = if (observation.app == PaymentApp.ALIPAY && observation.source != CaptureSource.NOTIFICATION &&
             text.contains("账单详情") && text.contains("支付时间") && text.contains("付款方式")) {
             val lines = text.lineSequence().map(String::trim).filter(String::isNotEmpty).toList()
@@ -33,13 +40,13 @@ object PaymentParser {
             Regex("(?m)^([^\\n]+)\\n(?:[-−][ \\t]*([0-9]+(?:,[0-9]{3})*\\.[0-9]{2})|支出[ \\t]*([0-9]+(?:,[0-9]{3})*(?:\\.[0-9]{1,2})?)[ \\t]*元)\\n交易成功$")
                 .find(lines.joinToString("\n"))
         } else null
-        val complete = success.containsMatchIn(text) && !unfinished.containsMatchIn(text)
+        val complete = (success.containsMatchIn(text) || pddOrder) && !unfinished.containsMatchIn(text)
         val type = when {
             risky.containsMatchIn(text) -> null
             Regex("退款成功|退款到账|已退款").containsMatchIn(text) -> TransactionType.REFUND
             target.containsMatchIn(text) && Regex("转账成功|提现成功|充值成功").containsMatchIn(text) -> TransactionType.TRANSFER
             Regex("收款到账|收款成功|已收款|转账到账").containsMatchIn(text) -> TransactionType.INCOME
-            Regex("支付成功|付款成功").containsMatchIn(text) || alipayHeader != null -> TransactionType.EXPENSE
+            Regex("支付成功|付款成功").containsMatchIn(text) || alipayHeader != null || pddOrder -> TransactionType.EXPENSE
             // “转账成功” alone does not establish whether the recipient is another own account.
             else -> null
         }
@@ -70,9 +77,11 @@ object PaymentParser {
                 .withResolverStyle(java.time.format.ResolverStyle.STRICT)
             java.time.LocalDateTime.parse(normalized, format).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         }.getOrNull() }
+        val pddMerchant = if (pddOrder) Regex("(?m)^([^\\n:：,，]{1,120}(?:旗舰店|专卖店|专营店))$")
+            .findAll(text).map { it.groupValues[1].trim() }.distinct().singleOrNull() else null
         return PaymentFacts(
             type, amount, (merchantIdentity.find(text)?.groupValues?.get(1) ?: alipayHeader?.groupValues?.get(1)
-                ?: merchantFallback.find(text)?.groupValues?.get(1))?.trim()?.take(120).orEmpty(),
+                ?: pddMerchant ?: merchantFallback.find(text)?.groupValues?.get(1))?.trim()?.take(120).orEmpty(),
             token.find(text)?.groupValues?.get(1)?.let {
                 normalizeToken(if (observation.app == PaymentApp.ALIPAY) it.trim().removeSuffix("查看扣款顺序") else it)
             },
@@ -80,6 +89,7 @@ object PaymentParser {
             external.find(idText)?.groupValues?.get(1), originalMatch?.groupValues?.get(1), complete,
             when { !complete -> ReviewReason.NOT_SUCCESS; amount == null -> ReviewReason.AMOUNT
                 type == null -> ReviewReason.DIRECTION
+                pddOrder -> ReviewReason.TIME // Delivery/order time does not prove a fresh payment.
                 paidAt == null && paidTimeLabel.containsMatchIn(text) -> ReviewReason.TIME
                 else -> ReviewReason.NONE }, paidAt,
         )

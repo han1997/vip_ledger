@@ -35,10 +35,10 @@ class PaymentAccessibilityService : AccessibilityService() {
         var container: String? = null
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val name = event.className?.toString().orEmpty()
-            if (name.contains("Activity") || name.endsWith("UI")) {
+            if (PaymentActivityClassifier.isTrackedContainer(name)) {
                 container = name
-                paymentActivity = Regex("Wallet|Pay|Trade|Order|Refund|Cashier", RegexOption.IGNORE_CASE).containsMatchIn(name)
-                resultActivity = Regex("(?:Pay|Trade|Refund).*(?:Success|Result)", RegexOption.IGNORE_CASE).containsMatchIn(name)
+                paymentActivity = PaymentActivityClassifier.isPaymentActivity(app, name)
+                resultActivity = PaymentActivityClassifier.isResultActivity(name)
             }
         }
         if (captureSession.update(app, event.windowId, container)) lastText = null
@@ -54,11 +54,11 @@ class PaymentAccessibilityService : AccessibilityService() {
             val text = PaymentNodeTextReader.read(root)
             if (text == lastText) return@launch
             lastText = text
-            if (PaymentParser.isPaymentPage(text)) {
+            if (PaymentParser.isPaymentPage(text, app)) {
                 processor.submit(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, System.currentTimeMillis(), text))
             }
             if (config.ocrEnabled && Build.VERSION.SDK_INT >= 30 &&
-                (resultActivity || PaymentParser.isPaymentPage(text)) &&
+                (resultActivity || PaymentParser.isPaymentPage(text, app)) &&
                 !Regex("支付密码|输入密码|验证码|身份证|银行卡号").containsMatchIn(text) &&
                 PaymentParser.parse(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, 0, text))?.amountCents == null &&
                 screenshotSession != session && !screenshotBusy) screenshot(app, session)

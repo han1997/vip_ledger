@@ -4,6 +4,48 @@ import com.han1997.vipledger.core.model.TransactionType
 import kotlin.test.*
 
 class PaymentParserTest {
+    private val pddSignedOrder = """
+        拼多多
+        已签收
+        返回
+        测试数码旗舰店
+        商品名称：测试充电器,单价: 142 元,规格描述：测试套装,数量：1个
+        联系商家
+        申请退款
+        多件多折活动减8元,实付:,134元,(免运费)
+        已购规格测试套装该规格补贴价¥142已购数量1合计补贴价¥142店铺优惠-¥8
+        订单编号： 260929-123456789012345
+        260929-123456789012345
+        支付方式： 微信支付
+        下单时间： 2026-09-29 17:21:49
+        拼单时间： 2026-09-29 17:21:59
+        发货时间： 2026-09-29 18:26:43
+        确认收货
+    """.trimIndent()
+
+    @Test fun pddSignedOrderReadsActualAmountAndShopButAlwaysRequiresTimeReview() {
+        assertTrue(PaymentParser.isPaymentPage(pddSignedOrder, PaymentApp.PDD))
+        val facts = parseBill(pddSignedOrder, PaymentApp.PDD)
+        assertEquals(13400L, facts.amountCents)
+        assertEquals("测试数码旗舰店", facts.merchant)
+        assertEquals("微信支付", facts.accountToken)
+        assertEquals("260929-123456789012345", facts.externalId)
+        assertEquals(TransactionType.EXPENSE, facts.type)
+        assertEquals(ReviewReason.TIME, facts.reason)
+        assertNull(facts.paidAt) // Order/shipping time is not a payment timestamp.
+    }
+
+    @Test fun signedOrderTemplateRequiresPddPageAndOrderEvidence() {
+        assertFalse(PaymentParser.isPaymentPage(pddSignedOrder))
+        assertFalse(PaymentParser.isPaymentPage(pddSignedOrder, PaymentApp.WECHAT))
+        assertFalse(PaymentParser.isPaymentPage(pddSignedOrder.replace("订单编号", "商品编号"), PaymentApp.PDD))
+        assertFalse(PaymentParser.isPaymentPage(pddSignedOrder.replace("已签收", "等待发货"), PaymentApp.PDD))
+        assertNull(parse(pddSignedOrder, PaymentApp.PDD))
+        assertNull(PaymentParser.parse(PaymentObservation(PaymentApp.WECHAT, CaptureSource.ACCESSIBILITY, "event", 1, pddSignedOrder)))
+        assertNull(parseBill(pddSignedOrder.replace("实付:,134元", "实付:,0元"), PaymentApp.PDD).amountCents)
+        assertNull(parseBill("$pddSignedOrder\n实付：135元", PaymentApp.PDD).amountCents)
+    }
+
     @Test fun alipayAccessibilityDebitDescriptionAndFullRecipientLabelAreRecognized() {
         // Sanitized device node text: the visible negative amount is exposed as "支出20元".
         val text = """

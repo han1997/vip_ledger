@@ -22,6 +22,20 @@ import kotlin.test.*
 
 @RunWith(AndroidJUnit4::class)
 class AutoBookRepositoryTest {
+    @Test fun signedPddOrderNeverPostsAutomaticallyEvenWithVerifiedAppAndBoundAccount() = runTest {
+        val repo = seed()
+        repo.bind(AccountBinding("l", PaymentApp.PDD, "微信支付", "a")).getOrThrow()
+        val page = PaymentObservation(PaymentApp.PDD, CaptureSource.ACCESSIBILITY, "signed-order", 1_791_417_600_000,
+            "已签收\n测试数码旗舰店\n实付:,134元\n支付方式：微信支付\n订单编号：pdd-order-123\n下单时间：2026-09-29 17:21:49")
+        val first = assertNotNull(repo.capture(page).getOrThrow())
+        assertEquals(13400L, first.facts.amountCents)
+        assertEquals(CandidateStatus.PENDING, first.status)
+        assertEquals(ReviewReason.TIME, first.reason)
+        assertEquals(first.id, assertNotNull(repo.capture(page.copy(eventKey = "reopen")).getOrThrow()).id)
+        assertEquals(1, repo.observeCandidates("l").first().size)
+        assertEquals(0, db.txnDao().countByLedger("l"))
+        assertEquals(0L, db.accountDao().getById("a")!!.currentBalanceCents)
+    }
     @Test fun expandingOrderNumberEnrichesSameBillButDifferentOrdersStaySeparate() = runTest {
         val repo = seed()
         val initial = PaymentObservation(PaymentApp.ALIPAY, CaptureSource.ACCESSIBILITY, "same-window", 1_791_417_600_000,
