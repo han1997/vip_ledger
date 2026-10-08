@@ -27,6 +27,7 @@ object StatsRoutes {
     const val ARG_FROM: String = "from"
     const val ARG_TO: String = "to"
 
+    const val STATS_TAB: String = "stats/tab"
     const val STATS: String = "stats/home/{$ARG_LEDGER_ID}"
     const val SEARCH: String = "stats/search/{$ARG_LEDGER_ID}"
 
@@ -96,14 +97,26 @@ private fun parseRange(from: String?, to: String?): DateRange? {
 
 fun NavGraphBuilder.statsGraph(
     navController: NavHostController,
+    onAddTxn: (ledgerId: String) -> Unit,
     onEditTxn: (ledgerId: String, txnId: String) -> Unit,
 ) {
+    // 统计 Tab 根：无路径参数，ledgerId 由 StatsViewModel 观察当前账本得出（V3 底部导航）。
+    composable(route = StatsRoutes.STATS_TAB) {
+        StatsScreen(
+            onBack = null,
+            onAddTxn = onAddTxn,
+            onOpenSearch = { ledgerId -> navController.navigate(StatsRoutes.search(ledgerId)) },
+            onOpenDrill = { args -> navController.navigate(StatsRoutes.drill(args)) },
+        )
+    }
+
     composable(
         route = StatsRoutes.STATS,
         arguments = listOf(navArgument(StatsRoutes.ARG_LEDGER_ID) { type = NavType.StringType }),
     ) {
         StatsScreen(
             onBack = { navController.popBackStack() },
+            onAddTxn = onAddTxn,
             onOpenSearch = { ledgerId -> navController.navigate(StatsRoutes.search(ledgerId)) },
             onOpenDrill = { args -> navController.navigate(StatsRoutes.drill(args)) },
         )

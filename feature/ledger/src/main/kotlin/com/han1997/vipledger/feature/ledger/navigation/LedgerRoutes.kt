@@ -1,5 +1,8 @@
 package com.han1997.vipledger.feature.ledger.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,6 +20,7 @@ import com.han1997.vipledger.feature.ledger.ui.manage.TagManageScreen
 import com.han1997.vipledger.feature.ledger.ui.recurring.RecurringEditScreen
 import com.han1997.vipledger.feature.ledger.ui.recurring.RecurringListScreen
 import com.han1997.vipledger.feature.ledger.ui.settings.SettingsScreen
+import com.han1997.vipledger.feature.ledger.ui.settings.SettingsTabViewModel
 import com.han1997.vipledger.feature.ledger.ui.txnedit.TxnEditScreen
 import com.han1997.vipledger.feature.ledger.ui.txnlist.TxnListScreen
 
@@ -32,6 +36,7 @@ object LedgerRoutes {
     const val ARG_PLAN_ID: String = "planId"
 
     const val HOME: String = "ledger/home"
+    const val SETTINGS_TAB: String = "ledger/settings-tab"
     const val SETTINGS: String = "ledger/settings/{$ARG_LEDGER_ID}"
     const val LEDGER_MANAGE: String = "ledger/manage/ledgers"
 
@@ -78,10 +83,34 @@ object LedgerRoutes {
 
 fun NavGraphBuilder.ledgerGraph(
     navController: NavHostController,
-    onOpenStats: (String) -> Unit,
     onOpenBackup: () -> Unit,
-    onOpenAi: () -> Unit,
+    onOpenAiModel: () -> Unit,
+    onOpenAiRules: () -> Unit,
 ) {
+    // 「我的」Tab 根：SettingsScreen 无返回箭头，badge 由 navController 上层传入。
+    composable(LedgerRoutes.SETTINGS_TAB) {
+        val viewModel: SettingsTabViewModel = hiltViewModel()
+        val currentLedger by viewModel.currentLedger.collectAsStateWithLifecycle()
+        val pendingDraftCount by viewModel.pendingDraftCount.collectAsStateWithLifecycle()
+        val ledgerId = currentLedger?.id.orEmpty()
+        val ready = ledgerId.isNotBlank()
+        SettingsScreen(
+            ledgerReady = ready,
+            pendingDraftCount = pendingDraftCount,
+            onBack = null,
+            onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
+            onOpenAccounts = { if (ready) navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
+            onOpenCategories = { if (ready) navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
+            onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
+            onOpenBackup = onOpenBackup,
+            onOpenAiModel = onOpenAiModel,
+            onOpenAiRules = onOpenAiRules,
+            onOpenRecurring = { if (ready) navController.navigate(LedgerRoutes.recurringList(ledgerId)) },
+            onOpenDrafts = { if (ready) navController.navigate(LedgerRoutes.drafts(ledgerId)) },
+            onOpenLoans = { if (ready) navController.navigate(LedgerRoutes.loanList(ledgerId)) },
+        )
+    }
+
     composable(
         route = LedgerRoutes.SETTINGS,
         arguments = listOf(navArgument(LedgerRoutes.ARG_LEDGER_ID) { type = NavType.StringType }),
@@ -95,9 +124,9 @@ fun NavGraphBuilder.ledgerGraph(
             onOpenAccounts = { if (ready) navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
             onOpenCategories = { if (ready) navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
             onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
-            onOpenStats = { if (ready) onOpenStats(ledgerId) },
             onOpenBackup = onOpenBackup,
-            onOpenAi = onOpenAi,
+            onOpenAiModel = onOpenAiModel,
+            onOpenAiRules = onOpenAiRules,
             onOpenRecurring = { if (ready) navController.navigate(LedgerRoutes.recurringList(ledgerId)) },
             onOpenDrafts = { if (ready) navController.navigate(LedgerRoutes.drafts(ledgerId)) },
             onOpenLoans = { if (ready) navController.navigate(LedgerRoutes.loanList(ledgerId)) },
@@ -110,13 +139,9 @@ fun NavGraphBuilder.ledgerGraph(
             onOpenTxns = { ledgerId -> navController.navigate(LedgerRoutes.txnList(ledgerId)) },
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
             onOpenAccounts = { ledgerId -> navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
-            onOpenRecurring = { ledgerId -> navController.navigate(LedgerRoutes.recurringList(ledgerId)) },
-            onOpenDrafts = { ledgerId -> navController.navigate(LedgerRoutes.drafts(ledgerId)) },
-            onOpenLoans = { ledgerId -> navController.navigate(LedgerRoutes.loanList(ledgerId)) },
             onOpenLoanDetail = { ledgerId, planId ->
                 navController.navigate(LedgerRoutes.loanDetail(ledgerId, planId))
             },
-            onOpenSettings = { ledgerId -> navController.navigate(LedgerRoutes.settings(ledgerId)) },
         )
     }
 
