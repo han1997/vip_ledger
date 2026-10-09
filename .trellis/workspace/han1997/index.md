@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 17
-- **Last Active**: 2026-10-09
+- **Total Sessions**: 18
+- **Last Active**: 2026-10-10
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~612 | Active |
+| `journal-1.md` | ~646 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 18 | 2026-10-10 | P0/P1 dashboard delivered and archived | `1c0f160`, `9632faa` | `master` |
 | 17 | 2026-10-09 | 应用版本管理与包名调整 | `9240efd` | `master` |
 | 16 | 2026-10-09 | 记账页交互与视觉优化 | `d67169d`, `3f314f0` | `master` |
 | 15 | 2026-10-09 | OPPO 真机测试收尾与支付采集修复 | `68a3099`, `09180e8`, `a40e48b`, `0fcbb23`, `2800512`, `04e02d5`, `3a03854`, `d248518`, `c149368`, `cb98cf8`, `b70f14a` | `master` |

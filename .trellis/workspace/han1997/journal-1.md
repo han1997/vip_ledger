@@ -610,3 +610,37 @@ Completed offline payment capture, account bindings, review queue, atomic postin
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: P0/P1 dashboard delivered and archived
+
+**Date**: 2026-10-10
+**Task**: P0/P1 dashboard delivered and archived
+**Branch**: `master`
+
+### Summary
+
+Delivered monthly budgets, calendar and dashboard in 0.1.2 (3); 607 unique JVM cases, Compose device regression, builds and lint passed. User approved local commits and archive on 2026-10-10. Proceed to P2 assets, savings goals and home layout.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1c0f160` | (see git log) |
+| `9632faa` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
