@@ -21,6 +21,7 @@ import com.han1997.vipledger.feature.ledger.ui.recurring.RecurringEditScreen
 import com.han1997.vipledger.feature.ledger.ui.recurring.RecurringListScreen
 import com.han1997.vipledger.feature.ledger.ui.settings.SettingsScreen
 import com.han1997.vipledger.feature.ledger.ui.settings.SettingsTabViewModel
+import com.han1997.vipledger.feature.ledger.ui.settings.rememberInstalledAppVersion
 import com.han1997.vipledger.feature.ledger.ui.txnedit.TxnEditScreen
 import com.han1997.vipledger.feature.ledger.ui.txnlist.TxnListScreen
 
@@ -103,6 +104,7 @@ fun NavGraphBuilder.ledgerGraph(
         val ready = ledgerId.isNotBlank()
         SettingsScreen(
             ledgerReady = ready,
+            appVersion = rememberInstalledAppVersion(),
             pendingDraftCount = pendingDraftCount,
             onBack = null,
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
@@ -127,6 +129,7 @@ fun NavGraphBuilder.ledgerGraph(
         val ready = ledgerId.isNotBlank() && ledgerId != "none"
         SettingsScreen(
             ledgerReady = ready,
+            appVersion = rememberInstalledAppVersion(),
             onBack = { navController.popBackStack() },
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
             onOpenAccounts = { if (ready) navController.navigate(LedgerRoutes.accountManage(ledgerId)) },

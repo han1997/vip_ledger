@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.han1997.vipledger.core.designsystem.component.ActionRow
 import com.han1997.vipledger.core.designsystem.component.GroupCard
@@ -25,6 +27,7 @@ import com.han1997.vipledger.feature.ledger.R
 @Composable
 fun SettingsScreen(
     ledgerReady: Boolean,
+    appVersion: InstalledAppVersion,
     pendingDraftCount: Int = 0,
     onBack: (() -> Unit)?,
     onOpenLedgers: () -> Unit,
@@ -102,6 +105,15 @@ fun SettingsScreen(
                     rows = listOf(SettingsRow(stringResource(R.string.home_backup), onOpenBackup)),
                 )
             }
+            item(key = "app-version") {
+                Text(
+                    text = stringResource(R.string.settings_app_version, appVersion.name, appVersion.code),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = VipLedgerTokens.Space2),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
@@ -140,6 +152,7 @@ private fun SettingsScreenPreview() {
     VipLedgerTheme {
         SettingsScreen(
             ledgerReady = true,
+            appVersion = InstalledAppVersion("0.1.1", 2),
             onBack = {},
             onOpenLedgers = {},
             onOpenAccounts = {},

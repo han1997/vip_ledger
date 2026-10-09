@@ -42,7 +42,8 @@ core/model/src/test/kotlin/...   测试与被测包路径一一对应
 
 ## 包名与命名
 
-- 包名前缀：`com.han1997.vipledger`，模块后缀与目录一致（如 `core.model`、`feature.stats`）。
+- 安装 applicationId：`fun.han1997.vipledger`，与源码 namespace 分离。
+- 源码包名前缀：`com.han1997.vipledger`，模块后缀与目录一致（如 `core.model`、`feature.stats`）。
 - Room 实体 `XxxEntity`、DAO `XxxDao`、仓库实现 `XxxRepositoryImpl`、用例 `XxxUseCase`。
 - 表名与列名用小写下划线；Kotlin 属性用驼峰，通过 `@ColumnInfo` 映射。
 - 测试类 `XxxTest`，与被测类同包；测试方法用中文描述业务规则或用反引号包裹的英文短句，禁止 `test1` 这类命名。

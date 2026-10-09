@@ -1,4 +1,5 @@
 import java.util.Properties
+import com.android.build.gradle.api.ApkVariantOutput
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,8 +9,21 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-// Local release signing. `keystore.properties` is untracked and only present on machines
-// that hold the release keystore; builds without it stay unsigned instead of failing.
+// One checked-in application version; builds never increment it.
+val appVersion = Properties().apply {
+    rootProject.file("version.properties").inputStream().use { load(it) }
+}
+val appVersionName = requireNotNull(appVersion.getProperty("versionName"))
+val appVersionCodeText = requireNotNull(appVersion.getProperty("versionCode"))
+require(appVersionName.matches(Regex("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)"))) {
+    "versionName must be major.minor.patch without leading zeros"
+}
+val appVersionCode = requireNotNull(appVersionCodeText.toIntOrNull())
+require(appVersionCodeText.matches(Regex("[1-9][0-9]*")) && appVersionCode in 1..2_100_000_000) {
+    "versionCode must be in 1..2100000000"
+}
+
+// Local release signing. Without the untracked keystore config, release stays unsigned.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
@@ -22,11 +36,11 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.han1997.vipledger"
+        applicationId = "fun.han1997.vipledger"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
     }
 
     signingConfigs {
@@ -72,6 +86,15 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+// AGP 8.13's public APK output API also keeps output-metadata.json in sync.
+android.applicationVariants.all {
+    val apkName = "$applicationId-v$versionName-$versionCode-$name" +
+        if (isSigningReady) ".apk" else "-unsigned.apk"
+    outputs.all {
+        (this as ApkVariantOutput).outputFileName = apkName
     }
 }
 

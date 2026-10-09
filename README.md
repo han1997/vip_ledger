@@ -92,8 +92,34 @@ sdk.dir=C:\\Users\\<you>\\AppData\\Local\\Android\\Sdk
 
 When asked to "build" the project, produce both variants: `assembleDebug assembleRelease`.
 
-- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
-- Signed release APK: `app/build/outputs/apk/release/app-release.apk`
+- Debug APK: `app/build/outputs/apk/debug/fun.han1997.vipledger-v<versionName>-<versionCode>-debug.apk`
+- Signed release APK: `app/build/outputs/apk/release/fun.han1997.vipledger-v<versionName>-<versionCode>-release.apk`
+
+### Application versions
+
+`version.properties` is the single source for `versionName` and `versionCode`.
+For each delivered application source/resource/build change, bump once and record its summary:
+
+```powershell
+python -B tools/version.py bump --message "更新说明"
+python -B tools/version.py bump --part minor --message "次版本更新说明" # use instead of patch when needed
+python -B -m unittest discover -s tools/tests -v
+```
+
+The default is a patch bump; `--part major` also works. Every bump increments `versionCode`
+and prepends an entry to `CHANGELOG.md`. The tool needs Python 3.8+ and no extra packages.
+Repeated builds, fixes within the same delivery, and documentation/Trellis-only edits do not
+bump again. Gradle only reads the version file. **Me** shows the installed version at the bottom,
+including when no ledger exists.
+
+The installed application ID is `fun.han1997.vipledger`; Kotlin packages and module namespaces
+remain `com.han1997.vipledger`. The first installation with this ID starts with fresh data and
+coexists with the old application, whose data stays intact. No automatic migration is performed.
+Subsequent versions use the same release key and `adb -s <physical-device-serial> install -r $releaseApk`.
+Verify the resulting package version after installation; do not uninstall or automate phone navigation.
+
+APK names include the application ID, version name, version code, and build type. Unsigned releases
+add `-unsigned` before `.apk`. Always select the current version, not a leftover APK from an earlier build.
 
 ### Release signing
 
@@ -120,7 +146,9 @@ keytool -genkeypair -v -keystore keystore/vipledger-release.jks -storetype JKS `
 Verify the signed APK:
 
 ```powershell
-& "$env:LOCALAPPDATA\Android\Sdk\build-tools\36.0.0\apksigner.bat" verify --print-certs app\build\outputs\apk\release\app-release.apk
+$appVersion = ConvertFrom-StringData (Get-Content -Raw version.properties)
+$releaseApk = "app/build/outputs/apk/release/fun.han1997.vipledger-v$($appVersion.versionName)-$($appVersion.versionCode)-release.apk"
+& "$env:LOCALAPPDATA\Android\Sdk\build-tools\36.0.0\apksigner.bat" verify --print-certs $releaseApk
 ```
 
 > **Back up the keystore.** `keystore/` and `keystore.properties` are gitignored and never committed. Keep a copy of both in a password manager or secure backup: losing the keystore means future releases are signed with a different key and cannot upgrade an installed app in place.
