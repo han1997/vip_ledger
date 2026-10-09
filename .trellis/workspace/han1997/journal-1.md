@@ -577,3 +577,36 @@ Completed offline payment capture, account bindings, review queue, atomic postin
 ### Next Steps
 
 - None - task complete
+
+
+## Session 17: 应用版本管理与包名调整
+
+**Date**: 2026-10-09
+**Task**: 应用版本管理与包名调整
+**Branch**: `master`
+
+### Summary
+
+实现 version.properties 单一版本来源和 Python 递增/更新日志工具，applicationId 改为 fun.han1997.vipledger，APK 按版本命名，我的页显示实际安装版本。版本 0.1.1（2）。Python 测试、test assembleDebug assembleRelease lintDebug、签名及重复构建核验通过；模拟器安装和页面验证通过。未连接真机，未执行真机安装。用户确认提交归档，原有账单 ZIP 保留。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9240efd` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
