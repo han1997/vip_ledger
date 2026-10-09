@@ -500,3 +500,46 @@ Completed offline payment capture, account bindings, review queue, atomic postin
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: OPPO 真机测试收尾与支付采集修复
+
+**Date**: 2026-10-09
+**Task**: OPPO 真机测试收尾与支付采集修复
+**Branch**: `master`
+
+### Summary
+
+按用户要求结束并归档本轮测试，不再继续支付识别调优。支付宝选定样本识别、确认入账与重放防重复通过；拼多多已签收订单待确认识别通过；京东准确率仍不足，用户暂时接受；微信最终复测、淘宝及其余全应用范围未完成，不视为全量验收通过。修复采集入口、字段边界、实付金额、幂等补全、OCR行顺序与限频重试，补交设置页/确认表单/密码遮蔽及编码构建收尾。build-13全量test/Debug/Release/lint与签名校验通过，最新Release已安装OPPO，数据和设置保留。完整结论见.trellis/tasks/archive/2026-10/10-08-oppo-full-acceptance/report.md。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `68a3099` | (see git log) |
+| `09180e8` | (see git log) |
+| `a40e48b` | (see git log) |
+| `0fcbb23` | (see git log) |
+| `2800512` | (see git log) |
+| `04e02d5` | (see git log) |
+| `3a03854` | (see git log) |
+| `d248518` | (see git log) |
+| `c149368` | (see git log) |
+| `cb98cf8` | (see git log) |
+| `b70f14a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
