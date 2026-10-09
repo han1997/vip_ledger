@@ -58,6 +58,7 @@ class PaymentAccessibilityService : AccessibilityService() {
             val text = PaymentNodeTextReader.read(root)
             val changedText = text != lastText
             lastText = text
+            if (text.isNotBlank()) control.update { it.copy(lastReadAt = System.currentTimeMillis()) }
             if (changedText && PaymentParser.isPaymentPage(text, app)) {
                 processor.submit(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, System.currentTimeMillis(), text))
             }

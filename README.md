@@ -41,10 +41,17 @@ Open **Me → Automatic bookkeeping**, choose a fixed ledger, bind payment metho
 and grant notification access or accessibility access in Android settings. Chinese OCR is optional
 and bundled for offline use; screenshots and raw notifications are not saved.
 
+Permissions, apps, and account bindings are grouped into expandable sections. A fixed ledger is
+required before capture can be enabled. You can capture a payment first, then select its observed
+payment method when creating an account binding; missing accounts are explained in the form.
+Password and API-key fields mask their contents.
+
 WeChat, Alipay, JD, Pinduoduo, and Taobao are configured capture targets. Each starts in review mode:
 validate real payment samples before enabling automatic posting for that platform. Ambiguous amounts,
 accounts, direction, refunds, and possible duplicates remain pending. Posted entries can be edited or
 deleted through the record link while capture evidence remains available for deduplication.
+
+The October 2026 device-test session ended at the user's request: selected Alipay and Pinduoduo flows passed, while JD OCR was provisionally accepted with remaining accuracy limitations. WeChat final field verification, Taobao, and the broader original acceptance matrix remain incomplete; this is not full five-platform certification.
 
 Refunds increase the receiving account balance and reduce expense in the month received. Partial
 refunds can reference an original expense. Database version 1 upgrades to version 2 without resetting

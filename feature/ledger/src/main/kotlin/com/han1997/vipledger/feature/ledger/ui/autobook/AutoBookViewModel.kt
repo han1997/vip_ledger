@@ -26,7 +26,11 @@ class AutoBookViewModel @Inject constructor(
         watch { control.runtime.collect { value -> state.update { it.copy(runtime = value) } } }
         watch {
             repository.observeConfig().collectLatest { config ->
-                state.update { it.copy(config = config, form = null, bindingAccount = "") }
+                state.update {
+                    if (it.config.ledgerId != config.ledgerId) it.copy(config = config, form = null, bindingAccount = "",
+                        accounts = emptyList(), bindings = emptyList(), candidates = emptyList(), txns = emptyList())
+                    else it.copy(config = config)
+                }
                 combine(accounts.observeByLedger(config.ledgerId), repository.observeBindings(config.ledgerId),
                     repository.observeCandidates(config.ledgerId), txns.observe(TxnFilter(config.ledgerId))) { a, b, c, t ->
                     state.update { it.copy(accounts = a.filter { account -> account.isUsable }, bindings = b, candidates = c, txns = t) }
@@ -49,7 +53,7 @@ class AutoBookViewModel @Inject constructor(
             is AutoBookAction.Unbind -> run { repository.removeBinding(action.value) }
             is AutoBookAction.Select -> state.update { it.copy(form = CandidateForm(action.value.id,
                 action.value.facts.type ?: TransactionType.EXPENSE,
-                action.value.facts.amountCents?.let { cents -> Money.ofCents(cents).toDisplayString() }.orEmpty(),
+                action.value.facts.amountCents?.let { cents -> Money.ofCents(cents).toPlainString() }.orEmpty(),
                 action.value.accountId.orEmpty(), action.value.targetAccountId.orEmpty(), action.value.facts.merchant,
                 action.value.refundOfTxnId.orEmpty(), action.value.duplicateTxnId.orEmpty())) }
             is AutoBookAction.Edit -> state.update { it.copy(form = action.value) }

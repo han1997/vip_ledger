@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
@@ -46,8 +48,15 @@ fun LabeledTextField(
             singleLine = singleLine,
             isError = isError,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            visualTransformation = textFieldVisualTransformation(keyboardType),
             supportingText = supportingText?.let { { Text(text = it) } },
             textStyle = textStyle,
         )
     }
 }
+
+internal fun textFieldVisualTransformation(keyboardType: KeyboardType): VisualTransformation =
+    when (keyboardType) {
+        KeyboardType.Password, KeyboardType.NumberPassword -> PasswordVisualTransformation()
+        else -> VisualTransformation.None
+    }

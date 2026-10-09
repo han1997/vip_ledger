@@ -6,6 +6,7 @@
 - 交互统一走 `XxxAction`：Screen 只调用 `viewModel.onAction(action)`，不直接调用仓库。
 - 状态用 `StateFlow<XxxUiState>` 暴露，`collectAsStateWithLifecycle()` 收集。
 - 一次性事件（弹提示、导航、弹 SAF 选择器）用 `Channel` 或状态字段 + 消费后置空，不要用 LiveData。
+- `LabeledTextField` 的 Password/NumberPassword 键盘必须同时使用 `PasswordVisualTransformation`；仅设置键盘类型不会遮蔽字符。回归见 `PasswordFieldTest`，普通文本/金额仍需正常显示。
 - UiState 里可以放「数据 + 选中项」，但**不放中文文案、不放 `Context`/`Uri`**；需要查表的名字用
   `categoryNames` / `accountNames` 这类 `Map<String, String>` 由 ViewModel 组装。
 
