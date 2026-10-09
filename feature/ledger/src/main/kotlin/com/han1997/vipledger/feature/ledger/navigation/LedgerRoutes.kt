@@ -30,6 +30,10 @@ import com.han1997.vipledger.feature.ledger.ui.txnlist.TxnListScreen
  * 后续 `feature:stats` / `feature:sync` 各自提供自己的 graph。
  */
 object LedgerRoutes {
+    const val CALENDAR: String = "ledger/calendar"
+    const val BUDGET: String = "ledger/budget/{ledgerId}"
+    const val ARG_DATE: String = "date"
+    fun budget(ledgerId: String) = "ledger/budget/$ledgerId"
     const val AUTO_BOOK = "ledger/auto-book"
 
     const val ARG_LEDGER_ID: String = "ledgerId"
@@ -43,7 +47,7 @@ object LedgerRoutes {
     const val LEDGER_MANAGE: String = "ledger/manage/ledgers"
 
     const val TXN_LIST: String = "ledger/txns/{$ARG_LEDGER_ID}"
-    const val TXN_EDIT: String = "ledger/txn/edit/{$ARG_LEDGER_ID}?$ARG_TXN_ID={$ARG_TXN_ID}"
+    const val TXN_EDIT: String = "ledger/txn/edit/{$ARG_LEDGER_ID}?$ARG_TXN_ID={$ARG_TXN_ID}&$ARG_DATE={$ARG_DATE}"
     const val ACCOUNT_MANAGE: String = "ledger/manage/accounts/{$ARG_LEDGER_ID}"
     const val CATEGORY_MANAGE: String = "ledger/manage/categories/{$ARG_LEDGER_ID}"
     const val TAG_MANAGE: String = "ledger/manage/tags/{$ARG_LEDGER_ID}"
@@ -58,8 +62,8 @@ object LedgerRoutes {
 
     fun txnList(ledgerId: String): String = "ledger/txns/$ledgerId"
 
-    fun txnEdit(ledgerId: String, txnId: String? = null): String =
-        "ledger/txn/edit/$ledgerId?$ARG_TXN_ID=" + txnId.orEmpty()
+    fun txnEdit(ledgerId: String, txnId: String? = null, date: kotlinx.datetime.LocalDate? = null): String =
+        "ledger/txn/edit/$ledgerId?$ARG_TXN_ID=" + txnId.orEmpty() + "&$ARG_DATE=" + (date?.toString() ?: "")
 
     fun accountManage(ledgerId: String): String = "ledger/manage/accounts/$ledgerId"
 
@@ -88,7 +92,19 @@ fun NavGraphBuilder.ledgerGraph(
     onOpenBackup: () -> Unit,
     onOpenAiModel: () -> Unit,
     onOpenAiRules: () -> Unit,
+    onOpenSearch: (String) -> Unit,
+    onOpenRange: (String, com.han1997.vipledger.core.model.time.DateRange) -> Unit,
 ) {
+    composable(LedgerRoutes.CALENDAR) {
+        com.han1997.vipledger.feature.ledger.ui.calendar.CalendarScreen(
+            onAdd = { ledger, date -> navController.navigate(LedgerRoutes.txnEdit(ledger, date = date)) },
+            onEdit = { ledger, txn -> navController.navigate(LedgerRoutes.txnEdit(ledger, txn)) },
+            onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
+        )
+    }
+    composable(LedgerRoutes.BUDGET, arguments = listOf(navArgument(LedgerRoutes.ARG_LEDGER_ID) { type = NavType.StringType })) {
+        com.han1997.vipledger.feature.ledger.ui.budget.BudgetScreen(onBack = { navController.popBackStack() })
+    }
     composable(LedgerRoutes.AUTO_BOOK) {
         com.han1997.vipledger.feature.ledger.ui.autobook.AutoBookScreen(
             onBack = { navController.popBackStack() },
@@ -147,6 +163,12 @@ fun NavGraphBuilder.ledgerGraph(
 
     composable(LedgerRoutes.HOME) {
         HomeScreen(
+            onEditTxn = { ledger, txn -> navController.navigate(LedgerRoutes.txnEdit(ledger, txn)) },
+            onOpenBudget = { navController.navigate(LedgerRoutes.budget(it)) },
+            onOpenSearch = onOpenSearch,
+            onOpenRange = onOpenRange,
+            onOpenDrafts = { navController.navigate(LedgerRoutes.drafts(it)) },
+            onOpenAuto = { navController.navigate(LedgerRoutes.AUTO_BOOK) },
             onAddTxn = { ledgerId -> navController.navigate(LedgerRoutes.txnEdit(ledgerId)) },
             onOpenTxns = { ledgerId -> navController.navigate(LedgerRoutes.txnList(ledgerId)) },
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
@@ -178,6 +200,7 @@ fun NavGraphBuilder.ledgerGraph(
                 nullable = true
                 defaultValue = null
             },
+            navArgument(LedgerRoutes.ARG_DATE) { type = NavType.StringType; nullable = true; defaultValue = null },
         ),
     ) {
         TxnEditScreen(onBack = { navController.popBackStack() })

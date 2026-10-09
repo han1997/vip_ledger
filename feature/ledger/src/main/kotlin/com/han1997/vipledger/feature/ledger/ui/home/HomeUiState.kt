@@ -11,17 +11,21 @@ import com.han1997.vipledger.core.domain.model.Reminder
  */
 data class HomeUiState(
     val isLoading: Boolean = true,
+    val failed: Boolean = false,
     val ledgerId: String? = null,
     val ledgerName: String = "",
     val ledgers: List<Ledger> = emptyList(),
     val overview: HomeOverview? = null,
     val reminders: List<Reminder> = emptyList(),
     val pendingDraftCount: Int = 0,
+    val pendingAutoCount: Int = 0,
+    val budget: com.han1997.vipledger.core.domain.model.BudgetReport? = null,
     val accountNames: Map<String, String> = emptyMap(),
     val categoryNames: Map<String, String> = emptyMap(),
     val tagNames: Map<String, String> = emptyMap(),
 )
 
 sealed interface HomeAction {
+    data object Retry : HomeAction
     data class SelectLedger(val ledgerId: String) : HomeAction
 }

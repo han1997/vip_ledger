@@ -18,10 +18,12 @@ import java.util.concurrent.TimeUnit
  */
 @HiltAndroidApp
 class VipLedgerApplication : Application() {
+    @javax.inject.Inject lateinit var budgetMonitor: com.han1997.vipledger.notify.BudgetMonitor
 
     override fun onCreate() {
         super.onCreate()
         ReminderNotifier.ensureChannel(this)
+        budgetMonitor.start()
         scheduleDailyWork()
     }
 

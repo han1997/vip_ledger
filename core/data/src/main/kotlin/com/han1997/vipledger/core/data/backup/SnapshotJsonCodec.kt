@@ -50,7 +50,7 @@ internal object SnapshotJsonCodec {
      */
     internal fun export(database: SupportSQLiteDatabase, tables: List<String>, writer: Writer): Map<String, Int> {
         val counts = linkedMapOf<String, Int>()
-        writer.write("{\"schemaVersion\":2,\"tables\":{")
+        writer.write("{\"schemaVersion\":${com.han1997.vipledger.core.database.LedgerDatabase.SCHEMA_VERSION},\"tables\":{")
         tables.forEachIndexed { tableIndex, table ->
             if (tableIndex > 0) writer.write(",")
             writer.write(JSONObject.quote(table))
@@ -73,10 +73,11 @@ internal object SnapshotJsonCodec {
     fun insert(database: SupportSQLiteDatabase, tables: List<String>, source: File) {
         val document = JSONObject(source.readText(Charsets.UTF_8))
         val version = document.optInt("schemaVersion", 1)
-        require(version in 1..2) { "Unsupported database JSON version" }
+        require(version in 1..com.han1997.vipledger.core.database.LedgerDatabase.SCHEMA_VERSION) { "Unsupported database JSON version" }
         val tableJson = document.getJSONObject("tables")
         tables.forEach { table ->
             if (version == 1 && table.startsWith("auto_") && !tableJson.has(table)) return@forEach
+            if (version < 3 && table.startsWith("budget_") && !tableJson.has(table)) return@forEach
             val rows = tableJson.getJSONArray(table)
             if (rows.length() == 0) return@forEach
             val blobColumns = blobColumns(database, table)

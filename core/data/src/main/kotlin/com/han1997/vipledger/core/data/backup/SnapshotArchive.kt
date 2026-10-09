@@ -108,7 +108,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
             require(expected.equals(sha256(dbJson), ignoreCase = true)) { "Backup checksum mismatch" }
             val countsJson = manifestJson.getJSONObject("counts")
             val counts = TABLES.associateWith { table ->
-                if (version == 1 && table.startsWith("auto_")) 0 else countsJson.getInt(table)
+                if ((version == 1 && table.startsWith("auto_")) || (version < 3 && table.startsWith("budget_"))) 0 else countsJson.getInt(table)
             }
             val manifest = SnapshotManifest(version, manifestJson.getLong("createdAt"), counts, expected)
             validateWithTemporaryDatabase(dbJson, counts)
@@ -231,7 +231,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
     }
 
     companion object {
-        const val FORMAT_VERSION = 2
+        const val FORMAT_VERSION = 3
         const val PBKDF2_ITERATIONS = 150_000
         const val SAFETY_COPY_DIR = "backups"
         const val SAFETY_COPY_PREFIX = "pre-restore-"
@@ -243,6 +243,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
             "ledger", "account", "category", "tag", "txn", "txn_tag", "recurring_rule",
             "installment_plan", "installment_period", "merchant_rule", "attachment", "ml_training_sample",
             "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
+            "budget_limit", "budget_alert",
         )
     }
 }

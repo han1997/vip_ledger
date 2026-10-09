@@ -17,6 +17,10 @@ data class HomeOverview(
     val todayExpense: Money = Money.ZERO,
     val usableAccountCount: Int = 0,
     val recentTxns: List<Txn> = emptyList(),
+    val totalAssets: Money = Money.ZERO,
+    val todayIncome: Money = Money.ZERO,
+    val recentGroups: List<TxnDayGroup> = emptyList(),
+    val lastSevenDays: List<PeriodStat> = emptyList(),
 ) {
     val monthBalance: Money get() = monthIncome - monthExpense
 }

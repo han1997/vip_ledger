@@ -64,7 +64,9 @@ class ObserveHomeOverviewUseCaseTest {
         assertEquals(Money.ofCents(3800), overview.todayExpense)
         assertEquals(2, overview.monthCount, "只有本月已确认的收支入账")
         assertEquals(2, overview.usableAccountCount)
-        assertEquals(5, overview.recentTxns.size)
+        assertEquals(4, overview.recentTxns.size, "首页近期流水不混入待确认草稿")
+        assertEquals(Money.ofCents(100000), overview.totalAssets)
+        assertEquals(Money.ofCents(800000), overview.todayIncome)
     }
 
     @Test

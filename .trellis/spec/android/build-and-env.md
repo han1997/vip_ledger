@@ -38,6 +38,8 @@
 
 ## 文件编码
 
+- 本轮观察到新增domain类已进入domain.jar，但长驻Gradle daemon内的KSP仍报告无法解析。先核验jar，再用`gradlew --stop`重启构建进程；必要时单次`'-Pksp.incremental=false'`，不要为缓存问题改依赖版本。PowerShell中带点的`-P`参数必须整体引号，否则会被拆成任务名。之后普通增量构建已通过。
+
 - 仓库内所有源码、配置与文档统一使用 UTF-8（无 BOM）；禁止新建 GBK/GB2312 或带 BOM 的文件。
 - 根目录 `.editorconfig` 固化 `charset = utf-8`，编辑器按该约定落盘；遇到带 BOM 的历史文件只移除 BOM，不顺手改内容。
 - `gradle.properties` 保持 `org.gradle.jvmargs` 里的 `-Dfile.encoding=UTF-8`，JVM 编译与运行统一 UTF-8。

@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
@@ -38,22 +40,25 @@ import com.han1997.vipledger.feature.sync.navigation.backupGraph
 /**
  * 应用的导航根。
  *
- * V3 起 `:app` 同时负责底部导航栏：首页 / 统计 / 我的 三个 Tab 各自独立返回栈，
+ * `:app` 负责底部导航栏：首页 / 日历 / 统计 / 我的 四个 Tab 各自独立返回栈，
  * 互不覆盖；次级页（交易列表、编辑、管理页、备份、AI 配置）在 Tab 之上叠导航。
  * 各 feature 模块自带 graph，`:app` 只负责把它们拼起来。
  */
 @Composable
-fun VipLedgerApp(modifier: Modifier = Modifier, openAutoBook: Boolean = false) {
+fun VipLedgerApp(modifier: Modifier = Modifier, openAutoBook: Boolean = false, openBudgetLedger: String? = null) {
     val navController = rememberNavController()
+    androidx.compose.runtime.LaunchedEffect(openBudgetLedger) {
+        if (!openBudgetLedger.isNullOrBlank()) navController.navigate(LedgerRoutes.budget(openBudgetLedger)) { launchSingleTop = true }
+    }
     androidx.compose.runtime.LaunchedEffect(openAutoBook) {
         if (openAutoBook) navController.navigate(LedgerRoutes.AUTO_BOOK) { launchSingleTop = true }
     }
     val backStackEntries by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntries?.destination?.route
 
-    // 只在三个 Tab 根上显示底部栏；次级页（编辑、管理、备份、AI 配置）进入后隐藏。
+    // 只在四个 Tab 根上显示底部栏；次级页进入后隐藏。
     val showBottomBar = when (currentRoute) {
-        LedgerRoutes.HOME, LedgerRoutes.SETTINGS_TAB, StatsRoutes.STATS_TAB -> true
+        LedgerRoutes.HOME, LedgerRoutes.CALENDAR, LedgerRoutes.SETTINGS_TAB, StatsRoutes.STATS_TAB -> true
         else -> false
     }
 
@@ -72,6 +77,8 @@ fun VipLedgerApp(modifier: Modifier = Modifier, openAutoBook: Boolean = false) {
                 onOpenBackup = { navController.navigate(BackupRoutes.HOME) },
                 onOpenAiModel = { navController.navigate(AiRoutes.MODEL) },
                 onOpenAiRules = { navController.navigate(AiRoutes.RULES) },
+                onOpenSearch = { navController.navigate(StatsRoutes.search(it)) },
+                onOpenRange = { ledger, range -> navController.navigate(StatsRoutes.drill(com.han1997.vipledger.feature.stats.navigation.DrillArgs(ledgerId = ledger, range = range))) },
             )
             statsGraph(
                 navController = navController,
@@ -95,7 +102,7 @@ private fun navigateTab(navController: NavHostController, route: String) {
 }
 
 /**
- * 底部导航栏容器：三个 Tab（首页/统计/我的）各自挂着标题与图标；
+ * 底部导航栏容器：四个 Tab 各自挂着标题与图标；
  * 次级页（showBottomBar = false）时整栏隐藏，内容直接铺满。
  */
 @Composable
@@ -143,6 +150,12 @@ private val TabDestinations: List<TabDestination> = listOf(
         labelRes = DesignSystemR.string.tab_home,
         selectedIcon = Icons.Filled.Home,
         unselectedIcon = Icons.Outlined.Home,
+    ),
+    TabDestination(
+        route = LedgerRoutes.CALENDAR,
+        labelRes = DesignSystemR.string.tab_calendar,
+        selectedIcon = Icons.Filled.CalendarMonth,
+        unselectedIcon = Icons.Outlined.CalendarMonth,
     ),
     TabDestination(
         route = StatsRoutes.STATS_TAB,

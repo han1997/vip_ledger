@@ -86,6 +86,11 @@ class TxnEditViewModel @Inject constructor(
 
     init {
         val zone = timeProvider.zone
+        if (txnId == null) {
+            com.han1997.vipledger.feature.ledger.ui.common.validCalendarDate(savedStateHandle.get<String>(LedgerRoutes.ARG_DATE))?.let { selected ->
+                _uiState.update { it.copy(occurredAt = replaceEntryDate(it.occurredAt, selected, zone)) }
+            }
+        }
         val today = timeProvider.nowMillis().toLocalDate(zone)
         _uiState.update {
             it.copy(

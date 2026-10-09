@@ -1,70 +1,30 @@
 package com.han1997.vipledger.feature.ledger.ui.home
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.han1997.vipledger.core.designsystem.component.AmountText
-import com.han1997.vipledger.core.designsystem.component.EmptyState
-import com.han1997.vipledger.core.designsystem.component.GroupCard
-import com.han1997.vipledger.core.designsystem.component.HeroCard
-import com.han1997.vipledger.core.designsystem.component.LoadingState
-import com.han1997.vipledger.core.designsystem.component.SectionHeader
-import com.han1997.vipledger.core.designsystem.component.TxnLine
-import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
-import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
+import com.han1997.vipledger.core.designsystem.component.*
+import com.han1997.vipledger.core.designsystem.component.chart.BarChart
+import com.han1997.vipledger.core.designsystem.component.chart.BarGroup
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
-import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
-import com.han1997.vipledger.core.designsystem.theme.IncomeGreen
-import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
-import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
-import com.han1997.vipledger.core.designsystem.theme.displayAmount
-import com.han1997.vipledger.core.designsystem.theme.displayHero
-import com.han1997.vipledger.core.designsystem.theme.vipLedgerAccentColors
-import com.han1997.vipledger.core.domain.model.HomeOverview
-import com.han1997.vipledger.core.domain.model.Ledger
-import com.han1997.vipledger.core.domain.model.Reminder
-import com.han1997.vipledger.core.domain.model.ReminderKind
-import com.han1997.vipledger.core.domain.model.Txn
-import com.han1997.vipledger.core.model.TransactionType
-import com.han1997.vipledger.core.model.money.Money
+import com.han1997.vipledger.core.designsystem.theme.*
+import com.han1997.vipledger.core.model.time.DateRange
 import com.han1997.vipledger.feature.ledger.R
+import com.han1997.vipledger.feature.ledger.ui.budget.BudgetProgressContent
 
-/** 首页概览：净资产 / 本月收支 / 今日支出 / 最近账目。 */
 @Composable
 fun HomeScreen(
     onAddTxn: (String) -> Unit,
@@ -72,20 +32,17 @@ fun HomeScreen(
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
     onOpenLoanDetail: (String, String) -> Unit,
+    onEditTxn: (String, String) -> Unit,
+    onOpenBudget: (String) -> Unit,
+    onOpenSearch: (String) -> Unit,
+    onOpenRange: (String, DateRange) -> Unit,
+    onOpenDrafts: (String) -> Unit,
+    onOpenAuto: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    HomeContent(
-        state = state,
-        onAction = viewModel::onAction,
-        onAddTxn = onAddTxn,
-        onOpenTxns = onOpenTxns,
-        onOpenLedgers = onOpenLedgers,
-        onOpenAccounts = onOpenAccounts,
-        onOpenLoanDetail = onOpenLoanDetail,
-        modifier = modifier,
-    )
+    HomeContent(state, viewModel::onAction, onAddTxn, onOpenTxns, onOpenLedgers, onOpenAccounts, onOpenLoanDetail, onEditTxn, onOpenBudget, onOpenSearch, onOpenRange, onOpenDrafts, onOpenAuto, modifier)
 }
 
 @Composable
@@ -97,130 +54,85 @@ internal fun HomeContent(
     onOpenLedgers: () -> Unit,
     onOpenAccounts: (String) -> Unit,
     onOpenLoanDetail: (String, String) -> Unit,
+    onEditTxn: (String, String) -> Unit,
+    onOpenBudget: (String) -> Unit,
+    onOpenSearch: (String) -> Unit,
+    onOpenRange: (String, DateRange) -> Unit,
+    onOpenDrafts: (String) -> Unit,
+    onOpenAuto: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val ledgerId = state.ledgerId
-    VipLedgerScaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            VipLedgerTopBar(
-                title = stringResource(R.string.home_title),
-                actions = {
-                LedgerSwitcher(
-                    state = state,
-                    onAction = onAction,
-                    onOpenLedgers = onOpenLedgers,
-                )
-                },
-            )
-        },
-        floatingActionButton = {
-            if (ledgerId != null) {
-                ExtendedFloatingActionButton(
-                    onClick = { onAddTxn(ledgerId) },
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text(text = stringResource(R.string.home_add_txn)) },
-                )
-            }
-        },
-    ) { padding ->
+    val ledger = state.ledgerId
+    VipLedgerScaffold(modifier = modifier.fillMaxSize(), topBar = {
+        VipLedgerTopBar(title = stringResource(R.string.home_title), actions = {
+            LedgerSwitcher(state, onAction, onOpenLedgers)
+            IconButton(onClick = { ledger?.let(onOpenSearch) }, enabled = ledger != null) { Icon(Icons.Filled.Search, stringResource(R.string.ledger_home_search)) }
+        })
+    }) { padding ->
+        val overview = state.overview
         when {
-            state.isLoading -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                LoadingState()
-            }
-
-            state.overview == null -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                EmptyState(
-                    message = stringResource(R.string.home_no_ledger),
-                    actionLabel = stringResource(R.string.ledger_manage_add),
-                    onAction = onOpenLedgers,
-                )
-            }
-
-            else -> HomeBody(
-                overview = state.overview,
-                reminders = state.reminders,
-                categoryNames = state.categoryNames,
-                accountNames = state.accountNames,
-                tagNames = state.tagNames,
-                modifier = Modifier.padding(padding),
-                onOpenTxns = { onOpenTxns(state.overview.ledgerId) },
-                onOpenLoanDetail = { planId -> ledgerId?.let { onOpenLoanDetail(it, planId) } },
-                onOpenAccounts = { ledgerId?.let(onOpenAccounts) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeBody(
-    overview: HomeOverview,
-    reminders: List<Reminder>,
-    categoryNames: Map<String, String>,
-    accountNames: Map<String, String>,
-    tagNames: Map<String, String>,
-    onOpenTxns: () -> Unit,
-    onOpenLoanDetail: (String) -> Unit,
-    onOpenAccounts: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        state = rememberLazyListState(),
-        contentPadding = PaddingValues(
-            start = VipLedgerTokens.Space4,
-            end = VipLedgerTokens.Space4,
-            top = VipLedgerTokens.Space2,
-            bottom = 96.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
-    ) {
-        item { NetWorthCard(overview) }
-        item { MonthCard(overview) }
-        if (reminders.isNotEmpty()) {
-            item {
-                ReminderCard(
-                    reminders = reminders,
-                    onOpenPlan = onOpenLoanDetail,
-                    onOpenAccount = { onOpenAccounts() },
-                )
-            }
-        }
-        item {
-            SectionHeader(
-                title = stringResource(R.string.home_recent_title),
-                actionLabel = stringResource(R.string.home_see_all),
-                onActionClick = onOpenTxns,
-            )
-        }
-        item {
-            GroupCard {
-                if (overview.recentTxns.isEmpty()) {
-                    EmptyState(message = stringResource(R.string.home_recent_empty))
-                } else {
-                    Column {
-                        overview.recentTxns.take(RECENT_PREVIEW).forEachIndexed { index, txn ->
-                            if (index > 0) {
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            }
-                            TxnLine(
-                                txn = txn,
-                                categoryName = txn.categoryId?.let { categoryNames[it] },
-                                accountName = accountNames[txn.accountId],
-                                tagNames = txn.tagIds.mapNotNull { tagNames[it] },
-                                onClick = onOpenTxns,
-                            )
+            state.failed -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { EmptyState(message = stringResource(R.string.ledger_load_failed), actionLabel = stringResource(R.string.ledger_retry), onAction = { onAction(HomeAction.Retry) }) }
+            state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { LoadingState() }
+            ledger == null || overview == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { EmptyState(message = stringResource(R.string.home_no_ledger), actionLabel = stringResource(R.string.ledger_manage_add), onAction = onOpenLedgers) }
+            else -> LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(VipLedgerTokens.Space4), verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
+                item {
+                    val colors = vipLedgerAccentColors()
+                    HeroCard(modifier = Modifier.clickable(role = Role.Button) { onOpenAccounts(ledger) }) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
+                            HeroMetric(stringResource(R.string.ledger_home_assets), overview.totalAssets.toDisplayString(false), Modifier.weight(1f))
+                            HeroMetric(stringResource(R.string.home_month_balance), overview.monthBalance.toDisplayString(false), Modifier.weight(1f))
+                            HeroMetric(stringResource(R.string.ledger_home_budget_remaining), state.budget?.total?.remaining?.toDisplayString(false) ?: stringResource(R.string.ledger_home_no_budget), Modifier.weight(1f))
                         }
+                        Text(stringResource(R.string.home_month_expense), color = colors.onHeroMuted, style = MaterialTheme.typography.labelMedium)
+                        AmountText(overview.monthExpense, style = displayHero, color = colors.onHero)
+                    }
+                }
+                item { PrimaryButton(stringResource(R.string.home_add_txn), { onAddTxn(ledger) }, Modifier.fillMaxWidth()) }
+                item {
+                    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
+                        HomeTile(stringResource(R.string.ledger_home_budget_entry), { onOpenBudget(ledger) }, Modifier.weight(1f).fillMaxHeight()) {
+                            val budget = state.budget?.total
+                            if (budget != null) BudgetProgressContent(budget)
+                            else Text(stringResource(R.string.ledger_budget_set_total), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                        }
+                        HomeTile(stringResource(R.string.ledger_home_today), {
+                            overview.lastSevenDays.lastOrNull()?.let { onOpenRange(ledger, DateRange(it.start, it.endInclusive)) }
+                        }, Modifier.weight(1f).fillMaxHeight()) {
+                            Text(stringResource(R.string.ledger_home_income), style = MaterialTheme.typography.labelSmall)
+                            AmountText(overview.todayIncome, color = IncomeGreen, style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.ledger_home_expense), style = MaterialTheme.typography.labelSmall)
+                            AmountText(overview.todayExpense, color = ExpenseRed, style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                }
+                item {
+                    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
+                        HomeTile(stringResource(R.string.ledger_home_week), {
+                            val days = overview.lastSevenDays
+                            if (days.isNotEmpty()) onOpenRange(ledger, DateRange(days.first().start, days.last().endInclusive))
+                        }, Modifier.weight(1f).fillMaxHeight()) {
+                            BarChart(overview.lastSevenDays.map { BarGroup(it.start.dayOfMonth.toString(), 0, it.expense.cents) }, height = VipLedgerTokens.Space8 * 2, maxLabels = 7, showLegend = false)
+                        }
+                        HomeTile(stringResource(R.string.ledger_home_pending), {
+                            if (state.pendingAutoCount > 0) onOpenAuto() else onOpenDrafts(ledger)
+                        }, Modifier.weight(1f).fillMaxHeight()) {
+                            Text(stringResource(R.string.ledger_home_pending_count, state.pendingDraftCount), Modifier.clickable { onOpenDrafts(ledger) }, style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.ledger_home_auto_count, state.pendingAutoCount), Modifier.clickable { onOpenAuto() }, style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.ledger_home_reminders_count, state.reminders.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                if (state.reminders.isNotEmpty()) item {
+                    GroupCard { state.reminders.take(3).forEach { reminder ->
+                        ActionRow(title = reminder.name, subtitle = fullDateLabel(reminder.dueDate), onClick = { reminder.planId?.let { onOpenLoanDetail(ledger, it) } ?: onOpenAccounts(ledger) })
+                    } }
+                }
+                item { SectionHeader(stringResource(R.string.home_recent_title), actionLabel = stringResource(R.string.home_see_all), onActionClick = { onOpenTxns(ledger) }) }
+                if (overview.recentGroups.isEmpty()) item { EmptyState(stringResource(R.string.home_recent_empty)) }
+                overview.recentGroups.forEach { group ->
+                    item(key = "day-${group.date}") { Text(fullDateLabel(group.date), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    items(group.txns, key = { it.id }) { txn ->
+                        GroupCard { TxnLine(txn = txn, categoryName = txn.categoryId?.let(state.categoryNames::get), accountName = state.accountNames[txn.accountId], tagNames = txn.tagIds.mapNotNull(state.tagNames::get), onClick = { onEditTxn(ledger, txn.id) }) }
                     }
                 }
             }
@@ -229,266 +141,39 @@ private fun HomeBody(
 }
 
 @Composable
-private fun NetWorthCard(overview: HomeOverview) {
-    // hero 渐变底座上的文字色必须显式取 onHero 系（不能用默认 onSurface，否则深绿底上不可读）。
-    val accents = vipLedgerAccentColors()
-    HeroCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.home_net_worth),
-                style = MaterialTheme.typography.labelMedium,
-                color = accents.onHeroMuted,
-            )
-            Text(
-                text = stringResource(R.string.home_account_count, overview.usableAccountCount),
-                style = MaterialTheme.typography.labelMedium,
-                color = accents.onHeroMuted,
-            )
-        }
-        AmountText(
-            amount = overview.netWorth,
-            style = displayHero,
-            color = accents.onHero,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space4),
-        ) {
-            LabeledAmount(
-                label = stringResource(R.string.home_total_debt),
-                amount = overview.totalDebt,
-                modifier = Modifier.weight(1f),
-                labelColor = accents.onHeroMuted,
-                color = accents.onHero,
-            )
-            LabeledAmount(
-                label = stringResource(R.string.home_today_expense),
-                amount = overview.todayExpense,
-                color = accents.onHero,
-                modifier = Modifier.weight(1f),
-                labelColor = accents.onHeroMuted,
-            )
+private fun HeroMetric(label: String, value: String, modifier: Modifier) {
+    val colors = vipLedgerAccentColors()
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space1)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = colors.onHeroMuted)
+        Text(value, style = MaterialTheme.typography.titleSmall, color = colors.onHero)
+    }
+}
+
+@Composable
+private fun HomeTile(title: String, onClick: () -> Unit, modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
+    GroupCard(modifier.clickable(role = Role.Button, onClick = onClick)) {
+        Column(Modifier.padding(VipLedgerTokens.Space3).heightIn(min = VipLedgerTokens.Space8 * 3), verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            content()
         }
     }
 }
 
 @Composable
-private fun MonthCard(overview: HomeOverview) {
-    GroupCard {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = VipLedgerTokens.Space4, vertical = VipLedgerTokens.Space5),
-            horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
-        ) {
-            LabeledAmount(
-                label = stringResource(R.string.home_month_income),
-                amount = overview.monthIncome,
-                color = IncomeGreen,
-                modifier = Modifier.weight(1f),
-            )
-            LabeledAmount(
-                label = stringResource(R.string.home_month_expense),
-                amount = overview.monthExpense,
-                color = ExpenseRed,
-                modifier = Modifier.weight(1f),
-            )
-            LabeledAmount(
-                label = stringResource(R.string.home_month_balance),
-                amount = overview.monthBalance,
-                style = displayAmount,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun LabeledAmount(
-    label: String,
-    amount: Money,
-    modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified,
-    labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    style: TextStyle = MaterialTheme.typography.titleSmall,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space1),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = labelColor,
-            maxLines = 1,
-        )
-        AmountText(amount = amount, color = color, style = style)
-    }
-}
-
-@Composable
-private fun LedgerSwitcher(
-    state: HomeUiState,
-    onAction: (HomeAction) -> Unit,
-    onOpenLedgers: () -> Unit,
-) {
+private fun LedgerSwitcher(state: HomeUiState, onAction: (HomeAction) -> Unit, onOpenLedgers: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         TextButton(onClick = { expanded = true }) {
-            Text(text = state.ledgerName.ifBlank { stringResource(R.string.home_switch_ledger) })
-            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null)
+            Text(state.ledgerName.ifBlank { stringResource(R.string.home_switch_ledger) })
+            Icon(Icons.Filled.KeyboardArrowDown, null)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            state.ledgers.forEach { ledger ->
-                DropdownMenuItem(
-                    text = { Text(text = ledger.name) },
-                    trailingIcon = {
-                        if (ledger.id == state.ledgerId) {
-                            Icon(Icons.Filled.Check, contentDescription = null)
-                        }
-                    },
-                    onClick = {
-                        expanded = false
-                        onAction(HomeAction.SelectLedger(ledger.id))
-                    },
-                )
-            }
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = { Text(text = stringResource(R.string.ledger_manage_title)) },
-                onClick = {
-                    expanded = false
-                    onOpenLedgers()
-                },
-            )
+        DropdownMenu(expanded, { expanded = false }) {
+            state.ledgers.forEach { ledger -> DropdownMenuItem(text = { Text(ledger.name) }, onClick = { expanded = false; onAction(HomeAction.SelectLedger(ledger.id)) }) }
+            DropdownMenuItem(text = { Text(stringResource(R.string.ledger_manage_title)) }, onClick = { expanded = false; onOpenLedgers() })
         }
     }
-}
-
-private const val RECENT_PREVIEW: Int = 5
-private const val REMINDER_PREVIEW: Int = 3
-
-/** 三个高频入口：周期记账 / 待确认 / 分期。 */
-/** 提醒卡：分期临近 / 逾期 + 信用卡账单日 / 还款日，最多展示 [REMINDER_PREVIEW] 条。 */
-@Composable
-private fun ReminderCard(
-    reminders: List<Reminder>,
-    onOpenPlan: (String) -> Unit,
-    onOpenAccount: () -> Unit,
-) {
-    GroupCard {
-        Column(
-            modifier = Modifier.padding(VipLedgerTokens.Space4),
-            verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),
-        ) {
-            Text(
-                text = stringResource(R.string.reminder_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            reminders.take(REMINDER_PREVIEW).forEach { reminder ->
-                val planId = reminder.planId
-                Text(
-                    text = reminderText(reminder),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            if (planId != null) onOpenPlan(planId) else onOpenAccount()
-                        }
-                        .padding(vertical = VipLedgerTokens.Space1),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun reminderText(reminder: Reminder): String = when (reminder.kind) {
-    ReminderKind.INSTALLMENT_DUE -> stringResource(
-        R.string.reminder_installment_due,
-        reminder.name,
-        reminder.periodNo ?: 0,
-        relativeDayLabel(reminder.daysUntilDue),
-    )
-
-    ReminderKind.INSTALLMENT_OVERDUE -> stringResource(
-        R.string.reminder_installment_overdue,
-        reminder.name,
-        reminder.periodNo ?: 0,
-        -reminder.daysUntilDue,
-    )
-
-    ReminderKind.CARD_BILLING -> stringResource(
-        R.string.reminder_card_billing,
-        reminder.name,
-        fullDateLabel(reminder.dueDate),
-    )
-
-    ReminderKind.CARD_DUE -> stringResource(
-        R.string.reminder_card_due,
-        reminder.name,
-        fullDateLabel(reminder.dueDate),
-        reminder.amount.toDisplayString(),
-    )
-}
-
-@Composable
-private fun relativeDayLabel(daysUntilDue: Int): String = when {
-    daysUntilDue <= 0 -> stringResource(R.string.reminder_today)
-    daysUntilDue == 1 -> stringResource(R.string.reminder_tomorrow)
-    else -> stringResource(R.string.reminder_in_days, daysUntilDue)
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun HomeContentPreview() {
-    VipLedgerTheme {
-        HomeContent(
-            state = HomeUiState(
-                isLoading = false,
-                ledgerId = "l1",
-                ledgerName = "默认账本",
-                ledgers = listOf(
-                    Ledger(id = "l1", name = "默认账本", isDefault = true, createdAt = 0, updatedAt = 0),
-                ),
-                overview = HomeOverview(
-                    ledgerId = "l1",
-                    ledgerName = "默认账本",
-                    netWorth = Money.ofCents(1234567),
-                    totalDebt = Money.ofCents(250000),
-                    monthIncome = Money.ofCents(800000),
-                    monthExpense = Money.ofCents(321100),
-                    monthCount = 20,
-                    todayExpense = Money.ofCents(3800),
-                    usableAccountCount = 3,
-                    recentTxns = listOf(
-                        Txn(
-                            id = "t1",
-                            ledgerId = "l1",
-                            type = TransactionType.EXPENSE,
-                            amount = Money.ofCents(3800),
-                            accountId = "a1",
-                            title = "午餐",
-                            occurredAt = 0,
-                            createdAt = 0,
-                            updatedAt = 0,
-                        ),
-                    ),
-                ),
-                accountNames = mapOf("a1" to "现金"),
-                categoryNames = mapOf("c1" to "餐饮"),
-            ),
-            onAction = {},
-            onAddTxn = {},
-            onOpenTxns = {},
-            onOpenLedgers = {},
-            onOpenAccounts = {},
-            onOpenLoanDetail = { _, _ -> },
-        )
-    }
-}
+private fun HomePreview() { VipLedgerTheme { HomeContent(HomeUiState(isLoading = false), {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {}, { _, _ -> }, {}, {}) } }

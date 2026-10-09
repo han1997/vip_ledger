@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             VipLedgerTheme {
-                VipLedgerApp(openAutoBook = intent.getBooleanExtra("openAutoBook", false))
+                VipLedgerApp(openAutoBook = intent.getBooleanExtra("openAutoBook", false), openBudgetLedger = intent.getStringExtra("openBudgetLedger"))
             }
         }
         lifecycleScope.launch { ensureInitialData() }

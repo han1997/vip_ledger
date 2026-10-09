@@ -1,5 +1,11 @@
 # VipLedger 数据模型
 
+## 2026-10-09：schema 3 月预算
+
+新增 `budget_limit`：UUID `id`，`ledger_id` 外键级联，`month` 为月份首日 ISO 日期，`scope_key` 空串代表总预算、其他值为当前账本支出分类 ID，`amount_cents` 可空（null为停用，0为零额度），`updated_at`。唯一索引 `(ledger_id, month, scope_key)`。按 scope 读取目标月之前最后一次设置，额度沿用、余额不结转；编辑历史月会保留下一月原额度。
+
+新增 `budget_alert`：主键 `(ledger_id, month, scope_key, threshold)`，threshold为80或100，保存通知认领时间。无通知权限不认领；应用内提示由实时进度计算。两表均进入快照/JSON格式3；格式1/2缺两表时按空表恢复。派生月历和预算用量不存表，复用 StatsCalculator 的退款、草稿、删除、排除语义。
+
 > 配套文档：`docs/ARCHITECTURE.md`（技术架构）、`docs/PLAN.md`（范围与里程碑）。
 > 数据库：Room（SQLite），`schemaVersion` 从 1 起，schema JSON 提交到版本库。
 > 最后更新：2026-09-24（M0 建库）

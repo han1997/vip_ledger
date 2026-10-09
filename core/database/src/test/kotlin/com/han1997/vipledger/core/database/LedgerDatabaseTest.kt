@@ -313,6 +313,7 @@ class LedgerDatabaseTest {
                 "attachment",
                 "ml_training_sample",
                 "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
+                "budget_limit", "budget_alert",
             ),
             tables - setOf("room_master_table", "android_metadata", "sqlite_sequence"),
         )

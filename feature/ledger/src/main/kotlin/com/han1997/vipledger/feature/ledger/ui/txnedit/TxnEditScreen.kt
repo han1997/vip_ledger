@@ -69,6 +69,7 @@ import com.han1997.vipledger.core.designsystem.format.timeLabelWithSeconds
 import com.han1997.vipledger.core.designsystem.format.toPickerUtcMillis
 import com.han1997.vipledger.core.designsystem.format.transactionTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.Category
 import com.han1997.vipledger.core.domain.model.CategoryNode
@@ -485,43 +486,46 @@ private fun AccountChip(account: Account, selected: Boolean, onClick: () -> Unit
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CategorySection(state: TxnEditUiState, onAction: (TxnEditAction) -> Unit) {
+internal fun CategorySection(state: TxnEditUiState, onAction: (TxnEditAction) -> Unit) {
     val nodes = state.visibleCategories
     if (nodes.isEmpty()) return
 
     SectionLabel(stringResource(R.string.txn_edit_category))
     val cells: List<CategoryNode?> = listOf<CategoryNode?>(null) + nodes
     cells.chunked(CATEGORY_COLUMNS).forEach { rowCells ->
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            rowCells.forEach { node ->
-                if (node == null) {
-                    CategoryCell(
-                        name = stringResource(R.string.txn_edit_category_none),
-                        selected = state.categoryId == null,
-                        onClick = { onAction(TxnEditAction.SelectCategory(null)) },
-                        modifier = Modifier.weight(1f),
-                    )
-                } else {
-                    CategoryCell(
-                        name = node.name,
-                        selected = state.categoryParentId == node.category.id,
-                        onClick = { onAction(TxnEditAction.ToggleCategoryParent(node.category.id)) },
-                        modifier = Modifier.weight(1f),
-                    )
+        androidx.compose.runtime.key(rowCells.firstOrNull()?.category?.id ?: "no-category") {
+            Column(verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    rowCells.forEach { node ->
+                        if (node == null) {
+                            CategoryCell(
+                                name = stringResource(R.string.txn_edit_category_none),
+                                selected = state.categoryId == null,
+                                onClick = { onAction(TxnEditAction.SelectCategory(null)) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
+                            CategoryCell(
+                                name = node.name,
+                                selected = state.categoryParentId == node.category.id,
+                                onClick = { onAction(TxnEditAction.ToggleCategoryParent(node.category.id)) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                    repeat(CATEGORY_COLUMNS - rowCells.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+
+                val expandedNode = rowCells.firstOrNull { it?.category?.id == state.expandedCategoryId }
+                if (expandedNode != null && expandedNode.children.isNotEmpty()) {
+                    CategoryChildrenRow(state, onAction, parent = expandedNode)
                 }
             }
-            repeat(CATEGORY_COLUMNS - rowCells.size) {
-                Spacer(modifier = Modifier.weight(1f))
-            }
-        }
-
-        val expandedId = state.expandedCategoryId ?: return@forEach
-        val expandedNode = rowCells.firstOrNull { it?.category?.id == expandedId } ?: return@forEach
-        if (expandedNode.children.isNotEmpty()) {
-            CategoryChildrenRow(state, onAction, parent = expandedNode)
         }
     }
 }

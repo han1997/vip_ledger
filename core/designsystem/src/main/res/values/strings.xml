@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="tab_calendar">日历</string>
     <!--
       共用组件文案：feature:ledger 与 feature:stats 都要用，按架构规范下沉到 designsystem，
       避免两个 feature 模块互相依赖（见 .trellis/spec/android/architecture.md）。

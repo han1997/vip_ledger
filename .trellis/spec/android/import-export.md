@@ -114,8 +114,8 @@ M5 落地的具体契约（`core:data` 的 `backup/` 包）：
 
 **快照格式**（`SnapshotArchive`）
 
-- `FORMAT_VERSION = 2`，读侧接受 1–2；manifest 字段固定为 `formatVersion` / `createdAt` / `counts`（表名 → 行数）/ `sha256OfDb`。
-- JSON 根新增 `schemaVersion: 2`；缺少版本号按 1 读取。旧格式允许缺少 `auto_*` 表与可空退款关联列。
+- `FORMAT_VERSION = 3`，读侧接受 1–3；manifest 字段固定为 `formatVersion` / `createdAt` / `counts`（表名 → 行数）/ `sha256OfDb`。
+- JSON根写schemaVersion 3；缺版本按1。格式1可缺auto表与退款列，格式1/2可缺budget_limit/budget_alert（恢复为空）。格式3要求完整表清单。预算额度及提醒历史完整往返。
 - 新格式包含自动记账配置、绑定、候选与凭据。恢复后清空 `verifiedApps` 并关闭 `enabled`，防止换设备后直接继续入账。
 - 升级导出格式时同步更新字节字面量/参考序列化/列集合断言；旧备份恢复测试独立保留，不能删除以绕过兼容性检查。
 - `db.json` = `SnapshotJsonCodec` 的整库表数据 JSON（与用户 JSON 导出同构），

@@ -36,6 +36,8 @@ import com.han1997.vipledger.core.database.entity.TxnTagEntity
  */
 @Database(
     entities = [
+        com.han1997.vipledger.core.database.entity.BudgetLimitEntity::class,
+        com.han1997.vipledger.core.database.entity.BudgetAlertEntity::class,
         com.han1997.vipledger.core.database.entity.AutoConfigEntity::class,
         com.han1997.vipledger.core.database.entity.AutoBindingEntity::class,
         com.han1997.vipledger.core.database.entity.AutoCandidateEntity::class,
@@ -58,6 +60,8 @@ import com.han1997.vipledger.core.database.entity.TxnTagEntity
 )
 @TypeConverters(EnumConverters::class)
 abstract class LedgerDatabase : RoomDatabase() {
+
+    abstract fun budgetDao(): com.han1997.vipledger.core.database.dao.BudgetDao
 
     abstract fun autoBookDao(): com.han1997.vipledger.core.database.dao.AutoBookDao
 
@@ -86,7 +90,7 @@ abstract class LedgerDatabase : RoomDatabase() {
     abstract fun mlTrainingSampleDao(): MlTrainingSampleDao
 
     companion object {
-        const val SCHEMA_VERSION: Int = 2
+        const val SCHEMA_VERSION: Int = 3
         const val NAME: String = "vipledger.db"
     }
 }

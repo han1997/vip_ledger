@@ -15,6 +15,13 @@ import com.han1997.vipledger.core.model.time.DateRangePreset
 import com.han1997.vipledger.core.model.time.toLocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import com.han1997.vipledger.core.domain.calculator.TxnDayGrouper
+import com.han1997.vipledger.core.domain.model.PeriodGranularity
+import com.han1997.vipledger.core.model.DraftStatus
+import com.han1997.vipledger.core.model.time.DateRange
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 
@@ -23,9 +30,9 @@ import kotlinx.datetime.TimeZone
  *
  * - 净资产与负债直接累加账户余额缓存（记账事务内维护），不重放全部流水；
  * - 本月收支走 [StatsCalculator] 的统一口径（只算已确认的收支）；
- * - 「今天」在订阅建立时确定。跨零点时页面的「今日支出」会在下次重组时刷新，
- *   属于可接受误差（长驻前台跨天不是主要场景）。
+ * - 日期与时区观察流驱动查询重建，长驻跨日/月最多30秒刷新；七日范围可跨越月边界。
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class ObserveHomeOverviewUseCase(
     private val ledgerRepository: LedgerRepository,
     private val accountRepository: AccountRepository,
@@ -33,18 +40,19 @@ class ObserveHomeOverviewUseCase(
     private val timeProvider: TimeProvider,
 ) {
 
-    operator fun invoke(ledgerId: String): Flow<HomeOverview> {
-        val zone = timeProvider.zone
-        val now = timeProvider.nowMillis()
-        val monthRange = DateRangePreset.THIS_MONTH.resolve(now.toLocalDate(zone))
-        val today = now.toLocalDate(zone)
+    operator fun invoke(ledgerId: String): Flow<HomeOverview> = ObserveLocalDayUseCase(timeProvider)().flatMapLatest { day ->
+        val zone = day.zone
+        val today = day.date
+        val monthRange = DateRangePreset.THIS_MONTH.resolve(today)
+        val weekRange = DateRange(today.minus(6, DateTimeUnit.DAY), today)
+        val readRange = DateRange(minOf(monthRange.start, weekRange.start), monthRange.endInclusive)
 
         val ledgerFlow = ledgerRepository.observeAll(includeArchived = true)
         val accountFlow = accountRepository.observeByLedger(ledgerId, includeArchived = true)
-        val monthFlow = txnRepository.observe(TxnFilter(ledgerId = ledgerId, range = monthRange))
-        val recentFlow = txnRepository.observe(TxnFilter(ledgerId = ledgerId, limit = RECENT_LIMIT))
+        val monthFlow = txnRepository.observe(TxnFilter(ledgerId = ledgerId, range = readRange))
+        val recentFlow = txnRepository.observe(TxnFilter(ledgerId = ledgerId, limit = RECENT_LIMIT, draftStatus = DraftStatus.CONFIRMED))
 
-        return combine(ledgerFlow, accountFlow, monthFlow, recentFlow) { ledgers, accounts, monthTxns, recentTxns ->
+        combine(ledgerFlow, accountFlow, monthFlow, recentFlow) { ledgers, accounts, monthTxns, recentTxns ->
             val month = StatsCalculator.summarize(
                 txns = monthTxns,
                 categories = emptyList(),
@@ -63,6 +71,10 @@ class ObserveHomeOverviewUseCase(
                 todayExpense = todayExpense(monthTxns, today, zone),
                 usableAccountCount = accounts.count { it.isUsable },
                 recentTxns = recentTxns,
+                totalAssets = Money.sum(accounts.filter { it.isUsable && it.includeInNetWorth && it.currentBalance.cents > 0 }.map { it.currentBalance }),
+                todayIncome = TxnDayGrouper.countedSum(monthTxns.filter { it.occurredAt.toLocalDate(zone) == today }, TransactionType.INCOME),
+                recentGroups = TxnDayGrouper.group(recentTxns, zone),
+                lastSevenDays = StatsCalculator.byPeriod(monthTxns, PeriodGranularity.DAY, weekRange, zone),
             )
         }
     }

@@ -41,6 +41,7 @@ fun BarChart(
     maxLabels: Int = 6,
     incomeColor: Color = IncomeGreen,
     expenseColor: Color = ExpenseRed,
+    showLegend: Boolean = true,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -108,12 +109,14 @@ fun BarChart(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            LegendItem(color = incomeColor, label = stringResource(R.string.chart_income))
-            LegendItem(color = expenseColor, label = stringResource(R.string.chart_expense))
+        if (showLegend) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                LegendItem(color = incomeColor, label = stringResource(R.string.chart_income))
+                LegendItem(color = expenseColor, label = stringResource(R.string.chart_expense))
+            }
         }
     }
 }

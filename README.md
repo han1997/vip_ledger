@@ -2,13 +2,34 @@
 
 A local-first, offline personal ledger for Android. Ledgers, accounts, categories, tags, transactions, recurring entries, installments, and statistics stay on the device. Cloud calls are limited to optional natural-language entry, and WebDAV stores encrypted backups only.
 
-Version `0.1.0`, still in development.
+Still in development. The application version is defined only in `version.properties`.
 
 ## Documentation rule
 
 Keep this README current as you work: **important updates and necessary content must be written into it as they happen**, not batched up for later. Whenever a change affects build steps, setup, features, or requirements, update the corresponding section in the same change.
 
 ## Features
+
+The home dashboard now combines monthly spending, assets, remaining budget, today's income and
+expense, a seven-day trend, pending drafts/payment reviews, and recent entries grouped by date.
+Tap a recent entry to edit it directly. The bottom navigation is Home / Calendar / Statistics / Me.
+
+**Monthly budgets:** tap the Budget card on Home to set a total or first/second-level expense
+category limit, including zero limits. Limits carry forward, unspent money does not. Historical
+month edits preserve subsequent limits. Refunds reduce spending in the month received. Each
+budget can notify once at 80% and 100% per month; in-app progress is available without notification
+permission. Stop a budget through its edit dialog. Budgets and alert history are included in backups.
+
+**Calendar:** switch months, select a date to inspect its entries, and use “Record on this day”
+to open the existing editor with that date. Today and monthly data refresh while the page remains
+open, including timezone changes (within 30 seconds). Calendar income/expense, home, budgets,
+and statistics share the same confirmed-entry/refund rules.
+
+The complete agreed feature roadmap and later phases are in [docs/FEATURE-ROADMAP.md](docs/FEATURE-ROADMAP.md).
+Category expansion now uses stable row containers; a Compose device test repeatedly expands,
+switches and collapses parent categories to prevent a reproduced node-insertion crash.
+Assets/savings, reimbursement/lending, extended finance, voice/image entry and report improvements
+are tracked separately; they are not represented as completed by this first dashboard delivery.
 
 JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
 

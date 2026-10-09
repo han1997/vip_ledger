@@ -1,0 +1,6 @@
+<resources>
+    <string name="notify_budget_total">总预算</string>
+    <string name="notify_budget_category">分类预算</string>
+    <string name="notify_budget_title">%1$s · %2$s提醒</string>
+    <string name="notify_budget_body">已使用至少%1$d%%：%2$s / %3$s</string>
+</resources>
