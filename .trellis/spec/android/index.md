@@ -12,6 +12,8 @@
 5. 金额用 `Money`（整数分），时间存 UTC epoch millis 并按设备时区归到 `LocalDate`。
 6. 重要更新与必要内容随做随写进 `README.md`，不要攒到最后补：涉及构建/用法/功能/需求/安装的变更，
    必须在同一变更里同步 `README.md` 对应章节。
+7. 所有新增/修改文件统一 UTF-8（无 BOM），详见 `build-and-env.md`「文件编码」；
+   PowerShell 查看中文用 `Get-Content -Encoding UTF8`，控制台乱码不代表文件编码错误。
 
 ## Quality Check（提交前必跑）
 
@@ -42,6 +44,6 @@
 | [ai-ml.md](./ai-ml.md) | AI 解析管线与降级触发、云端调用契约（阶梯/容错抽取/错误矩阵/UA 硬前提）、未识别字段表示、端侧分类器、实测约束与隐私红线 |
 | [recurring-loans.md](./recurring-loans.md) | 周期推算、草稿口径、分期还款、提醒与后台任务 |
 | [import-export.md](./import-export.md) | 导入导出（含 SAF 界面导出握手）、WebDAV 备份格式约定 |
-| [build-and-env.md](./build-and-env.md) | 构建配置、依赖仓库、环境坑位 |
+| [build-and-env.md](./build-and-env.md) | 构建配置、依赖仓库、文件编码、环境坑位 |
 
 **文档语言**：中文。

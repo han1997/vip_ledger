@@ -1,4 +1,4 @@
-﻿# UI polish: theme and key components
+# UI polish: theme and key components
 
 ## Goal
 Make the existing VipLedger look more polished without changing navigation or business behavior. First pass only updates the shared theme and the shared design-system components that show up on most screens.

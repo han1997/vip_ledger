@@ -1,4 +1,4 @@
-﻿package com.han1997.vipledger.core.designsystem.component
+package com.han1997.vipledger.core.designsystem.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
