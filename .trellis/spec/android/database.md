@@ -20,6 +20,9 @@
   统一传 `,id1,id2,` 形式的 CSV，SQL 里用 `INSTR(:csv, ',' || col || ',') > 0` 判断；
   空集合 → 传 null 表示不过滤。参考 `TxnDao.TXN_FILTER_SQL` 与 `TxnFilterSql`。
 - 需要分页而不限条数时，`LIMIT :limit` 传 -1（SQLite 的「不限制」写法）。
+- 流水排序必须带齐兜底键：列表 `ORDER BY occurred_at DESC, created_at DESC, id DESC`，
+  账户明细用 ASC。只按 `occurred_at` 排时，同秒/同毫秒的多笔顺序由 SQLite 自行决定，
+  列表刷新会换位；回归见 `LedgerDatabaseTest.orderingIsStableWhenTxnsShareTheSameOccurredAt`。
 - 读模型用 `@Relation` + `@Transaction`（如 `TxnWithTagIds`），不要在 UI 层拼装。
 - 实体只存 `Long/Int/String/Boolean`，`Money` 与 `LocalDate` 的换算留在 `:core:data` 的 mapper 里。
 

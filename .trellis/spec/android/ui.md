@@ -99,8 +99,26 @@
 8. **替换 material3 裸组件后要删干净 import**：`CircularProgressIndicator`/`SnackbarHost`/`ConfirmDialog`
    换成 designsystem 版本后，残留的无用 import 不会报编译错但会混入下一次 grep 排查；
    收尾时 `grep -rn "material3.SnackbarHost$\|material3.ConfirmDialog\|material3.CircularProgressIndicator$" feature/` 应零命中。
+9. **`LocalDateTime(y, m, d, h, min, s, X)` 第 7 个参数是 `nanosecond` 不是毫秒**：要传「321 毫秒」
+   必须写 `321_000_000`；写 `321` 只代表 321 纳秒，断言会莫名其妙地失败（见 `TxnEditTimeTest`）。
+   `LocalDateTime(...).toInstant(zone)` 需要 `@file:OptIn(ExperimentalTime::class)`。
 
 ## 设置页
+
+## 记账编辑页（记一笔 / 编辑账目）
+
+- 单屏单操作：整页只有一个底部 `PrimaryButton` 保存（顶栏不再放保存），保存后返回，不做连续记账。
+- 时间精确到秒：`SelectDate(LocalDate)` 只换日期（保留时分秒/毫秒），`SelectTime(LocalTime)` 只换时间；
+  今天/昨天由 `todayMillis/yesterdayMillis` 实时计算，进页面发一次 `RefreshToday`。
+  纯换算函数在 `TxnEditTime.kt`（`replaceEntryDate/replaceEntryTime/parsedEntryTime/parseEntryClock`），
+  单测 `TxnEditTimeTest`。AI 识别出时刻时用识别值（`parsedEntryTime`），识别不出才沿用手表时刻。
+- 分类是一级网格（`chunked(4)` 拼 `Row`，不用 `LazyVerticalGrid`，避免嵌套滚动），
+  二级区插在被点一级所在那一行下方，一次只展开一个父级（`expandedCategoryId`）；
+  首格「不选分类」= 清除。网格单元 `maxLines = 2`，不要退回 `weight(1f)` 单行省略。
+- 标签在本页搜索/新建：输入非空时列表过滤为 `matchingTags`，同名命中走 `existingTag` 复用（不重复建），
+  新建失败保留输入并就地提示。
+- 未保存退出（顶栏返回与系统返回）走 `BackHandler` + `VipLedgerConfirmDialog`（判 `hasUnsavedChanges`）；
+  保存防重统一看 `isBusy`（`isSaving || isCreatingTag`），不要只判断 `isSaving`。
 
 - 应用主导航使用底部三 Tab：`Home`、`Stats`、`Settings`。高频记账入口由首页/统计页的 FAB 进入，AI 记账不再作为设置页独立入口。
 - `SettingsScreen` 保持无业务 ViewModel；Tab 根由导航层通过 `SettingsTabViewModel` 观察当前账本并传入启用状态与带账本 ID 的回调。没有当前账本时，依赖账本的入口禁用。
