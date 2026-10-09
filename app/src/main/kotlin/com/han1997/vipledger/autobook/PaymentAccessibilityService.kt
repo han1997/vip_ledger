@@ -3,6 +3,7 @@ package com.han1997.vipledger.autobook
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Bitmap
 import android.os.Build
+import android.os.SystemClock
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import com.han1997.vipledger.core.data.autobook.PaymentOcr
@@ -24,6 +25,8 @@ class PaymentAccessibilityService : AccessibilityService() {
     private val window get() = captureSession.windowId
     private var paymentActivity = false
     private var resultActivity = false
+    private var retryableOrderOcr = false
+    private val ocrThrottle = PaymentOcrThrottle()
     private var screenshotBusy = false
     private var screenshotSession: String? = null
     private var lastText: String? = null
@@ -31,15 +34,15 @@ class PaymentAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() { control.update { it.copy(accessibilityConnected = true, issue = null) } }
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val app = PaymentApp.fromPackage(event.packageName?.toString().orEmpty()) ?: return
-        if (captureSession.app != app) { paymentActivity = false; resultActivity = false }
+        if (captureSession.app != app) { paymentActivity = false; resultActivity = false; retryableOrderOcr = false }
         var container: String? = null
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val name = event.className?.toString().orEmpty()
             if (PaymentActivityClassifier.isTrackedContainer(name)) {
                 container = name
                 paymentActivity = PaymentActivityClassifier.isPaymentActivity(app, name)
-                resultActivity = PaymentActivityClassifier.isResultActivity(name) ||
-                    PaymentActivityClassifier.isVerifiedOrderOcrActivity(app, name)
+                retryableOrderOcr = PaymentActivityClassifier.isVerifiedOrderOcrActivity(app, name)
+                resultActivity = PaymentActivityClassifier.isResultActivity(name) || retryableOrderOcr
             }
         }
         if (captureSession.update(app, event.windowId, container)) lastText = null
@@ -62,11 +65,24 @@ class PaymentAccessibilityService : AccessibilityService() {
                 (resultActivity || PaymentParser.isPaymentPage(text, app)) &&
                 !Regex("支付密码|输入密码|验证码|身份证|银行卡号").containsMatchIn(text) &&
                 PaymentParser.parse(PaymentObservation(app, CaptureSource.ACCESSIBILITY, session, 0, text))?.amountCents == null &&
-                screenshotSession != session && !screenshotBusy) screenshot(app, session)
+                (screenshotSession != session || retryableOrderOcr) && !screenshotBusy) requestScreenshot(app, session)
         }
     }
     @androidx.annotation.RequiresApi(30)
+    private suspend fun requestScreenshot(app: PaymentApp, capturedSession: String) {
+        delay(ocrThrottle.remainingDelay(SystemClock.elapsedRealtime()))
+        val config = repository.config()
+        val root = rootInActiveWindow ?: return
+        if (session != capturedSession || !paymentActivity || screenshotBusy || !config.enabled || !config.ocrEnabled ||
+            app !in config.enabledApps || root.packageName?.toString() != app.packageName) return
+        val text = PaymentNodeTextReader.read(root)
+        if ((!resultActivity && !PaymentParser.isPaymentPage(text, app)) ||
+            Regex("支付密码|输入密码|验证码|身份证|银行卡号").containsMatchIn(text)) return
+        screenshot(app, capturedSession)
+    }
+    @androidx.annotation.RequiresApi(30)
     private fun screenshot(app: PaymentApp, capturedSession: String) {
+        ocrThrottle.started(SystemClock.elapsedRealtime())
         screenshotBusy = true; screenshotSession = capturedSession
         val callback = object : TakeScreenshotCallback {
             override fun onSuccess(result: ScreenshotResult) {

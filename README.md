@@ -10,6 +10,8 @@ Keep this README current as you work: **important updates and necessary content 
 
 ## Features
 
+JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
+
 JD OCR reconstructs label/value rows from recognized line coordinates instead of relying on text-block order. Known JD OCR label errors (`支付时闻`, `台计`, and an icon before `完成`) are corrected only in JD OCR input; amounts and order-number digits are never guessed or rewritten. The store row with `进店` takes precedence over store names inside product images.
 
 JD's verified `OrderDetailActivityTaro` order-detail page can use the optional on-device OCR fallback even when its accessibility tree exposes no text. Completed orders require an order number, payment method and payment-time label; actual totals are read from `实付款 … 合计`, excluding discounts and product prices. Historical order results remain pending for review.

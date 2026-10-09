@@ -35,6 +35,10 @@ class PaymentOcrReadingOrderTest {
         assertNotNull(facts.paidAt)
         assertEquals("12345678901234561", facts.externalId) // Never guess-correct OCR digits.
         assertNull(PaymentParser.parse(PaymentObservation(PaymentApp.JD, CaptureSource.NOTIFICATION, "jd", 1, text)))
+        val lightText = text.replace("o完成", "©完成").replace("订单编号", "订单蝙号")
+            .replace("支付方式", "支付万式").replace("支付时闻", "支付时间").replace("台计", "合计")
+        val lightFacts = assertNotNull(PaymentParser.parse(PaymentObservation(PaymentApp.JD, CaptureSource.OCR, "light", 1, lightText)))
+        assertEquals(facts, lightFacts)
     }
 
     @Test fun adjacentRowsStaySeparateAndInputBlockOrderDoesNotMatter() {

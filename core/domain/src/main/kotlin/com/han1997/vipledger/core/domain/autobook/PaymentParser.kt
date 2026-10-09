@@ -38,7 +38,9 @@ object PaymentParser {
         val text = when {
             observation.app == PaymentApp.PDD -> sourceText.replace(Regex("实付[：:]?[,，\\s]+"), "实付 ")
             observation.app == PaymentApp.JD && observation.source == CaptureSource.OCR -> sourceText
-                .replace(Regex("(?m)^[ \\t]*[oO0○][ \\t]*完成[ \\t]*$"), "完成")
+                .replace(Regex("(?m)^[ \\t]*[oO0○©][ \\t]*完成[ \\t]*$"), "完成")
+                .replace(Regex("(?m)^订单蝙号(?=[：:\\s])"), "订单编号")
+                .replace(Regex("(?m)^支付万式(?=[：:\\s])"), "支付方式")
                 .replace(Regex("(?m)^支付时闻(?=[：:\\s])"), "支付时间")
                 .lineSequence().joinToString("\n") { line ->
                     if (line.trimStart().startsWith("实付款")) line.replace(Regex("台计(?=[：:\\s]*[¥￥0-9])"), "合计") else line
