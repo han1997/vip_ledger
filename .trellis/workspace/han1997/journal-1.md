@@ -543,3 +543,37 @@ Completed offline payment capture, account bindings, review queue, atomic postin
 ### Next Steps
 
 - None - task complete
+
+
+## Session 16: 记账页交互与视觉优化
+
+**Date**: 2026-10-09
+**Task**: 记账页交互与视觉优化
+**Branch**: `master`
+
+### Summary
+
+记账编辑页交互与视觉优化：类型自适应换行；一级分类网格且二级区插入被点父级所在行下、一次只展开一个；标签页内搜索与新建、同账本同名复用、失败保留输入；时间精确到秒（改日期保留时分秒/毫秒、手动秒级、今天/昨天实时算、AI 识别时刻优先）；单 LazyColumn 与底部单一保存、保存防重、未保存退出确认。流水显示秒并按 occurredAt/createdAt/id 稳定排序。新增 TxnEditUiStateTest/TxnEditTimeTest 与 LedgerDatabaseTest 同刻排序回归，test+assembleDebug+assembleRelease+lintDebug 全绿；README 与 android/ui、android/database spec 同步更新。真机 Compose 走查（网格插入位置/长名称/键盘布局）因无真机连接未做。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d67169d` | (see git log) |
+| `3f314f0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
