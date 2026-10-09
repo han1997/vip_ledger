@@ -280,6 +280,22 @@ class LedgerDatabaseTest {
     }
 
     @Test
+    fun orderingIsStableWhenTxnsShareTheSameOccurredAt() = runTest {
+        seedWorld()
+        val moment = DAY_2
+        db.txnDao().upsert(txn("ta", occurredAt = moment).copy(createdAt = 5))
+        db.txnDao().upsert(txn("tb", occurredAt = moment).copy(createdAt = 5))
+        db.txnDao().upsert(txn("tc", occurredAt = moment).copy(createdAt = 5))
+        db.txnDao().upsert(txn("td", occurredAt = moment).copy(createdAt = 9))
+
+        // occurred_at 相同 → created_at 倒序 → id 倒序；同秒/同毫秒的多笔不会随机换位
+        assertEquals(listOf("td", "tc", "tb", "ta"), filtered())
+        assertEquals(listOf("td", "tc", "tb", "ta"), db.txnDao().listByLedger("l1", includeDeleted = false).map { it.id })
+        // 账户明细按时间正序，同样带 created_at/id 兜底
+        assertEquals(listOf("ta", "tb", "tc", "td"), db.txnDao().listByAccount("cash", includeDeleted = false).map { it.id })
+    }
+
+    @Test
     fun schemaContainsEveryDocumentedTable() {
         val tables = queryStrings("SELECT name FROM sqlite_master WHERE type = 'table'").toSet()
         assertEquals(

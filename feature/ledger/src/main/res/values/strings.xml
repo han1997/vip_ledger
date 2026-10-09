@@ -91,6 +91,23 @@
     <string name="txn_edit_saved">已保存</string>
     <string name="txn_edit_pick_account">选择账户</string>
     <string name="txn_edit_pick_category">选择分类</string>
+    <string name="txn_edit_category_clear">不细分</string>
+    <string name="txn_edit_time">时间</string>
+    <string name="txn_edit_time_pick">选择时间</string>
+    <string name="txn_edit_time_now">此刻</string>
+    <string name="txn_edit_time_hour">时</string>
+    <string name="txn_edit_time_minute">分</string>
+    <string name="txn_edit_time_second">秒</string>
+    <string name="txn_edit_time_invalid">请输入有效时间</string>
+    <string name="txn_edit_tag_add">新建标签</string>
+    <string name="txn_edit_tag_collapse">收起</string>
+    <string name="txn_edit_tag_search_placeholder">搜索或新建标签</string>
+    <string name="txn_edit_tag_create">新建「%1$s」</string>
+    <string name="txn_edit_tag_exists">已有同名标签，点击即可选中</string>
+    <string name="txn_edit_tag_create_failed">标签创建失败，请重试</string>
+    <string name="txn_edit_unsaved_title">放弃修改？</string>
+    <string name="txn_edit_unsaved_message">当前修改尚未保存，返回后不会保留。</string>
+    <string name="txn_edit_unsaved_discard">放弃</string>
 
     <!-- 管理：账本 -->
     <string name="ledger_manage_title">账本管理</string>

@@ -68,12 +68,12 @@ interface TxnDao {
         SELECT * FROM txn
         WHERE (account_id = :accountId OR to_account_id = :accountId)
           AND (:includeDeleted OR deleted_at IS NULL)
-        ORDER BY occurred_at ASC, created_at ASC
+        ORDER BY occurred_at ASC, created_at ASC, id ASC
         """,
     )
     suspend fun listByAccount(accountId: String, includeDeleted: Boolean): List<TxnEntity>
 
-    @Query("SELECT * FROM txn WHERE ledger_id = :ledgerId AND (:includeDeleted OR deleted_at IS NULL) ORDER BY occurred_at DESC")
+    @Query("SELECT * FROM txn WHERE ledger_id = :ledgerId AND (:includeDeleted OR deleted_at IS NULL) ORDER BY occurred_at DESC, created_at DESC, id DESC")
     suspend fun listByLedger(ledgerId: String, includeDeleted: Boolean): List<TxnEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -118,7 +118,7 @@ interface TxnDao {
               AND (:minAmount IS NULL OR ABS(amount_cents) >= :minAmount)
               AND (:maxAmount IS NULL OR ABS(amount_cents) <= :maxAmount)
               AND (:draftStatus IS NULL OR draft_status = :draftStatus)
-            ORDER BY occurred_at DESC, created_at DESC
+            ORDER BY occurred_at DESC, created_at DESC, id DESC
             LIMIT :limit
         """
     }

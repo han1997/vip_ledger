@@ -85,6 +85,13 @@ fun timeLabel(millis: Long, zone: TimeZone): String {
     return stringResource(R.string.date_time_hm, dateTime.hour, dateTime.minute)
 }
 
+/** 时分秒，如 12:05:09。流水列表用它，同分钟内的多笔顺序才看得出来。 */
+@Composable
+fun timeLabelWithSeconds(millis: Long, zone: TimeZone): String {
+    val dateTime = Instant.fromEpochMilliseconds(millis).toLocalDateTime(zone)
+    return stringResource(R.string.date_time_hms, dateTime.hour, dateTime.minute, dateTime.second)
+}
+
 /** 设备时区下的某个时刻 → Material3 日期选择器要的「UTC 零点」毫秒。 */
 fun Long.toPickerUtcMillis(zone: TimeZone): Long = toLocalDate(zone).toDateColumnEpochMillis()
 

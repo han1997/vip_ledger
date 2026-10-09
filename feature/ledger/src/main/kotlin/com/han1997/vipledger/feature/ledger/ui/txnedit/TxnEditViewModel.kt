@@ -17,6 +17,7 @@ import com.han1997.vipledger.core.domain.nlp.LlmParserClient
 import com.han1997.vipledger.core.domain.usecase.account.ObserveAccountsUseCase
 import com.han1997.vipledger.core.domain.usecase.category.ObserveCategoryTreeUseCase
 import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
+import com.han1997.vipledger.core.domain.usecase.tag.SaveTagUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.CreateTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.ConfirmAiEntryUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.GetTxnUseCase
@@ -50,7 +51,8 @@ class TxnEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val observeAccounts: ObserveAccountsUseCase,
     private val observeCategoryTree: ObserveCategoryTreeUseCase,
-    observeTags: ObserveTagsUseCase,
+    private val observeTags: ObserveTagsUseCase,
+    private val saveTag: SaveTagUseCase,
     private val getTxn: GetTxnUseCase,
     private val createTxn: CreateTxnUseCase,
     private val updateTxn: UpdateTxnUseCase,
@@ -98,7 +100,8 @@ class TxnEditViewModel @Inject constructor(
                     val previous = lastAccountStore.getLastAccountId(ledgerId)
                     val next = state.copy(
                         accounts = accounts,
-                        accountId = state.copy(accounts = accounts).resolvedAccountId(previous),
+                        accountId = if (state.isEditing && original != null) state.accountId
+                            else state.copy(accounts = accounts).resolvedAccountId(previous),
                         isLoading = state.isLoading && txnId != null,
                     )
                     next.copy(toAccountId = next.resolvedTargetAccountId())
@@ -123,10 +126,11 @@ class TxnEditViewModel @Inject constructor(
     private suspend fun loadExisting(id: String) {
         val txn = getTxn(id)
         if (txn == null) {
-            _uiState.update { it.copy(isLoading = false, error = TxnEditError.SAVE_FAILED) }
+            _uiState.update { it.copy(isLoading = false, editingUnavailable = true, error = TxnEditError.SAVE_FAILED) }
             return
         }
         original = txn
+        val nodes = observeCategoryTree(ledgerId).first()
         _uiState.update {
             it.copy(
                 isLoading = false,
@@ -139,6 +143,10 @@ class TxnEditViewModel @Inject constructor(
                 accountId = txn.accountId,
                 toAccountId = txn.toAccountId,
                 categoryId = txn.categoryId,
+                categoryNodes = nodes,
+                expandedCategoryId = nodes.firstOrNull { node ->
+                    node.category.id == txn.categoryId || node.children.any { child -> child.id == txn.categoryId }
+                }?.category?.id,
                 selectedTagIds = txn.tagIds.toSet(),
                 excludeFromStats = txn.excludeFromStats,
             )
@@ -146,13 +154,29 @@ class TxnEditViewModel @Inject constructor(
     }
 
     fun onAction(action: TxnEditAction) {
+        if (_uiState.value.isBusy && action != TxnEditAction.ConsumeError) return
+        val before = _uiState.value
+        val changesForm = when (action) {
+            is TxnEditAction.SelectType -> action.type != before.type
+            is TxnEditAction.UpdateAmount -> action.text != before.amountInput
+            is TxnEditAction.UpdateTitle -> action.text != before.title
+            is TxnEditAction.UpdateRemark -> action.text != before.remark
+            is TxnEditAction.SelectAccount -> action.accountId != before.accountId
+            is TxnEditAction.SelectTargetAccount -> action.accountId != before.toAccountId
+            is TxnEditAction.SelectCategory -> action.categoryId != before.categoryId
+            is TxnEditAction.ToggleTag -> true
+            is TxnEditAction.UpdateExcludeFromStats -> action.exclude != before.excludeFromStats
+            else -> false
+        }
+        if (changesForm) _uiState.update { it.copy(hasUnsavedChanges = true) }
         when (action) {
             is TxnEditAction.SelectType -> _uiState.update { state ->
                 val next = state.copy(
                     type = action.type,
                     categoryId = if (state.hasCategoryFor(action.type)) state.categoryId else null,
                 )
-                next.copy(toAccountId = next.resolvedTargetAccountId())
+                next.copy(toAccountId = next.resolvedTargetAccountId(),
+                    expandedCategoryId = if (state.categoryKind == next.categoryKind) state.expandedCategoryId else null)
             }
 
             is TxnEditAction.UpdateAmount -> _uiState.update {
@@ -171,6 +195,10 @@ class TxnEditViewModel @Inject constructor(
             is TxnEditAction.SelectTargetAccount -> _uiState.update { it.copy(toAccountId = action.accountId) }
 
             is TxnEditAction.SelectCategory -> _uiState.update { it.copy(categoryId = action.categoryId) }
+            is TxnEditAction.ToggleCategoryParent -> _uiState.update { it.toggleCategoryParent(action.categoryId) }
+            TxnEditAction.ToggleTagEditor -> _uiState.update { it.copy(tagEditorExpanded = !it.tagEditorExpanded, tagCreateFailed = false) }
+            is TxnEditAction.UpdateTagInput -> _uiState.update { it.copy(tagInput = action.text, tagCreateFailed = false) }
+            TxnEditAction.CreateTag -> createTag()
 
             is TxnEditAction.ToggleTag -> _uiState.update { state ->
                 val tags = state.selectedTagIds.toMutableSet()
@@ -182,7 +210,15 @@ class TxnEditViewModel @Inject constructor(
                 it.copy(excludeFromStats = action.exclude)
             }
 
-            is TxnEditAction.SelectDate -> _uiState.update { it.copy(occurredAt = action.millis) }
+            is TxnEditAction.SelectDate -> changeTimestamp { replaceEntryDate(it, action.date, timeProvider.zone) }
+            is TxnEditAction.SelectTime -> changeTimestamp { replaceEntryTime(it, action.time, timeProvider.zone) }
+            is TxnEditAction.SelectRelativeDate -> {
+                val today = timeProvider.nowMillis().toLocalDate(timeProvider.zone)
+                changeTimestamp { replaceEntryDate(it, today.minus(action.daysAgo, DateTimeUnit.DAY), timeProvider.zone) }
+                refreshToday()
+            }
+            TxnEditAction.SelectNow -> { changeTimestamp { timeProvider.nowMillis() }; refreshToday() }
+            TxnEditAction.RefreshToday -> refreshToday()
 
             is TxnEditAction.UpdateAiInput -> _uiState.update {
                 it.copy(aiInput = action.text, aiError = null)
@@ -210,6 +246,37 @@ class TxnEditViewModel @Inject constructor(
             TxnEditAction.Save -> save()
 
             TxnEditAction.ConsumeError -> _uiState.update { it.copy(error = null, saveFailureMessage = null) }
+        }
+    }
+
+    private fun changeTimestamp(transform: (Long) -> Long) {
+        _uiState.update { state ->
+            val value = transform(state.occurredAt)
+            state.copy(occurredAt = value, hasUnsavedChanges = state.hasUnsavedChanges || value != state.occurredAt)
+        }
+    }
+
+    private fun refreshToday() {
+        val today = timeProvider.nowMillis().toLocalDate(timeProvider.zone)
+        _uiState.update { it.copy(todayMillis = today.startOfDayEpochMillis(timeProvider.zone),
+            yesterdayMillis = today.minus(1, DateTimeUnit.DAY).startOfDayEpochMillis(timeProvider.zone)) }
+    }
+
+    private fun createTag() {
+        val name = _uiState.value.tagInput.trim()
+        if (name.isEmpty()) return
+        _uiState.update { it.copy(isCreatingTag = true, tagCreateFailed = false) }
+        viewModelScope.launch {
+            val existing = observeTags(ledgerId).first().firstOrNull { it.name == name }
+            val result = existing?.let { AppResult.success(it) } ?: saveTag(null, ledgerId, name)
+            val tag = (result as? AppResult.Success)?.value
+                ?: observeTags(ledgerId).first().firstOrNull { it.name == name }
+            _uiState.update { state ->
+                if (tag == null) state.copy(isCreatingTag = false, tagCreateFailed = true)
+                else state.copy(isCreatingTag = false, tagCreateFailed = false, tagInput = "",
+                    selectedTagIds = state.selectedTagIds + tag.id, hasUnsavedChanges = true,
+                    tags = if (state.tags.any { it.id == tag.id }) state.tags else state.tags + tag)
+            }
         }
     }
 
@@ -246,7 +313,7 @@ class TxnEditViewModel @Inject constructor(
 
     private fun applyParsed(parsed: ParsedEntry) {
         _uiState.update { state ->
-            state.copy(
+            val next = state.copy(
                 type = parsed.type,
                 amountInput = parsed.amount.toPlainString().removePrefix("-"),
                 title = parsed.title,
@@ -254,17 +321,22 @@ class TxnEditViewModel @Inject constructor(
                 accountId = parsed.accountId ?: state.accountId,
                 toAccountId = parsed.toAccountId ?: state.toAccountId,
                 categoryId = parsed.categoryId ?: state.categoryId,
-                occurredAt = parsed.date.startOfDayEpochMillis(timeProvider.zone),
+                occurredAt = parsedEntryTime(state.occurredAt, parsed.date, parsed.time, timeProvider.zone),
+                hasUnsavedChanges = true,
                 aiMode = false,
                 aiInput = "",
                 aiError = null,
             )
+            val account = next.resolvedAccountId(null)
+            val validated = next.copy(accountId = account,
+                categoryId = next.categoryId.takeIf { next.hasCategoryFor(parsed.type) })
+            validated.copy(toAccountId = validated.resolvedTargetAccountId(), expandedCategoryId = validated.categoryParentId)
         }
     }
 
     private fun save() {
         val state = _uiState.value
-        if (state.isSaving) return
+        if (state.isBusy || state.editingUnavailable) return
         val parsed = Money.parse(state.amountInput)
         val amountValid = when (state.type) {
             TransactionType.ADJUST -> parsed != null && !parsed.isZero

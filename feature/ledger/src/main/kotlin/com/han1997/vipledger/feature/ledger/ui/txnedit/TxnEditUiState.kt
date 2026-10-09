@@ -7,6 +7,8 @@ import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.domain.model.Tag
 import com.han1997.vipledger.core.model.CategoryKind
 import com.han1997.vipledger.core.model.TransactionType
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 
 data class TxnEditUiState(
     val isLoading: Boolean = true,
@@ -20,6 +22,7 @@ data class TxnEditUiState(
     val accountId: String? = null,
     val toAccountId: String? = null,
     val categoryId: String? = null,
+    val expandedCategoryId: String? = null,
     val selectedTagIds: Set<String> = emptySet(),
     val excludeFromStats: Boolean = false,
     val accounts: List<Account> = emptyList(),
@@ -32,6 +35,12 @@ data class TxnEditUiState(
     val saveFailureMessage: String? = null,
     val saved: Boolean = false,
     val isSaving: Boolean = false,
+    val hasUnsavedChanges: Boolean = false,
+    val editingUnavailable: Boolean = false,
+    val tagEditorExpanded: Boolean = false,
+    val tagInput: String = "",
+    val isCreatingTag: Boolean = false,
+    val tagCreateFailed: Boolean = false,
     val aiPendingTxnId: String? = null,
     val aiMode: Boolean = false,
     val aiInput: String = "",
@@ -40,6 +49,22 @@ data class TxnEditUiState(
     val aiParsed: ParsedEntry? = null,
 ) {
     val isAiMode: Boolean get() = aiMode
+    val isBusy: Boolean get() = isSaving || isCreatingTag
+    val visibleCategories: List<CategoryNode> get() = categoryNodes.filter { it.category.kind == categoryKind }
+    val categoryParentId: String? get() = visibleCategories.firstOrNull {
+        it.category.id == categoryId || it.children.any { child -> child.id == categoryId }
+    }?.category?.id
+    val selectedCategoryNames: List<String> get() = visibleCategories.firstOrNull { it.category.id == categoryParentId }?.let { node ->
+        listOfNotNull(node.name, node.children.firstOrNull { it.id == categoryId }?.name)
+    }.orEmpty()
+    val matchingTags: List<Tag> get() = tags.filter { it.name.contains(tagInput.trim(), ignoreCase = true) }
+    val existingTag: Tag? get() = tags.firstOrNull { it.name == tagInput.trim() }
+
+    fun toggleCategoryParent(id: String): TxnEditUiState {
+        if (visibleCategories.none { it.category.id == id }) return this
+        return if (categoryParentId == id) copy(expandedCategoryId = id.takeUnless { expandedCategoryId == id })
+        else copy(categoryId = id, expandedCategoryId = id, hasUnsavedChanges = true)
+    }
 
     /** 当前类型对应的分类方向（支出 / 收入 / 转账各自成树）。 */
     val categoryKind: CategoryKind get() = TxnValidator.expectedKind(type)
@@ -101,12 +126,20 @@ sealed interface TxnEditAction {
     data class SelectTargetAccount(val accountId: String) : TxnEditAction
 
     data class SelectCategory(val categoryId: String?) : TxnEditAction
+    data class ToggleCategoryParent(val categoryId: String) : TxnEditAction
 
     data class ToggleTag(val tagId: String) : TxnEditAction
+    data object ToggleTagEditor : TxnEditAction
+    data class UpdateTagInput(val text: String) : TxnEditAction
+    data object CreateTag : TxnEditAction
 
     data class UpdateExcludeFromStats(val exclude: Boolean) : TxnEditAction
 
-    data class SelectDate(val millis: Long) : TxnEditAction
+    data class SelectDate(val date: LocalDate) : TxnEditAction
+    data class SelectTime(val time: LocalTime) : TxnEditAction
+    data class SelectRelativeDate(val daysAgo: Int) : TxnEditAction
+    data object SelectNow : TxnEditAction
+    data object RefreshToday : TxnEditAction
 
     data class UpdateAiInput(val text: String) : TxnEditAction
 

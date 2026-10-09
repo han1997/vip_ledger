@@ -35,6 +35,14 @@ Payment captures that need review now also produce a notification (when Android 
 - CSV and JSON import/export, with encrypted WebDAV snapshots
 - Offline payment capture with a separate review queue and account bindings
 
+The recording screen keeps a single save action at the bottom and confirms before leaving with
+unsaved edits. Times are second-precise: changing the date keeps the time of day, manual time entry
+is second-level, Today and Yesterday are computed live, and an AI-recognized time wins over the
+form's default. Categories render as a grid of full names, with the sub-category row inserted
+directly under the tapped parent and only one parent expanded at a time; tags can be searched or
+created inline, and a same-named tag is reused instead of duplicated. Transaction lists show
+seconds so entries in the same minute keep a stable order.
+
 ## Automatic bookkeeping
 
 Open **Me → Automatic bookkeeping**, choose a fixed ledger, bind payment methods to accounts,

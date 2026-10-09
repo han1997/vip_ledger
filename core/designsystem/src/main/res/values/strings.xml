@@ -9,6 +9,7 @@
     <string name="date_month_day">%1$d月%2$d日</string>
     <string name="date_year_month_day">%1$d-%2$02d-%3$02d</string>
     <string name="date_time_hm">%1$02d:%2$02d</string>
+    <string name="date_time_hms">%1$02d:%2$02d:%3$02d</string>
     <string name="weekday_mon">周一</string>
     <string name="weekday_tue">周二</string>
     <string name="weekday_wed">周三</string>

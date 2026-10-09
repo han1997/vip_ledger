@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.han1997.vipledger.core.designsystem.R
-import com.han1997.vipledger.core.designsystem.format.timeLabel
+import com.han1997.vipledger.core.designsystem.format.timeLabelWithSeconds
 import com.han1997.vipledger.core.designsystem.theme.amountColorOf
 import com.han1997.vipledger.core.domain.model.Txn
 import kotlinx.datetime.TimeZone
@@ -54,7 +54,7 @@ fun TxnLine(
         categoryName?.let { add(it) }
         accountName?.let { add(it) }
         if (tagNames.isNotEmpty()) add(tagNames.joinToString(separator = " "))
-        if (showTime) add(timeLabel(txn.occurredAt, zone))
+        if (showTime) add(timeLabelWithSeconds(txn.occurredAt, zone))
     }.joinToString(separator = " · ")
     val mark = headline.trim().firstOrNull()?.toString() ?: "·"
     val accent = amountColorOf(txn.type)
