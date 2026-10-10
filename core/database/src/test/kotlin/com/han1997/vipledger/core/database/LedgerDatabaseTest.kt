@@ -9,6 +9,11 @@ import com.han1997.vipledger.core.database.entity.CategoryEntity
 import com.han1997.vipledger.core.database.entity.LedgerEntity
 import com.han1997.vipledger.core.database.entity.LendingEntity
 import com.han1997.vipledger.core.database.entity.LendingLinkEntity
+import com.han1997.vipledger.core.database.entity.InstallmentLinkEntity
+import com.han1997.vipledger.core.database.entity.InstallmentPeriodEntity
+import com.han1997.vipledger.core.database.entity.InstallmentPlanEntity
+import com.han1997.vipledger.core.database.entity.InvestmentEntity
+import com.han1997.vipledger.core.database.entity.InvestmentLinkEntity
 import com.han1997.vipledger.core.database.entity.ReimbursementEntity
 import com.han1997.vipledger.core.database.entity.ReimbursementItemEntity
 import com.han1997.vipledger.core.database.entity.ReimbursementReceiptEntity
@@ -18,6 +23,12 @@ import com.han1997.vipledger.core.database.entity.TxnTagEntity
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.CategoryKind
 import com.han1997.vipledger.core.model.DraftStatus
+import com.han1997.vipledger.core.model.InstallmentMethod
+import com.han1997.vipledger.core.model.InstallmentOrigin
+import com.han1997.vipledger.core.model.InstallmentPeriodStatus
+import com.han1997.vipledger.core.model.InstallmentPlanStatus
+import com.han1997.vipledger.core.model.InstallmentPostingKind
+import com.han1997.vipledger.core.model.InvestmentLinkKind
 import com.han1997.vipledger.core.model.LendingDirection
 import com.han1997.vipledger.core.model.LendingLinkKind
 import com.han1997.vipledger.core.model.TransactionType
@@ -323,6 +334,7 @@ class LedgerDatabaseTest {
                 "budget_limit", "budget_alert",
                 "savings_goal", "savings_link", "home_card", "asset_baseline",
                 "reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link",
+                "installment_link", "investment", "investment_link",
             ),
             tables - setOf("room_master_table", "android_metadata", "sqlite_sequence"),
         )
@@ -388,6 +400,86 @@ class LedgerDatabaseTest {
             "index_lending_ledger_id",
             "index_lending_account_id",
             "index_lending_link_lending_id",
+        ).forEach { assertTrue(it in names, "缺少索引 $it") }
+    }
+
+    @Test
+    fun financeTablesPersistAndJoinByLedger() = runTest {
+        seedWorld()
+        db.txnDao().upsert(txn("tx1"))
+        db.txnDao().upsert(txn("tx2", type = TransactionType.TRANSFER, toAccountId = "card"))
+
+        db.installmentPlanDao().upsertPlan(
+            InstallmentPlanEntity(
+                id = "plan",
+                ledgerId = "l1",
+                accountId = "card",
+                name = "花呗",
+                method = InstallmentMethod.EQUAL_PRINCIPAL,
+                principalCents = 120_000,
+                periods = 2,
+                annualRateBp = 1200,
+                upfrontFeeCents = 0,
+                perPeriodFeeCents = 0,
+                firstDueDate = DAY_2,
+                dueDay = null,
+                origin = InstallmentOrigin.DISBURSEMENT,
+                disbursementAccountId = "cash",
+                disbursedAt = DAY_2,
+                status = InstallmentPlanStatus.ACTIVE,
+                remark = null,
+                createdAt = 1,
+                updatedAt = 1,
+                deletedAt = null,
+            ),
+        )
+        db.installmentPeriodDao().upsertAll(
+            listOf(
+                InstallmentPeriodEntity(
+                    id = "sp1",
+                    planId = "plan",
+                    periodNo = 1,
+                    dueDate = DAY_2,
+                    principalCents = 60_000,
+                    interestCents = 1_000,
+                    feeCents = 500,
+                    totalCents = 61_500,
+                    status = InstallmentPeriodStatus.PAID,
+                    paidPrincipalCents = 60_000,
+                    paidInterestCents = 1_000,
+                    paidFeeCents = 500,
+                    paidTxnId = "tx1",
+                    paidAt = DAY_2,
+                ),
+            ),
+        )
+        db.installmentLinkDao().link(InstallmentLinkEntity("tx1", "plan", 1, InstallmentPostingKind.PRINCIPAL, 1))
+        assertEquals(InstallmentPostingKind.PRINCIPAL, db.installmentLinkDao().linkForTxn("tx1")?.kind)
+        assertEquals(listOf("tx1"), db.installmentLinkDao().links("plan").map { it.txnId })
+        assertEquals(1, db.installmentLinkDao().linksForLedger("l1").size)
+        assertEquals(InstallmentOrigin.DISBURSEMENT, db.installmentPlanDao().getPlan("plan")?.origin)
+        assertEquals(60_000L, db.installmentPeriodDao().getPeriod("plan", 1)?.paidPrincipalCents)
+
+        db.investmentDao().save(InvestmentEntity("inv1", "l1", "基金", "cash", "", false, 1, 1))
+        db.investmentDao().link(InvestmentLinkEntity("tx2", "inv1", InvestmentLinkKind.REDEEM, 1))
+        assertEquals(InvestmentLinkKind.REDEEM, db.investmentDao().linkForTxn("tx2")?.kind)
+        assertEquals(listOf("tx2"), db.investmentDao().links("inv1").map { it.txnId })
+        assertEquals(listOf("inv1"), db.investmentDao().linksForLedger("l1").map { it.investmentId })
+        assertEquals("基金", db.investmentDao().record("inv1")?.name)
+    }
+
+    @Test
+    fun schemaKeepsFinanceIndexes() {
+        val names = queryStrings(
+            "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name IN " +
+                "('installment_link','investment','investment_link')",
+        ).toSet()
+        listOf(
+            "index_installment_link_plan_id",
+            "index_installment_link_plan_id_period_no",
+            "index_investment_ledger_id",
+            "index_investment_account_id",
+            "index_investment_link_investment_id",
         ).forEach { assertTrue(it in names, "缺少索引 $it") }
     }
 

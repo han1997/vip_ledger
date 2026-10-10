@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 分期增强（P4，前缀 loan_） -->
+    <string name="loan_origin">计划来源</string>
+    <string name="loan_origin_existing">已有负债</string>
+    <string name="loan_origin_disbursement">新放款</string>
+    <string name="loan_disbursement_account">放款到账账户</string>
+    <string name="loan_disbursement_account_required">请选择放款到账账户</string>
+    <string name="loan_disbursement_account_empty">还没有可用的资金账户，先到「账户管理」新建</string>
+    <string name="loan_disbursement_banner">新放款到账：%1$s</string>
+    <string name="loan_custom_amounts">逐期本金/利息/费</string>
+    <string name="loan_custom_amounts_hint">每期一行：本金,利息,费；各期本金之和必须等于本金。只填一个数字时表示该期还款总额</string>
+    <string name="loan_custom_amounts_invalid">逐期金额格式不正确，请检查本金之和与各期数字</string>
+    <string name="loan_partial_paid">已还 %1$s</string>
+    <string name="loan_period_partial">部分已还</string>
+    <string name="loan_period_untouched">未还</string>
+    <string name="loan_repay_amount_input">还款金额（留空为还清本期）</string>
+    <string name="loan_repay_amount_invalid">金额需大于 0 且不超过本期未还</string>
+    <string name="loan_repay_split">本金 %1$s · 利息 %2$s · 手续费 %3$s</string>
+    <string name="loan_repay_hint">按「手续费 → 利息 → 本金」顺序核销；本金转账不计收支，利息与手续费计入支出。</string>
+    <string name="loan_settle">提前结清</string>
+    <string name="loan_settle_title">提前结清「%1$s」</string>
+    <string name="loan_settle_hint">一次还清剩余本金、利息与手续费，并把计划置为已结清。</string>
+    <string name="loan_prepay">部分提前还款</string>
+    <string name="loan_prepay_title">部分提前还款 · %1$s</string>
+    <string name="loan_prepay_amount">提前偿还本金</string>
+    <string name="loan_prepay_hint">保持余期数不变，等额下调未还期次本金并按原计息方式重算，已还期次不改动。</string>
+    <string name="loan_prepay_amount_invalid">金额需大于 0 且小于未还本金（等于或超过请用提前结清）</string>
+    <string name="loan_prepay_untouched_only">只能在「完全未还」的期次上提前还款</string>
+    <string name="loan_change_rate">变更利率</string>
+    <string name="loan_change_rate_title">利率变更 · %1$s</string>
+    <string name="loan_change_rate_from">从第几期起生效</string>
+    <string name="loan_change_rate_value">新的年化利率（%）</string>
+    <string name="loan_change_rate_hint">只能从未还款的期次起生效，已还期次的历史金额保持不变。</string>
+    <string name="loan_remaining_principal">未还本金 %1$s</string>
+    <string name="loan_legacy_title">旧口径还款差异</string>
+    <string name="loan_legacy_hint">旧版本把整期记为一次本金转账（利息与手续费未计入支出）；修正后会拆成本金转账 + 利息/手续费支出，原流水保留在回收站。</string>
+    <string name="loan_legacy_row">第 %1$d 期：旧 %2$s → 本金 %3$s / 利息 %4$s / 费 %5$s</string>
+    <string name="loan_legacy_correct">修正旧口径</string>
+    <string name="loan_legacy_corrected">已修正 %1$d 期旧还款</string>
+    <string name="loan_legacy_none">没有需要修正的旧还款</string>
+    <string name="loan_settled">已结清</string>
+    <string name="loan_prepaid">已提前还款</string>
+    <string name="loan_rate_changed">已变更利率</string>
+    <string name="loan_link_invalid">分期还款流水关联失效，请重新打开</string>
+    <string name="loan_direction_locked">分期还款流水的类型与方向不能修改</string>
+    <string name="loan_amount_locked">该分期流水金额已锁定，不能修改或删除</string>
+    <string name="loan_over_paid">核销金额超过该期应还金额</string>
+</resources>

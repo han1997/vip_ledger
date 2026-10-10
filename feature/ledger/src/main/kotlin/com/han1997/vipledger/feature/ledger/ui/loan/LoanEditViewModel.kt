@@ -46,10 +46,16 @@ class LoanEditViewModel @Inject constructor(
                 _uiState.update { state ->
                     val debt = accounts.filter { it.type.isDebt }
                     val current = state.accountId?.takeIf { id -> debt.any { it.id == id } }
+                    val accountId = current ?: debt.firstOrNull()?.id
+                    val cash = accounts.filter { it.isUsable && !it.isDebt }
+                    val disbursement = state.disbursementAccountId
+                        ?.takeIf { id -> cash.any { it.id == id && it.id != accountId } }
+                        ?: cash.firstOrNull { it.id != accountId }?.id
                     state.copy(
                         isLoading = false,
                         accounts = accounts,
-                        accountId = current ?: debt.firstOrNull()?.id,
+                        accountId = accountId,
+                        disbursementAccountId = disbursement,
                     )
                 }
             }
@@ -67,6 +73,10 @@ class LoanEditViewModel @Inject constructor(
             is LoanEditAction.UpdateUpfrontFee -> update { it.copy(upfrontFeeInput = action.text) }
             is LoanEditAction.UpdatePerPeriodFee -> update { it.copy(perPeriodFeeInput = action.text) }
             is LoanEditAction.UpdateCustomTotals -> update { it.copy(customTotalsInput = action.text) }
+            is LoanEditAction.SelectOrigin -> update { it.copy(origin = action.origin) }
+            is LoanEditAction.SelectDisbursementAccount -> update {
+                it.copy(disbursementAccountId = action.accountId)
+            }
             is LoanEditAction.SelectFirstDueDate -> update { it.copy(firstDueDate = action.date) }
             is LoanEditAction.UpdateDueDay -> update { it.copy(dueDayInput = action.text) }
             is LoanEditAction.UpdateRemark -> update { it.copy(remark = action.text) }
@@ -86,6 +96,7 @@ class LoanEditViewModel @Inject constructor(
             _uiState.update { it.copy(error = error) }
             return
         }
+        val customAmounts = state.customAmountsValue()
         val input = SaveInstallmentPlanInput(
             ledgerId = ledgerId,
             accountId = state.accountId.orEmpty(),
@@ -99,7 +110,10 @@ class LoanEditViewModel @Inject constructor(
             upfrontFee = state.upfrontFeeValue() ?: Money.ZERO,
             perPeriodFee = state.perPeriodFeeValue() ?: Money.ZERO,
             remark = state.remark.trim().takeIf { it.isNotEmpty() },
-            customPeriodTotals = state.customTotalsValue(),
+            origin = state.origin,
+            disbursementAccountId = state.disbursementAccountId.takeIf { state.showsDisbursementAccount },
+            customPeriodTotals = state.customTotalsValue().takeIf { customAmounts == null },
+            customAmounts = customAmounts,
         )
         viewModelScope.launch {
             val result = savePlan(input)

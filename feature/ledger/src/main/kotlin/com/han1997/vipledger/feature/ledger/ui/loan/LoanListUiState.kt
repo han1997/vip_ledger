@@ -14,7 +14,7 @@ data class LoanListUiState(
 )
 
 /** 一次性提示：界面层查表成文案。 */
-enum class LoanNotice { DELETED, REPAID, FAILED }
+enum class LoanNotice { DELETED, REPAID, SETTLED, PREPAID, RATE_CHANGED, LEGACY_CORRECTED, FAILED }
 
 sealed interface LoanListAction {
     data class Delete(val planId: String) : LoanListAction

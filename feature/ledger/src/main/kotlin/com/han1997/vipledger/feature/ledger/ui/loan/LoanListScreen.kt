@@ -88,6 +88,10 @@ internal fun LoanListContent(
     val noticeMessage: String? = when (state.notice) {
         LoanNotice.DELETED -> stringResource(R.string.notice_deleted)
         LoanNotice.REPAID -> stringResource(R.string.loan_repay_done)
+        LoanNotice.SETTLED -> stringResource(R.string.loan_settled)
+        LoanNotice.PREPAID -> stringResource(R.string.loan_prepaid)
+        LoanNotice.RATE_CHANGED -> stringResource(R.string.loan_rate_changed)
+        LoanNotice.LEGACY_CORRECTED -> state.noticeDetail ?: stringResource(R.string.loan_legacy_none)
         LoanNotice.FAILED -> state.noticeDetail ?: stringResource(R.string.notice_failed)
         null -> null
     }

@@ -3,12 +3,14 @@ package com.han1997.vipledger.core.data.mapper
 import com.han1997.vipledger.core.database.entity.AttachmentEntity
 import com.han1997.vipledger.core.database.entity.InstallmentPeriodEntity
 import com.han1997.vipledger.core.database.entity.InstallmentPlanEntity
+import com.han1997.vipledger.core.database.entity.InstallmentLinkEntity
 import com.han1997.vipledger.core.database.entity.MerchantRuleEntity
 import com.han1997.vipledger.core.database.entity.MlTrainingSampleEntity
 import com.han1997.vipledger.core.database.entity.RecurringRuleEntity
 import com.han1997.vipledger.core.domain.model.Attachment
 import com.han1997.vipledger.core.domain.model.InstallmentPeriod
 import com.han1997.vipledger.core.domain.model.InstallmentPlan
+import com.han1997.vipledger.core.domain.model.InstallmentLink
 import com.han1997.vipledger.core.domain.model.MerchantRule
 import com.han1997.vipledger.core.domain.model.MlTrainingSample
 import com.han1997.vipledger.core.domain.model.RecurringRule
@@ -103,6 +105,9 @@ internal fun InstallmentPlanEntity.toDomain() = InstallmentPlan(
     perPeriodFee = Money.ofCents(perPeriodFeeCents),
     firstDueDate = firstDueDate.toDateColumnLocalDate(),
     dueDay = dueDay,
+    origin = origin,
+    disbursementAccountId = disbursementAccountId,
+    disbursedAt = disbursedAt,
     status = status,
     remark = remark,
     createdAt = createdAt,
@@ -123,6 +128,9 @@ internal fun InstallmentPlan.toEntity() = InstallmentPlanEntity(
     perPeriodFeeCents = perPeriodFee.cents,
     firstDueDate = firstDueDate.toDateColumnEpochMillis(),
     dueDay = dueDay,
+    origin = origin,
+    disbursementAccountId = disbursementAccountId,
+    disbursedAt = disbursedAt,
     status = status,
     remark = remark,
     createdAt = createdAt,
@@ -139,6 +147,9 @@ internal fun InstallmentPeriodEntity.toDomain() = InstallmentPeriod(
     interest = Money.ofCents(interestCents),
     fee = Money.ofCents(feeCents),
     status = status,
+    paidPrincipal = Money.ofCents(paidPrincipalCents),
+    paidInterest = Money.ofCents(paidInterestCents),
+    paidFee = Money.ofCents(paidFeeCents),
     paidTxnId = paidTxnId,
     paidAt = paidAt,
 )
@@ -153,8 +164,27 @@ internal fun InstallmentPeriod.toEntity() = InstallmentPeriodEntity(
     feeCents = fee.cents,
     totalCents = total.cents,
     status = status,
+    paidPrincipalCents = paidPrincipal.cents,
+    paidInterestCents = paidInterest.cents,
+    paidFeeCents = paidFee.cents,
     paidTxnId = paidTxnId,
     paidAt = paidAt,
+)
+
+internal fun InstallmentLinkEntity.toDomain() = InstallmentLink(
+    txnId = txnId,
+    planId = planId,
+    periodNo = periodNo,
+    kind = kind,
+    createdAt = createdAt,
+)
+
+internal fun InstallmentLink.toEntity() = InstallmentLinkEntity(
+    txnId = txnId,
+    planId = planId,
+    periodNo = periodNo,
+    kind = kind,
+    createdAt = createdAt,
 )
 
 internal fun MerchantRuleEntity.toDomain() = MerchantRule(

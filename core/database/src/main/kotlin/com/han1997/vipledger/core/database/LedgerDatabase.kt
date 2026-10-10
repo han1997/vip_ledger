@@ -60,6 +60,9 @@ import com.han1997.vipledger.core.database.entity.TxnTagEntity
         RecurringRuleEntity::class,
         InstallmentPlanEntity::class,
         InstallmentPeriodEntity::class,
+        com.han1997.vipledger.core.database.entity.InstallmentLinkEntity::class,
+        com.han1997.vipledger.core.database.entity.InvestmentEntity::class,
+        com.han1997.vipledger.core.database.entity.InvestmentLinkEntity::class,
         MerchantRuleEntity::class,
         AttachmentEntity::class,
         MlTrainingSampleEntity::class,
@@ -97,6 +100,10 @@ abstract class LedgerDatabase : RoomDatabase() {
 
     abstract fun installmentPeriodDao(): InstallmentPeriodDao
 
+    abstract fun installmentLinkDao(): com.han1997.vipledger.core.database.dao.InstallmentLinkDao
+
+    abstract fun investmentDao(): com.han1997.vipledger.core.database.dao.InvestmentDao
+
     abstract fun merchantRuleDao(): MerchantRuleDao
 
     abstract fun attachmentDao(): AttachmentDao
@@ -104,7 +111,7 @@ abstract class LedgerDatabase : RoomDatabase() {
     abstract fun mlTrainingSampleDao(): MlTrainingSampleDao
 
     companion object {
-        const val SCHEMA_VERSION: Int = 5
+        const val SCHEMA_VERSION: Int = 6
         const val NAME: String = "vipledger.db"
     }
 }

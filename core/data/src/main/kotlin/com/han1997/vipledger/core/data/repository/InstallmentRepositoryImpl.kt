@@ -6,6 +6,8 @@ import com.han1997.vipledger.core.data.mapper.toEntity
 import com.han1997.vipledger.core.data.support.dataResult
 import com.han1997.vipledger.core.database.dao.InstallmentPeriodDao
 import com.han1997.vipledger.core.database.dao.InstallmentPlanDao
+import com.han1997.vipledger.core.database.dao.InstallmentLinkDao
+import com.han1997.vipledger.core.domain.model.InstallmentLink
 import com.han1997.vipledger.core.domain.model.InstallmentPeriod
 import com.han1997.vipledger.core.domain.model.InstallmentPlan
 import com.han1997.vipledger.core.domain.repository.InstallmentRepository
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.map
 class InstallmentRepositoryImpl @Inject constructor(
     private val planDao: InstallmentPlanDao,
     private val periodDao: InstallmentPeriodDao,
+    private val linkDao: InstallmentLinkDao,
     private val transactionRunner: TransactionRunner,
 ) : InstallmentRepository {
 
@@ -49,11 +52,18 @@ class InstallmentRepositoryImpl @Inject constructor(
         updatedAt: Long,
     ): AppResult<Unit> = dataResult { planDao.updatePlanStatus(planId, status, updatedAt) }
 
+    override suspend fun savePlan(plan: InstallmentPlan): AppResult<Unit> =
+        dataResult { planDao.upsertPlan(plan.toEntity()) }
+
     override suspend fun listPeriods(planId: String): List<InstallmentPeriod> =
         periodDao.listPeriods(planId).map { it.toDomain() }
 
     override suspend fun listPeriodsForLedger(ledgerId: String): List<InstallmentPeriod> =
         periodDao.listPeriodsForLedger(ledgerId).map { it.toDomain() }
+
+    override suspend fun savePeriods(periods: List<InstallmentPeriod>): AppResult<Unit> = dataResult {
+        if (periods.isNotEmpty()) periodDao.upsertAll(periods.map { it.toEntity() })
+    }
 
     override suspend fun getPeriod(planId: String, periodNo: Int): InstallmentPeriod? =
         periodDao.getPeriod(planId, periodNo)?.toDomain()
@@ -69,4 +79,16 @@ class InstallmentRepositoryImpl @Inject constructor(
 
     override suspend fun softDeletePlan(planId: String, deletedAt: Long): AppResult<Unit> =
         dataResult { planDao.softDeletePlan(planId, deletedAt) }
+
+    override suspend fun link(link: InstallmentLink): AppResult<Unit> =
+        dataResult { linkDao.link(link.toEntity()) }
+
+    override suspend fun linkForTxn(txnId: String): InstallmentLink? =
+        linkDao.linkForTxn(txnId)?.toDomain()
+
+    override suspend fun linksForPlan(planId: String): List<InstallmentLink> =
+        linkDao.links(planId).map { it.toDomain() }
+
+    override suspend fun linksForLedger(ledgerId: String): List<InstallmentLink> =
+        linkDao.linksForLedger(ledgerId).map { it.toDomain() }
 }

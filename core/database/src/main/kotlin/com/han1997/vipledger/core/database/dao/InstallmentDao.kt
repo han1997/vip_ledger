@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.han1997.vipledger.core.database.entity.InstallmentPeriodEntity
 import com.han1997.vipledger.core.database.entity.InstallmentPlanEntity
+import com.han1997.vipledger.core.database.entity.InstallmentLinkEntity
 import com.han1997.vipledger.core.model.InstallmentPeriodStatus
 import com.han1997.vipledger.core.model.InstallmentPlanStatus
 import kotlinx.coroutines.flow.Flow
@@ -62,7 +63,10 @@ interface InstallmentPeriodDao {
     @Query(
         """
         UPDATE installment_period
-        SET status = :status, paid_txn_id = :txnId, paid_at = :paidAt
+        SET status = :status, paid_txn_id = :txnId, paid_at = :paidAt,
+            paid_principal_cents = principal_cents,
+            paid_interest_cents = interest_cents,
+            paid_fee_cents = fee_cents
         WHERE plan_id = :planId AND period_no = :periodNo
         """,
     )
@@ -73,4 +77,26 @@ interface InstallmentPeriodDao {
         txnId: String,
         paidAt: Long,
     )
+}
+
+@Dao
+interface InstallmentLinkDao {
+
+    @Query("SELECT * FROM installment_link WHERE plan_id=:planId ORDER BY created_at, txn_id")
+    suspend fun links(planId: String): List<InstallmentLinkEntity>
+
+    @Query(
+        """
+        SELECT installment_link.* FROM installment_link
+        INNER JOIN installment_plan ON installment_link.plan_id = installment_plan.id
+        WHERE installment_plan.ledger_id = :ledgerId
+        """,
+    )
+    suspend fun linksForLedger(ledgerId: String): List<InstallmentLinkEntity>
+
+    @Query("SELECT * FROM installment_link WHERE txn_id=:txnId")
+    suspend fun linkForTxn(txnId: String): InstallmentLinkEntity?
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun link(row: InstallmentLinkEntity)
 }

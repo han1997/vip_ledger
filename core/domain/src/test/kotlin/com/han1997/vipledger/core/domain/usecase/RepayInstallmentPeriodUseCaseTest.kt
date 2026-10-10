@@ -2,6 +2,7 @@ package com.han1997.vipledger.core.domain.usecase
 
 import com.han1997.vipledger.core.common.result.AppError
 import com.han1997.vipledger.core.common.result.AppResult
+import com.han1997.vipledger.core.common.result.getOrThrow
 import com.han1997.vipledger.core.domain.fake.FakeAccountRepository
 import com.han1997.vipledger.core.domain.fake.FakeCategoryRepository
 import com.han1997.vipledger.core.domain.fake.FakeInstallmentRepository
@@ -16,20 +17,26 @@ import com.han1997.vipledger.core.domain.model.InstallmentPlan
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.usecase.loan.RepayInstallmentPeriodInput
 import com.han1997.vipledger.core.domain.usecase.loan.RepayInstallmentPeriodUseCase
+import com.han1997.vipledger.core.domain.usecase.txn.CreateTxnUseCase
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.InstallmentMethod
 import com.han1997.vipledger.core.model.InstallmentPeriodStatus
 import com.han1997.vipledger.core.model.InstallmentPlanStatus
+import com.han1997.vipledger.core.model.InstallmentPostingKind
 import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.money.Money
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 
+/**
+ * 逐期核销：本金走转账（现金 → 负债），利息/手续费走支出；一期可产生 1–3 条流水。
+ */
 class RepayInstallmentPeriodUseCaseTest {
 
     private val card = Account(
@@ -81,71 +88,103 @@ class RepayInstallmentPeriodUseCaseTest {
         ),
     )
 
-    private fun setup(
-        plans: List<InstallmentPlan> = listOf(plan),
-        periods: List<InstallmentPeriod> = periods(),
-    ): Triple<FakeInstallmentRepository, FakeTxnRepository, RecordingBalanceSyncer> {
+    private class Fixture(
+        plans: List<InstallmentPlan>,
+        periods: List<InstallmentPeriod>,
+        card: Account,
+        cash: Account,
+    ) {
         val installments = FakeInstallmentRepository(plans.toMutableList(), periods.toMutableList())
         val txns = FakeTxnRepository()
+        val accounts = FakeAccountRepository(mutableListOf(card, cash))
         val syncer = RecordingBalanceSyncer()
-        return Triple(installments, txns, syncer)
+        val runner = FakeTransactionRunner()
+        private val time = FakeTimeProvider()
+        private val create = CreateTxnUseCase(
+            txns,
+            accounts,
+            FakeCategoryRepository(),
+            runner,
+            syncer,
+            time,
+            SequentialIdGenerator("txn"),
+        )
+        val useCase = RepayInstallmentPeriodUseCase(installments, accounts, runner, create, FakeTimeProvider())
     }
 
-    private fun useCase(
-        installments: FakeInstallmentRepository,
-        txns: FakeTxnRepository,
-        syncer: RecordingBalanceSyncer,
-    ) = RepayInstallmentPeriodUseCase(
-        installmentRepository = installments,
-        txnRepository = txns,
-        accountRepository = FakeAccountRepository(mutableListOf(card, cash)),
-        categoryRepository = FakeCategoryRepository(),
-        transactionRunner = FakeTransactionRunner(),
-        balanceSyncer = syncer,
-        timeProvider = FakeTimeProvider(),
-        idGenerator = SequentialIdGenerator("txn"),
-    )
+    private fun fixture(
+        plans: List<InstallmentPlan> = listOf(plan),
+        periods: List<InstallmentPeriod> = periods(),
+    ) = Fixture(plans, periods, card, cash)
 
     @Test
-    fun repayingAPeriodWritesARepayTxnAndMarksItPaid() = runTest {
-        val (installments, txns, syncer) = setup()
-        val txn = assertIs<AppResult.Success<Txn>>(
-            useCase(installments, txns, syncer)(
-                RepayInstallmentPeriodInput(planId = "plan", periodNo = 1, fromAccountId = "cash"),
-            ),
-        ).value
+    fun repayingAPeriodSplitsPrincipalTransferAndInterestExpense() = runTest {
+        val fixture = fixture()
+        val entries = fixture.useCase(
+            RepayInstallmentPeriodInput(planId = "plan", periodNo = 1, fromAccountId = "cash"),
+        ).getOrThrow()
 
-        assertEquals(TransactionType.DEBT_REPAY, txn.type)
-        assertEquals("cash", txn.accountId)
-        assertEquals("card", txn.toAccountId)
-        assertEquals(Money.ofYuan(1010), txn.amount)
-        assertEquals("plan", txn.installmentPlanId)
-        assertEquals(1, txn.installmentPeriodNo)
-        assertEquals(1, txns.snapshot().size)
+        assertEquals(2, entries.size)
+        val principal = entries.single { it.type == TransactionType.TRANSFER }
+        val interest = entries.single { it.type == TransactionType.EXPENSE }
+        assertEquals(Money.ofYuan(1000), principal.amount)
+        assertEquals("cash", principal.accountId)
+        assertEquals("card", principal.toAccountId)
+        assertEquals("plan", principal.installmentPlanId)
+        assertEquals(1, principal.installmentPeriodNo)
+        assertEquals(Money.ofYuan(10), interest.amount)
+        assertEquals("cash", interest.accountId)
+        assertNull(interest.toAccountId)
 
-        val updated = assertNotNull(installments.getPeriod("plan", 1))
+        val links = fixture.installments.linkSnapshot()
+        assertEquals(setOf(InstallmentPostingKind.PRINCIPAL, InstallmentPostingKind.INTEREST), links.map { it.kind }.toSet())
+
+        val updated = assertNotNull(fixture.installments.getPeriod("plan", 1))
         assertEquals(InstallmentPeriodStatus.PAID, updated.status)
-        assertEquals(txn.id, updated.paidTxnId)
-        assertEquals(InstallmentPlanStatus.ACTIVE, assertNotNull(installments.getPlan("plan")).status)
-        assertEquals(listOf("cash", "card"), syncer.syncedIds)
+        assertEquals(Money.ofYuan(1000), updated.paidPrincipal)
+        assertEquals(Money.ofYuan(10), updated.paidInterest)
+        assertEquals(Money.ZERO, updated.paidFee)
+        assertEquals(principal.id, updated.paidTxnId)
+        assertEquals(InstallmentPlanStatus.ACTIVE, assertNotNull(fixture.installments.getPlan("plan")).status)
+    }
+
+    @Test
+    fun partialRepaymentAllocatesFeeThenInterestAndKeepsThePeriodPartial() = runTest {
+        val withFee = periods().map { if (it.periodNo == 1) it.copy(fee = Money.ofYuan(3)) else it }
+        val fixture = fixture(periods = withFee)
+        fixture.useCase(
+            RepayInstallmentPeriodInput(
+                planId = "plan",
+                periodNo = 1,
+                fromAccountId = "cash",
+                amount = Money.ofYuan(8),
+            ),
+        ).getOrThrow()
+
+        val updated = assertNotNull(fixture.installments.getPeriod("plan", 1))
+        assertEquals(InstallmentPeriodStatus.PARTIAL, updated.status)
+        assertEquals(Money.ofYuan(3), updated.paidFee)
+        assertEquals(Money.ofYuan(5), updated.paidInterest)
+        assertEquals(Money.ZERO, updated.paidPrincipal)
+        assertTrue(fixture.txns.snapshot().all { it.type == TransactionType.EXPENSE })
+        assertEquals(InstallmentPlanStatus.ACTIVE, assertNotNull(fixture.installments.getPlan("plan")).status)
     }
 
     @Test
     fun payingTheLastPeriodClosesThePlan() = runTest {
-        val (installments, txns, syncer) = setup()
-        val useCase = useCase(installments, txns, syncer)
-        useCase(RepayInstallmentPeriodInput(planId = "plan", periodNo = 1, fromAccountId = "cash"))
-        useCase(RepayInstallmentPeriodInput(planId = "plan", periodNo = 2, fromAccountId = "cash"))
+        val fixture = fixture()
+        fixture.useCase(RepayInstallmentPeriodInput("plan", 1, "cash")).getOrThrow()
+        fixture.useCase(RepayInstallmentPeriodInput("plan", 2, "cash")).getOrThrow()
 
-        assertEquals(InstallmentPlanStatus.CLOSED, assertNotNull(installments.getPlan("plan")).status)
-        assertTrue(installments.periodSnapshot().all { it.status == InstallmentPeriodStatus.PAID })
-        assertEquals(2, txns.snapshot().size)
+        assertEquals(InstallmentPlanStatus.CLOSED, assertNotNull(fixture.installments.getPlan("plan")).status)
+        assertTrue(fixture.installments.periodSnapshot().all { it.status == InstallmentPeriodStatus.PAID })
+        assertEquals(4, fixture.txns.snapshot().size)
     }
 
     @Test
     fun rejectsInvalidRepayments() = runTest {
-        val (installments, txns, syncer) = setup()
-        val useCase = useCase(installments, txns, syncer)
+        val fixture = fixture()
+        val useCase = fixture.useCase
         assertIs<AppError.NotFound>(
             assertIs<AppResult.Failure>(useCase(RepayInstallmentPeriodInput("nope", 1, "cash"))).error,
         )
@@ -158,13 +197,21 @@ class RepayInstallmentPeriodUseCaseTest {
         assertIs<AppError.Validation>(
             assertIs<AppResult.Failure>(useCase(RepayInstallmentPeriodInput("plan", 1, "card"))).error,
         )
-        assertIs<AppResult.Success<Txn>>(useCase(RepayInstallmentPeriodInput("plan", 1, "cash")))
+        // 超过本期未还
+        assertIs<AppError.Validation>(
+            assertIs<AppResult.Failure>(
+                useCase(
+                    RepayInstallmentPeriodInput("plan", 1, "cash", amount = Money.ofYuan(9999)),
+                ),
+            ).error,
+        )
+        assertIs<AppResult.Success<List<Txn>>>(useCase(RepayInstallmentPeriodInput("plan", 1, "cash")))
         // 同一期不能还两次
         assertIs<AppError.Validation>(
             assertIs<AppResult.Failure>(useCase(RepayInstallmentPeriodInput("plan", 1, "cash"))).error,
         )
         // 最后一期还清后计划结清，再还任何一期都会被拒
-        assertIs<AppResult.Success<Txn>>(useCase(RepayInstallmentPeriodInput("plan", 2, "cash")))
+        assertIs<AppResult.Success<List<Txn>>>(useCase(RepayInstallmentPeriodInput("plan", 2, "cash")))
         assertIs<AppError.Validation>(
             assertIs<AppResult.Failure>(useCase(RepayInstallmentPeriodInput("plan", 2, "cash"))).error,
         )
@@ -172,10 +219,10 @@ class RepayInstallmentPeriodUseCaseTest {
 
     @Test
     fun deletedPlansCannotBeRepaid() = runTest {
-        val (installments, txns, syncer) = setup(plans = listOf(plan.copy(deletedAt = 1L)))
+        val fixture = fixture(plans = listOf(plan.copy(deletedAt = 1L)))
         assertIs<AppError.NotFound>(
             assertIs<AppResult.Failure>(
-                useCase(installments, txns, syncer)(RepayInstallmentPeriodInput("plan", 1, "cash")),
+                fixture.useCase(RepayInstallmentPeriodInput("plan", 1, "cash")),
             ).error,
         )
     }

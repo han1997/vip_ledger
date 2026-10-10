@@ -76,6 +76,8 @@ import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard
 import com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard
 import com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard
+import com.han1997.vipledger.core.domain.usecase.investment.InvestmentTxnGuard
+import com.han1997.vipledger.core.domain.usecase.loan.InstallmentTxnGuard
 import com.han1997.vipledger.core.domain.nlp.ParsedEntry
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.CategoryKind
@@ -136,6 +138,13 @@ internal fun TxnEditContent(
         LendingTxnGuard.DIRECTION -> stringResource(R.string.lending_direction_locked)
         LendingTxnGuard.OVER_SETTLE -> stringResource(R.string.lending_over_settle)
         LendingTxnGuard.LINK_INVALID -> stringResource(R.string.lending_link_invalid)
+        InstallmentTxnGuard.LINK_INVALID -> stringResource(R.string.loan_link_invalid)
+        InstallmentTxnGuard.DIRECTION -> stringResource(R.string.loan_direction_locked)
+        InstallmentTxnGuard.AMOUNT_LOCKED -> stringResource(R.string.loan_amount_locked)
+        InstallmentTxnGuard.OVER_PAID -> stringResource(R.string.loan_over_paid)
+        InvestmentTxnGuard.LINK_INVALID -> stringResource(R.string.investment_link_invalid)
+        InvestmentTxnGuard.DIRECTION -> stringResource(R.string.investment_direction_locked)
+        InvestmentTxnGuard.OVER_REDEEM -> stringResource(R.string.investment_over_redeem)
         else -> state.saveFailureMessage ?: failedMessage
     }
     val aiNoEntryMessage = stringResource(R.string.txn_edit_ai_no_entry)

@@ -77,6 +77,7 @@ class MigrationTest {
                 "budget_limit", "budget_alert",
                 "savings_goal", "savings_link", "home_card", "asset_baseline",
                 "reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link",
+                "installment_link", "investment", "investment_link",
             ),
             tables,
         )
@@ -112,7 +113,57 @@ class MigrationTest {
     @Test
     fun versionFourUpgradesWithoutLosingExistingRows() = upgradeFrom(4)
 
-    private fun upgradeFrom(version: Int) {
+    @Test
+    fun versionFiveUpgradesWithoutLosingExistingRows() = upgradeFrom(5)
+
+    @Test
+    fun migrationFiveToSixBackfillsLegacyPaidPeriods() = upgradeFrom(
+        version = 5,
+        extraSetup = { sql ->
+            sql.execSQL(
+                "INSERT INTO installment_plan(id,ledger_id,account_id,name,method,principal_cents,periods," +
+                    "annual_rate_bp,upfront_fee_cents,per_period_fee_cents,first_due_date,due_day,status," +
+                    "remark,created_at,updated_at,deleted_at) VALUES('plan','old','cash','包年','EQUAL_PRINCIPAL'," +
+                    "120000,2,1200,0,0,1,NULL,'ACTIVE',NULL,1,1,NULL)",
+            )
+            sql.execSQL(
+                "INSERT INTO installment_period(id,plan_id,period_no,due_date,principal_cents,interest_cents," +
+                    "fee_cents,total_cents,status,paid_txn_id,paid_at) VALUES('sp1','plan',1,1,60000,1000,500," +
+                    "61500,'PAID','purchase',1)",
+            )
+            sql.execSQL(
+                "INSERT INTO installment_period(id,plan_id,period_no,due_date,principal_cents,interest_cents," +
+                    "fee_cents,total_cents,status,paid_txn_id,paid_at) VALUES('sp2','plan',2,1,60000,1000,500," +
+                    "61500,'PENDING',NULL,NULL)",
+            )
+        },
+        extraAssert = { sql ->
+            sql.query(
+                "SELECT paid_principal_cents,paid_interest_cents,paid_fee_cents FROM installment_period WHERE id='sp1'",
+            ).use {
+                assertTrue(it.moveToFirst())
+                assertEquals(60000L, it.getLong(0))
+                assertEquals(1000L, it.getLong(1))
+                assertEquals(500L, it.getLong(2))
+            }
+            sql.query("SELECT paid_principal_cents FROM installment_period WHERE id='sp2'").use {
+                assertTrue(it.moveToFirst())
+                assertEquals(0L, it.getLong(0))
+            }
+            sql.query("SELECT origin,disbursement_account_id,disbursed_at FROM installment_plan WHERE id='plan'").use {
+                assertTrue(it.moveToFirst())
+                assertEquals("EXISTING", it.getString(0))
+                assertTrue(it.isNull(1))
+                assertTrue(it.isNull(2))
+            }
+        },
+    )
+
+    private fun upgradeFrom(
+        version: Int,
+        extraSetup: (androidx.sqlite.db.SupportSQLiteDatabase) -> Unit = {},
+        extraAssert: (androidx.sqlite.db.SupportSQLiteDatabase) -> Unit = {},
+    ) {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val name = "migration-${System.nanoTime()}.db"
         val assets = InstrumentationRegistry.getInstrumentation().context.assets
@@ -138,6 +189,7 @@ class MigrationTest {
         helper.writableDatabase.execSQL("INSERT INTO ledger(id,name,currency_code,sort_order,is_default,created_at,updated_at) VALUES('old','Old ledger','CNY',0,1,1,1)")
         helper.writableDatabase.execSQL("INSERT INTO account(id,ledger_id,name,type,initial_balance_cents,current_balance_cents,include_in_net_worth,is_archived,sort_order,created_at,updated_at) VALUES('cash','old','Cash','CASH',10000,8766,1,0,0,1,1)")
         helper.writableDatabase.execSQL("INSERT INTO txn(id,ledger_id,type,amount_cents,account_id,occurred_at,title,remark,source,draft_status,exclude_from_stats,created_at,updated_at) VALUES('purchase','old','EXPENSE',1234,'cash',1,'Lunch','','MANUAL','CONFIRMED',0,1,1)")
+        extraSetup(helper.writableDatabase)
         helper.close()
         val upgraded = Room.databaseBuilder(context, LedgerDatabase::class.java, name)
             .addMigrations(*ALL_MIGRATIONS).allowMainThreadQueries().build()
@@ -164,11 +216,15 @@ class MigrationTest {
             upgraded.openHelper.writableDatabase.query("SELECT current_balance_cents FROM account WHERE id='cash'").use {
                 assertTrue(it.moveToFirst()); assertEquals(8766L, it.getLong(0))
             }
-            listOf("reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link").forEach { table ->
+            listOf(
+                "reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link",
+                "installment_link", "investment", "investment_link",
+            ).forEach { table ->
                 upgraded.openHelper.writableDatabase.query("SELECT COUNT(*) FROM $table").use {
                     assertTrue(it.moveToFirst()); assertEquals(0, it.getInt(0), "迁移后 $table 应为空")
                 }
             }
+            extraAssert(upgraded.openHelper.writableDatabase)
         } finally { upgraded.close(); context.deleteDatabase(name) }
     }
 

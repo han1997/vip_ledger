@@ -17,6 +17,8 @@ class DeleteTxnUseCase(
     private val savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard? = null,
     private val reimbursementGuard: com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard? = null,
     private val lendingGuard: com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard? = null,
+    private val installmentGuard: com.han1997.vipledger.core.domain.usecase.loan.InstallmentTxnGuard? = null,
+    private val investmentGuard: com.han1997.vipledger.core.domain.usecase.investment.InvestmentTxnGuard? = null,
 ) {
 
     suspend operator fun invoke(txnId: String): AppResult<Unit> {
@@ -28,6 +30,8 @@ class DeleteTxnUseCase(
             savingsGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
             reimbursementGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
             lendingGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
+            installmentGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
+            investmentGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = now), txnRepository.listByLedger(existing.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.softDelete(txnId, now)
@@ -47,6 +51,8 @@ class DeleteTxnUseCase(
             savingsGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
             reimbursementGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
             lendingGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
+            installmentGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
+            investmentGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = null), txnRepository.listByLedger(existing.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.restore(txnId, now)

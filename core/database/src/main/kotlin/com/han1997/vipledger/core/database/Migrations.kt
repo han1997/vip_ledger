@@ -48,4 +48,24 @@ val MIGRATION_4_5: Migration = object : Migration(4, 5) {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_lending_link_lending_id ON lending_link(lending_id)")
     }
 }
-val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE installment_plan ADD COLUMN origin TEXT NOT NULL DEFAULT 'EXISTING'")
+        db.execSQL("ALTER TABLE installment_plan ADD COLUMN disbursement_account_id TEXT")
+        db.execSQL("ALTER TABLE installment_plan ADD COLUMN disbursed_at INTEGER")
+        db.execSQL("ALTER TABLE installment_period ADD COLUMN paid_principal_cents INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE installment_period ADD COLUMN paid_interest_cents INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE installment_period ADD COLUMN paid_fee_cents INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE TABLE IF NOT EXISTS installment_link (txn_id TEXT NOT NULL PRIMARY KEY, plan_id TEXT NOT NULL, period_no INTEGER NOT NULL, kind TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(txn_id) REFERENCES txn(id) ON UPDATE NO ACTION ON DELETE NO ACTION, FOREIGN KEY(plan_id) REFERENCES installment_plan(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_installment_link_plan_id ON installment_link(plan_id)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_installment_link_plan_id_period_no ON installment_link(plan_id, period_no)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS investment (id TEXT NOT NULL PRIMARY KEY, ledger_id TEXT NOT NULL, name TEXT NOT NULL, account_id TEXT NOT NULL, remark TEXT NOT NULL, closed INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY(ledger_id) REFERENCES ledger(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_investment_ledger_id ON investment(ledger_id)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_investment_account_id ON investment(account_id)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS investment_link (txn_id TEXT NOT NULL PRIMARY KEY, investment_id TEXT NOT NULL, kind TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(txn_id) REFERENCES txn(id) ON UPDATE NO ACTION ON DELETE NO ACTION, FOREIGN KEY(investment_id) REFERENCES investment(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_investment_link_investment_id ON investment_link(investment_id)")
+        // 旧口径已还期次补齐累计：历史单笔还款按「费 → 息 → 本」等价回填，不新建流水（差异预览由用户显式修正）。
+        db.execSQL("UPDATE installment_period SET paid_principal_cents = principal_cents, paid_interest_cents = interest_cents, paid_fee_cents = fee_cents WHERE status = 'PAID'")
+    }
+}
+val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)

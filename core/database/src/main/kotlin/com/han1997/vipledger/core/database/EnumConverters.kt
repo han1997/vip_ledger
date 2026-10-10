@@ -6,8 +6,11 @@ import com.han1997.vipledger.core.model.CategoryKind
 import com.han1997.vipledger.core.model.DraftStatus
 import com.han1997.vipledger.core.model.GenerateMode
 import com.han1997.vipledger.core.model.InstallmentMethod
+import com.han1997.vipledger.core.model.InstallmentOrigin
 import com.han1997.vipledger.core.model.InstallmentPeriodStatus
 import com.han1997.vipledger.core.model.InstallmentPlanStatus
+import com.han1997.vipledger.core.model.InstallmentPostingKind
+import com.han1997.vipledger.core.model.InvestmentLinkKind
 import com.han1997.vipledger.core.model.LendingDirection
 import com.han1997.vipledger.core.model.LendingLinkKind
 import com.han1997.vipledger.core.model.MissedPolicy
@@ -97,6 +100,24 @@ class EnumConverters {
 
     @TypeConverter
     fun toInstallmentPeriodStatus(value: String): InstallmentPeriodStatus = InstallmentPeriodStatus.valueOf(value)
+
+    @TypeConverter
+    fun fromInstallmentOrigin(value: InstallmentOrigin): String = value.name
+
+    @TypeConverter
+    fun toInstallmentOrigin(value: String): InstallmentOrigin = InstallmentOrigin.valueOf(value)
+
+    @TypeConverter
+    fun fromInstallmentPostingKind(value: InstallmentPostingKind): String = value.name
+
+    @TypeConverter
+    fun toInstallmentPostingKind(value: String): InstallmentPostingKind = InstallmentPostingKind.valueOf(value)
+
+    @TypeConverter
+    fun fromInvestmentLinkKind(value: InvestmentLinkKind): String = value.name
+
+    @TypeConverter
+    fun toInvestmentLinkKind(value: String): InvestmentLinkKind = InvestmentLinkKind.valueOf(value)
 
     @TypeConverter
     fun fromLendingDirection(value: LendingDirection): String = value.name

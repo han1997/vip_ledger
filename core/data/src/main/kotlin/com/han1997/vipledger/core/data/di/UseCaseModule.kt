@@ -112,6 +112,8 @@ object UseCaseModule {
         savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard,
         reimbursementGuard: com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard,
         lendingGuard: com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard,
+        installmentGuard: com.han1997.vipledger.core.domain.usecase.loan.InstallmentTxnGuard,
+        investmentGuard: com.han1997.vipledger.core.domain.usecase.investment.InvestmentTxnGuard,
     ) = UpdateTxnUseCase(
         txnRepository = txnRepository,
         accountRepository = accountRepository,
@@ -122,6 +124,8 @@ object UseCaseModule {
         savingsGuard = savingsGuard,
         reimbursementGuard = reimbursementGuard,
         lendingGuard = lendingGuard,
+        installmentGuard = installmentGuard,
+        investmentGuard = investmentGuard,
     )
 
     @Provides
@@ -134,6 +138,8 @@ object UseCaseModule {
         savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard,
         reimbursementGuard: com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard,
         lendingGuard: com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard,
+        installmentGuard: com.han1997.vipledger.core.domain.usecase.loan.InstallmentTxnGuard,
+        investmentGuard: com.han1997.vipledger.core.domain.usecase.investment.InvestmentTxnGuard,
     ) = DeleteTxnUseCase(
         txnRepository = txnRepository,
         transactionRunner = transactionRunner,
@@ -142,6 +148,8 @@ object UseCaseModule {
         savingsGuard = savingsGuard,
         reimbursementGuard = reimbursementGuard,
         lendingGuard = lendingGuard,
+        installmentGuard = installmentGuard,
+        investmentGuard = investmentGuard,
     )
 
     @Provides
@@ -205,12 +213,14 @@ object UseCaseModule {
         installmentRepository: InstallmentRepository,
         accountRepository: AccountRepository,
         transactionRunner: TransactionRunner,
+        createTxnUseCase: CreateTxnUseCase,
         timeProvider: TimeProvider,
         idGenerator: IdGenerator,
     ) = SaveInstallmentPlanUseCase(
         installmentRepository = installmentRepository,
         accountRepository = accountRepository,
         transactionRunner = transactionRunner,
+        createTxn = createTxnUseCase,
         timeProvider = timeProvider,
         idGenerator = idGenerator,
     )
@@ -341,22 +351,16 @@ object UseCaseModule {
     @Singleton
     fun provideRepayInstallmentPeriodUseCase(
         installmentRepository: InstallmentRepository,
-        txnRepository: TxnRepository,
         accountRepository: AccountRepository,
-        categoryRepository: CategoryRepository,
         transactionRunner: TransactionRunner,
-        balanceSyncer: AccountBalanceSyncer,
+        createTxnUseCase: CreateTxnUseCase,
         timeProvider: TimeProvider,
-        idGenerator: IdGenerator,
     ) = RepayInstallmentPeriodUseCase(
         installmentRepository = installmentRepository,
-        txnRepository = txnRepository,
         accountRepository = accountRepository,
-        categoryRepository = categoryRepository,
         transactionRunner = transactionRunner,
-        balanceSyncer = balanceSyncer,
+        createTxn = createTxnUseCase,
         timeProvider = timeProvider,
-        idGenerator = idGenerator,
     )
 
     @Provides

@@ -39,9 +39,11 @@ import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 import com.han1997.vipledger.core.model.InstallmentMethod
+import com.han1997.vipledger.core.model.InstallmentOrigin
 import com.han1997.vipledger.core.model.time.toDateColumnEpochMillis
 import com.han1997.vipledger.core.model.time.toDateColumnLocalDate
 import com.han1997.vipledger.feature.ledger.R
+import com.han1997.vipledger.feature.ledger.ui.common.installmentOriginLabel
 import com.han1997.vipledger.feature.ledger.ui.common.installmentMethodLabel
 import kotlinx.datetime.LocalDate
 
@@ -80,6 +82,8 @@ internal fun LoanEditContent(
         LoanEditError.INVALID_FEE -> stringResource(R.string.loan_fee_invalid)
         LoanEditError.INVALID_DUE_DAY -> stringResource(R.string.loan_due_day_invalid)
         LoanEditError.INVALID_CUSTOM -> stringResource(R.string.loan_custom_invalid)
+        LoanEditError.DISBURSEMENT_ACCOUNT_REQUIRED ->
+            stringResource(R.string.loan_disbursement_account_required)
         LoanEditError.SAVE_FAILED -> state.saveFailureMessage ?: failedMessage
         null -> null
     }
@@ -135,6 +139,21 @@ internal fun LoanEditContent(
             SectionLabel(stringResource(R.string.loan_method))
             MethodSection(state, onAction)
 
+            SectionLabel(stringResource(R.string.loan_origin))
+            OriginSection(state, onAction)
+            if (state.showsDisbursementAccount) {
+                if (state.disbursementAccounts.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.loan_disbursement_account_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                } else {
+                    SectionLabel(stringResource(R.string.loan_disbursement_account))
+                    DisbursementSection(state, onAction)
+                }
+            }
+
             LabeledTextField(
                 label = stringResource(R.string.loan_principal),
                 value = state.principalInput,
@@ -167,12 +186,12 @@ internal fun LoanEditContent(
             )
             if (state.showsCustomTotalsField()) {
                 LabeledTextField(
-                    label = stringResource(R.string.loan_custom_totals),
+                    label = stringResource(R.string.loan_custom_amounts),
                     value = state.customTotalsInput,
                     onValueChange = { onAction(LoanEditAction.UpdateCustomTotals(it)) },
                     keyboardType = KeyboardType.Decimal,
                     singleLine = false,
-                    supportingText = stringResource(R.string.loan_custom_totals_hint),
+                    supportingText = stringResource(R.string.loan_custom_amounts_hint),
                 )
             }
 
@@ -252,6 +271,34 @@ private fun MethodSection(state: LoanEditUiState, onAction: (LoanEditAction) -> 
                 selected = state.method == method,
                 onClick = { onAction(LoanEditAction.SelectMethod(method)) },
                 label = { Text(text = installmentMethodLabel(method)) },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OriginSection(state: LoanEditUiState, onAction: (LoanEditAction) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        InstallmentOrigin.entries.forEach { origin ->
+            FilterChip(
+                selected = state.origin == origin,
+                onClick = { onAction(LoanEditAction.SelectOrigin(origin)) },
+                label = { Text(text = installmentOriginLabel(origin)) },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DisbursementSection(state: LoanEditUiState, onAction: (LoanEditAction) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        state.disbursementAccounts.forEach { account ->
+            FilterChip(
+                selected = state.disbursementAccountId == account.id,
+                onClick = { onAction(LoanEditAction.SelectDisbursementAccount(account.id)) },
+                label = { Text(text = account.name) },
             )
         }
     }

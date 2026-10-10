@@ -41,6 +41,7 @@
 | [budget-calendar.md](./budget-calendar.md) | 预算继承/提醒、日历首页口径、日期路由及schema3备份 |
 | [assets-savings.md](./assets-savings.md) | 资产口径、储蓄关联事务、布局、基线与schema4恢复 |
 | [reimbursement-lending.md](./reimbursement-lending.md) | 报销项目/到账与退款上限、借贷本金/利息/结清、到期提醒与schema5恢复 |
+| [finance-plans.md](./finance-plans.md) | 分期本金/利息/费分账、提前还款/利率变更/旧口径修正、理财台账与schema6恢复 |
 | [error-handling.md](./error-handling.md) | `AppResult` 与 `AppError` 使用方式 |
 | [logging-guidelines.md](./logging-guidelines.md) | 日志级别与敏感信息红线 |
 | [testing.md](./testing.md) | 测试分层、命名与命令、跨模块口径一致性测试 |

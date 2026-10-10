@@ -245,8 +245,9 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
     }
 
     companion object {
-        const val FORMAT_VERSION = 5
+        const val FORMAT_VERSION = 6
         fun tableVersion(table: String): Int = when {
+            table in setOf("installment_link", "investment", "investment_link") -> 6
             table in setOf("reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link") -> 5
             table in setOf("savings_goal", "savings_link", "home_card", "asset_baseline") -> 4
             table.startsWith("budget_") -> 3
@@ -267,6 +268,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
             "budget_limit", "budget_alert",
             "savings_goal", "savings_link", "home_card", "asset_baseline",
             "reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link",
+            "installment_link", "investment", "investment_link",
         )
     }
 }

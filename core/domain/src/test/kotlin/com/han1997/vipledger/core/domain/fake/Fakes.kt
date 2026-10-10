@@ -24,6 +24,7 @@ import com.han1997.vipledger.core.domain.repository.AccountRepository
 import com.han1997.vipledger.core.domain.repository.AttachmentRepository
 import com.han1997.vipledger.core.domain.repository.CategoryRepository
 import com.han1997.vipledger.core.domain.repository.InstallmentRepository
+import com.han1997.vipledger.core.domain.repository.InvestmentRepository
 import com.han1997.vipledger.core.domain.repository.LedgerRepository
 import com.han1997.vipledger.core.domain.repository.LendingRepository
 import com.han1997.vipledger.core.domain.repository.MerchantRuleRepository
@@ -331,6 +332,7 @@ class FakeTxnRepository(
 class FakeInstallmentRepository(
     private val plans: MutableList<InstallmentPlan> = mutableListOf(),
     private val periods: MutableList<InstallmentPeriod> = mutableListOf(),
+    private val links: MutableList<com.han1997.vipledger.core.domain.model.InstallmentLink> = mutableListOf(),
 ) : InstallmentRepository {
     override fun observePlans(ledgerId: String): Flow<List<InstallmentPlan>> = MutableStateFlow(filtered(ledgerId))
 
@@ -385,9 +387,82 @@ class FakeInstallmentRepository(
         return AppResult.success(Unit)
     }
 
+    override suspend fun savePlan(plan: InstallmentPlan): AppResult<Unit> {
+        val index = plans.indexOfFirst { it.id == plan.id }
+        if (index < 0) return AppResult.failure(AppError.NotFound("分期计划不存在"))
+        plans[index] = plan
+        return AppResult.success(Unit)
+    }
+
+    override suspend fun savePeriods(updated: List<InstallmentPeriod>): AppResult<Unit> {
+        updated.forEach { period ->
+            val index = periods.indexOfFirst { it.planId == period.planId && it.periodNo == period.periodNo }
+            if (index >= 0) periods[index] = period
+        }
+        return AppResult.success(Unit)
+    }
+
+    override suspend fun link(link: com.han1997.vipledger.core.domain.model.InstallmentLink): AppResult<Unit> {
+        links.removeAll { it.txnId == link.txnId }
+        links += link
+        return AppResult.success(Unit)
+    }
+
+    override suspend fun linkForTxn(txnId: String) =
+        links.firstOrNull { it.txnId == txnId }
+
+    override suspend fun linksForPlan(planId: String) = links.filter { it.planId == planId }
+
+    override suspend fun linksForLedger(ledgerId: String): List<com.han1997.vipledger.core.domain.model.InstallmentLink> {
+        val planIds = plans.filter { it.ledgerId == ledgerId }.map { it.id }.toSet()
+        return links.filter { it.planId in planIds }
+    }
+
     fun planCount(): Int = plans.size
 
     fun periodSnapshot(): List<InstallmentPeriod> = periods.toList()
+
+    fun linkSnapshot(): List<com.han1997.vipledger.core.domain.model.InstallmentLink> = links.toList()
+}
+
+class FakeInvestmentRepository(
+    private val records: MutableList<com.han1997.vipledger.core.domain.model.Investment> = mutableListOf(),
+    private val links: MutableList<com.han1997.vipledger.core.domain.model.InvestmentLink> = mutableListOf(),
+) : InvestmentRepository {
+    override fun observeInvestments(ledgerId: String): Flow<List<com.han1997.vipledger.core.domain.model.Investment>> =
+        MutableStateFlow(records.filter { it.ledgerId == ledgerId })
+
+    override fun observeLinks(ledgerId: String): Flow<List<com.han1997.vipledger.core.domain.model.InvestmentLink>> {
+        val ids = records.filter { it.ledgerId == ledgerId }.map { it.id }.toSet()
+        return MutableStateFlow(links.filter { it.investmentId in ids })
+    }
+
+    override suspend fun investment(id: String) = records.firstOrNull { it.id == id }
+
+    override suspend fun links(investmentId: String) = links.filter { it.investmentId == investmentId }
+
+    override suspend fun linksForLedger(ledgerId: String): List<com.han1997.vipledger.core.domain.model.InvestmentLink> {
+        val ids = records.filter { it.ledgerId == ledgerId }.map { it.id }.toSet()
+        return links.filter { it.investmentId in ids }
+    }
+
+    override suspend fun linkForTxn(txnId: String) = links.firstOrNull { it.txnId == txnId }
+
+    override suspend fun save(investment: com.han1997.vipledger.core.domain.model.Investment): AppResult<Unit> {
+        records.removeAll { it.id == investment.id }
+        records += investment
+        return AppResult.success(Unit)
+    }
+
+    override suspend fun link(link: com.han1997.vipledger.core.domain.model.InvestmentLink): AppResult<Unit> {
+        links.removeAll { it.txnId == link.txnId }
+        links += link
+        return AppResult.success(Unit)
+    }
+
+    fun recordSnapshot(): List<com.han1997.vipledger.core.domain.model.Investment> = records.toList()
+
+    fun linkSnapshot(): List<com.han1997.vipledger.core.domain.model.InvestmentLink> = links.toList()
 }
 
 class FakeRecurringRuleRepository(private val rules: MutableList<RecurringRule> = mutableListOf()) : RecurringRuleRepository {

@@ -9,6 +9,8 @@ import com.han1997.vipledger.core.database.dao.AttachmentDao
 import com.han1997.vipledger.core.database.dao.CategoryDao
 import com.han1997.vipledger.core.database.dao.InstallmentPeriodDao
 import com.han1997.vipledger.core.database.dao.InstallmentPlanDao
+import com.han1997.vipledger.core.database.dao.InstallmentLinkDao
+import com.han1997.vipledger.core.database.dao.InvestmentDao
 import com.han1997.vipledger.core.database.dao.LedgerDao
 import com.han1997.vipledger.core.database.dao.MerchantRuleDao
 import com.han1997.vipledger.core.database.dao.MlTrainingSampleDao
@@ -61,6 +63,12 @@ object DatabaseModule {
 
     @Provides
     fun provideInstallmentPeriodDao(database: LedgerDatabase): InstallmentPeriodDao = database.installmentPeriodDao()
+
+    @Provides
+    fun provideInstallmentLinkDao(database: LedgerDatabase): InstallmentLinkDao = database.installmentLinkDao()
+
+    @Provides
+    fun provideInvestmentDao(database: LedgerDatabase): InvestmentDao = database.investmentDao()
 
     @Provides
     fun provideMerchantRuleDao(database: LedgerDatabase): MerchantRuleDao = database.merchantRuleDao()

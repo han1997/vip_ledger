@@ -3,9 +3,11 @@ package com.han1997.vipledger.feature.ledger.ui.loan
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.InstallmentMethod
+import com.han1997.vipledger.core.model.InstallmentOrigin
 import com.han1997.vipledger.core.model.money.Money
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlinx.datetime.LocalDate
 
@@ -23,6 +25,8 @@ class LoanEditUiStateTest {
         perPeriodFee: String = "",
         customTotals: String = "",
         dueDay: String = "",
+        origin: InstallmentOrigin = InstallmentOrigin.EXISTING,
+        disbursementAccountId: String? = null,
     ) = LoanEditUiState(
         isLoading = false,
         ledgerId = LEDGER_ID,
@@ -37,6 +41,8 @@ class LoanEditUiStateTest {
         customTotalsInput = customTotals,
         firstDueDate = LocalDate(2026, 2, 10),
         dueDayInput = dueDay,
+        origin = origin,
+        disbursementAccountId = disbursementAccountId,
     )
 
     @Test
@@ -130,6 +136,55 @@ class LoanEditUiStateTest {
             ),
         )
         assertEquals(listOf("card", "loan"), state.debtAccounts.map { it.id })
+    }
+
+    @Test
+    fun disbursementRequiresAReceivingCashAccount() {
+        val missing = stateOf(origin = InstallmentOrigin.DISBURSEMENT)
+        assertEquals(LoanEditError.DISBURSEMENT_ACCOUNT_REQUIRED, missing.validationError())
+
+        val chosen = stateOf(origin = InstallmentOrigin.DISBURSEMENT, disbursementAccountId = "cash")
+        assertNull(chosen.validationError())
+        // 已有负债不需要到账账户
+        assertNull(stateOf(origin = InstallmentOrigin.EXISTING).validationError())
+    }
+
+    @Test
+    fun disbursementAccountsExcludeTheDebtAccountItself() {
+        val state = stateOf().copy(
+            accounts = listOf(
+                account("cash", AccountType.CASH),
+                account("card", AccountType.CREDIT_CARD),
+            ),
+        )
+        assertEquals(listOf("cash"), state.disbursementAccounts.map { it.id })
+    }
+
+    @Test
+    fun customAmountsPerPeriodAreParsedFromMultipleLines() {
+        val state = stateOf(
+            method = InstallmentMethod.CUSTOM,
+            principal = "12000",
+            periods = "2",
+            customTotals = "6000,300,100\n6000,200,0",
+        )
+        val amounts = assertNotNull(state.customAmountsValue())
+        assertEquals(2, amounts.size)
+        assertEquals(Money.parse("6000"), amounts.first().principal)
+        assertEquals(Money.parse("300"), amounts.first().interest)
+        assertEquals(Money.parse("100"), amounts.first().fee)
+        assertNull(state.validationError())
+    }
+
+    @Test
+    fun customAmountsMustSumToThePlanPrincipal() {
+        val state = stateOf(
+            method = InstallmentMethod.CUSTOM,
+            principal = "12000",
+            periods = "2",
+            customTotals = "6000,300,100\n5900,200,0",
+        )
+        assertEquals(LoanEditError.INVALID_CUSTOM, state.validationError())
     }
 
     private fun account(id: String, type: AccountType) = Account(

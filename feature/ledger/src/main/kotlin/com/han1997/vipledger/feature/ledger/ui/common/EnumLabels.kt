@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.han1997.vipledger.core.model.GenerateMode
 import com.han1997.vipledger.core.model.InstallmentMethod
+import com.han1997.vipledger.core.model.InstallmentOrigin
 import com.han1997.vipledger.core.model.MissedPolicy
 import com.han1997.vipledger.core.model.RecurrenceEndType
 import com.han1997.vipledger.core.model.RecurrenceFrequency
@@ -59,6 +60,15 @@ fun installmentMethodLabel(method: InstallmentMethod): String = stringResource(
         InstallmentMethod.EQUAL_PRINCIPAL -> R.string.loan_method_equal_principal
         InstallmentMethod.INTEREST_FIRST -> R.string.loan_method_interest_first
         InstallmentMethod.CUSTOM -> R.string.loan_method_custom
+    },
+)
+
+/** 计划来源：已有负债 / 新放款。 */
+@Composable
+fun installmentOriginLabel(origin: InstallmentOrigin): String = stringResource(
+    when (origin) {
+        InstallmentOrigin.EXISTING -> R.string.loan_origin_existing
+        InstallmentOrigin.DISBURSEMENT -> R.string.loan_origin_disbursement
     },
 )
 

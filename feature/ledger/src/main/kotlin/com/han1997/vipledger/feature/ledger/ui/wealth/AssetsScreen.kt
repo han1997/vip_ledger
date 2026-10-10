@@ -17,13 +17,13 @@ import com.han1997.vipledger.core.domain.model.AssetGroup
 import com.han1997.vipledger.feature.ledger.R
 
 @Composable
-fun AssetsScreen(onAccount: (String, String) -> Unit, onManage: (String) -> Unit, onSavings: (String) -> Unit, onReimburse: (String) -> Unit, onLending: (String) -> Unit, onLedgers: () -> Unit, viewModel: AssetsViewModel = hiltViewModel()) {
+fun AssetsScreen(onAccount: (String, String) -> Unit, onManage: (String) -> Unit, onSavings: (String) -> Unit, onReimburse: (String) -> Unit, onLending: (String) -> Unit, onLoans: (String) -> Unit, onInvest: (String) -> Unit, onLedgers: () -> Unit, viewModel: AssetsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    AssetsContent(state, viewModel::onAction, onAccount, onManage, onSavings, onReimburse, onLending, onLedgers)
+    AssetsContent(state, viewModel::onAction, onAccount, onManage, onSavings, onReimburse, onLending, onLoans, onInvest, onLedgers)
 }
 
 @Composable
-internal fun AssetsContent(state: AssetsUiState, onAction: (AssetsAction) -> Unit, onAccount: (String, String) -> Unit, onManage: (String) -> Unit, onSavings: (String) -> Unit, onReimburse: (String) -> Unit, onLending: (String) -> Unit, onLedgers: () -> Unit) {
+internal fun AssetsContent(state: AssetsUiState, onAction: (AssetsAction) -> Unit, onAccount: (String, String) -> Unit, onManage: (String) -> Unit, onSavings: (String) -> Unit, onReimburse: (String) -> Unit, onLending: (String) -> Unit, onLoans: (String) -> Unit, onInvest: (String) -> Unit, onLedgers: () -> Unit) {
     VipLedgerScaffold(topBar = { VipLedgerTopBar(title = stringResource(R.string.wealth_assets), actions = { TextButton(onClick = onLedgers) { Text(state.ledgerName.ifBlank { stringResource(R.string.home_switch_ledger) }) } }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(VipLedgerTokens.Space4), verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
             val report = state.report
@@ -47,6 +47,8 @@ internal fun AssetsContent(state: AssetsUiState, onAction: (AssetsAction) -> Uni
                     item { GroupCard {
                         ActionRow(title = stringResource(R.string.reimburse_title), subtitle = stringResource(R.string.reimburse_pending, state.reimbursementPending.toDisplayString()), onClick = { onReimburse(state.ledgerId) })
                         ActionRow(title = stringResource(R.string.lending_title), subtitle = stringResource(R.string.lending_outstanding, state.lendingOutstanding.toDisplayString()) + if (state.lendingActive > 0) " · " + state.lendingActive else "", onClick = { onLending(state.ledgerId) })
+                        ActionRow(title = stringResource(R.string.wealth_installment), subtitle = stringResource(R.string.wealth_installment_remaining, state.installmentOutstanding.toDisplayString()) + if (state.installmentActive > 0) " · " + state.installmentActive else "", onClick = { onLoans(state.ledgerId) })
+                        ActionRow(title = stringResource(R.string.wealth_investment), subtitle = stringResource(R.string.wealth_investment_outstanding, state.investmentPrincipal.toDisplayString()) + if (state.investmentActive > 0) " · " + state.investmentActive else "", onClick = { onInvest(state.ledgerId) })
                     } }
                     item { FilterChip(selected = state.showArchived, onClick = { onAction(AssetsAction.ToggleArchived) }, label = { Text(stringResource(R.string.account_manage_show_archived)) }) }
                     val accounts = report.accounts.filter { state.showArchived || !it.isArchived }
@@ -79,4 +81,4 @@ private fun assetGroupName(group: AssetGroup) = stringResource(when (group) {
 
 @Preview(showBackground = true)
 @Composable
-private fun AssetsPreview() { VipLedgerTheme { AssetsContent(AssetsUiState(loading = false), {}, { _, _ -> }, {}, {}, {}, {}, {}) } }
+private fun AssetsPreview() { VipLedgerTheme { AssetsContent(AssetsUiState(loading = false), {}, { _, _ -> }, {}, {}, {}, {}, {}, {}, {}) } }

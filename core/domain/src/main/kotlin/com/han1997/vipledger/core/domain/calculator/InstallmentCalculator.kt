@@ -32,6 +32,13 @@ data class ScheduledPeriod(
     val total: Money get() = principal + interest + fee
 }
 
+/** 自定义分期的单期金额（本金/利息/费分别录入）。 */
+data class InstallmentAmounts(
+    val principal: Money,
+    val interest: Money = Money.ZERO,
+    val fee: Money = Money.ZERO,
+)
+
 /**
  * 分期计息（docs/DATA-MODEL.md 3.7）。
  *
@@ -87,6 +94,33 @@ object InstallmentCalculator {
                 add(period(no, input, principalPart, interest))
             }
             require(remaining.isZero) { "各期本金之和必须等于本金" }
+        }
+    }
+
+    /**
+     * 自定义分期：逐期直接给出本金/利息/费，不再从「每期还款总额」反推本金。
+     * 校验各期本金之和恰好等于计划本金，避免账面漏计或多计。
+     */
+    fun scheduleCustomAmounts(
+        input: InstallmentScheduleInput,
+        entries: List<InstallmentAmounts>,
+    ): List<ScheduledPeriod> {
+        require(isValidInput(input)) { "本金需大于 0、期数需大于 0、利率与手续费不能为负" }
+        require(entries.size == input.periods) { "自定义分期需要给出每一期的金额" }
+        require(entries.all { !it.principal.isNegative && !it.interest.isNegative && !it.fee.isNegative }) {
+            "每期本金/利息/费不能为负"
+        }
+        require(Money.sum(entries.map { it.principal }) == input.principal) {
+            "各期本金之和必须等于本金"
+        }
+        return entries.mapIndexed { index, entry ->
+            ScheduledPeriod(
+                periodNo = index + 1,
+                dueDate = dueDateOf(input, index + 1),
+                principal = entry.principal,
+                interest = entry.interest,
+                fee = entry.fee,
+            )
         }
     }
 

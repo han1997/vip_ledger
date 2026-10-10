@@ -13,6 +13,10 @@ data class AssetsUiState(
     val reimbursementPending: Money = Money.ZERO,
     val lendingOutstanding: Money = Money.ZERO,
     val lendingActive: Int = 0,
+    val installmentOutstanding: Money = Money.ZERO,
+    val installmentActive: Int = 0,
+    val investmentPrincipal: Money = Money.ZERO,
+    val investmentActive: Int = 0,
 )
 sealed interface AssetsAction { data object ToggleArchived : AssetsAction; data object Retry : AssetsAction }
 data class AccountDetailUiState(

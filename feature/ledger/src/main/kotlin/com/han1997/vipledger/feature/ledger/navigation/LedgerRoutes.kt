@@ -37,11 +37,13 @@ object LedgerRoutes {
     const val SAVINGS = "ledger/savings/{ledgerId}"
     const val REIMBURSEMENT = "ledger/reimbursements/{ledgerId}"
     const val LENDING = "ledger/lending/{ledgerId}"
+    const val INVESTMENT = "ledger/investment/{ledgerId}"
     const val HOME_LAYOUT = "ledger/home-layout/{ledgerId}"
     fun accountDetail(ledgerId: String, accountId: String) = "ledger/account/$ledgerId/$accountId"
     fun savings(ledgerId: String) = "ledger/savings/$ledgerId"
     fun reimbursements(ledgerId: String) = "ledger/reimbursements/$ledgerId"
     fun lending(ledgerId: String) = "ledger/lending/$ledgerId"
+    fun investment(ledgerId: String) = "ledger/investment/$ledgerId"
     fun homeLayout(ledgerId: String) = "ledger/home-layout/$ledgerId"
     const val CALENDAR: String = "ledger/calendar"
     const val BUDGET: String = "ledger/budget/{ledgerId}"
@@ -116,6 +118,8 @@ fun NavGraphBuilder.ledgerGraph(
             onSavings = { navController.navigate(LedgerRoutes.savings(it)) },
             onReimburse = { navController.navigate(LedgerRoutes.reimbursements(it)) },
             onLending = { navController.navigate(LedgerRoutes.lending(it)) },
+            onLoans = { navController.navigate(LedgerRoutes.loanList(it)) },
+            onInvest = { navController.navigate(LedgerRoutes.investment(it)) },
             onLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
         )
     }
@@ -129,6 +133,11 @@ fun NavGraphBuilder.ledgerGraph(
         LendingScreen(
             onBack = { navController.popBackStack() },
             onEditTxn = { ledger, txn -> navController.navigate(LedgerRoutes.txnEdit(ledger, txn)) },
+        )
+    }
+    composable(LedgerRoutes.INVESTMENT, arguments = listOf(navArgument("ledgerId") { type = NavType.StringType })) {
+        com.han1997.vipledger.feature.ledger.ui.investment.InvestmentScreen(
+            onBack = { navController.popBackStack() },
         )
     }
     composable(LedgerRoutes.ACCOUNT_DETAIL, arguments = listOf(navArgument("ledgerId") { type = NavType.StringType }, navArgument("accountId") { type = NavType.StringType })) {

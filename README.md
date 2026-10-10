@@ -53,11 +53,25 @@ plus item links, receipt plus refund, and principal transfer plus account link e
 transaction and roll back together. Format-5 backups include the five new tables and stay compatible
 with formats 1–4.
 
+**Installment, mortgage and investment (P4):** an installment plan posts each repayment as separate
+legs: principal is a transfer from a cash account into the plan's debt account, while interest and
+fees are expenses, so spending counts only interest and fees. A plan is either an existing debt (no
+new principal) or a new disbursement that posts its principal transfer once. Periods support
+per-period settlement with partial repayment (fee → interest → principal), settle-in-full, partial
+prepayment that keeps the remaining period count and rewrites only unpaid periods, and rate changes
+effective from a chosen unpaid period; custom plans enter principal, interest and fee per period.
+Legacy paid periods without split links are shown only as a difference and rewritten solely on
+explicit user correction, never silently. Investments are amount ledgers: adding or redeeming
+principal is a transfer (excluded from income/expense), realized gains are income and losses or fees
+are expenses, and the list shows invested principal, cumulative investment and realized result
+without market data or automatic valuation. Format-6 backups include the installment links and the
+two investment tables and stay compatible with formats 1–5.
+
 The complete agreed feature roadmap and later phases are in [docs/FEATURE-ROADMAP.md](docs/FEATURE-ROADMAP.md).
 Category expansion now uses stable row containers; a Compose device test repeatedly expands,
 switches and collapses parent categories to prevent a reproduced node-insertion crash.
-Reimbursement and lending are now implemented; extended finance, voice/image entry and report
-improvements remain in later phases.
+Reimbursement, lending, installment plans and investment ledgers are now implemented; voice/image
+entry and report improvements remain in later phases.
 
 JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
 

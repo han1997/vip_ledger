@@ -19,4 +19,14 @@ enum class InstallmentMethod {
 enum class InstallmentPlanStatus { ACTIVE, CLOSED }
 
 /** 分期单期状态。 */
-enum class InstallmentPeriodStatus { PENDING, PAID }
+enum class InstallmentPeriodStatus { PENDING, PARTIAL, PAID }
+
+/** 计划来源：已有负债（不再重复计本金）或新放款（首期同事务发放本金）。 */
+enum class InstallmentOrigin { EXISTING, DISBURSEMENT }
+
+/**
+ * 还款流水的分账口径：本金转账不计收支，利息与手续费计入支出。
+ *
+ * [PREPAY] 是部分提前还款的本金流水，会连带重算未还期次，因此不可单独改金额或删除。
+ */
+enum class InstallmentPostingKind { PRINCIPAL, INTEREST, FEE, PREPAY }

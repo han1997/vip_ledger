@@ -57,4 +57,8 @@
     <string name="wealth_layout_reset">恢复默认布局</string>
     <string name="wealth_move_up">上移</string>
     <string name="wealth_move_down">下移</string>
+    <string name="wealth_installment">分期房贷</string>
+    <string name="wealth_installment_remaining">剩余应还 %1$s</string>
+    <string name="wealth_investment">理财</string>
+    <string name="wealth_investment_outstanding">在投本金 %1$s</string>
 </resources>

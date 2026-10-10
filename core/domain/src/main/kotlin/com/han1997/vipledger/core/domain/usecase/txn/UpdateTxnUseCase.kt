@@ -24,6 +24,8 @@ class UpdateTxnUseCase(
     private val savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard? = null,
     private val reimbursementGuard: com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard? = null,
     private val lendingGuard: com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard? = null,
+    private val installmentGuard: com.han1997.vipledger.core.domain.usecase.loan.InstallmentTxnGuard? = null,
+    private val investmentGuard: com.han1997.vipledger.core.domain.usecase.investment.InvestmentTxnGuard? = null,
 ) {
 
     suspend operator fun invoke(txn: Txn): AppResult<Txn> {
@@ -43,6 +45,8 @@ class UpdateTxnUseCase(
             savingsGuard?.validate(updated)?.let { return@inTransaction AppResult.failure(it) }
             reimbursementGuard?.validate(updated)?.let { return@inTransaction AppResult.failure(it) }
             lendingGuard?.validate(updated)?.let { return@inTransaction AppResult.failure(it) }
+            installmentGuard?.validate(updated)?.let { return@inTransaction AppResult.failure(it) }
+            investmentGuard?.validate(updated)?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(updated, txnRepository.listByLedger(updated.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.update(updated)
