@@ -644,3 +644,36 @@ Delivered monthly budgets, calendar and dashboard in 0.1.2 (3); 607 unique JVM c
 ### Next Steps
 
 - None - task complete
+
+
+## Session 19: P2 assets, savings and home layout delivered
+
+**Date**: 2026-10-10
+**Task**: P2 assets, savings and home layout delivered
+**Branch**: `master`
+
+### Summary
+
+Delivered 0.1.3 (4): assets/account details, savings transfers with guarded edits and atomic rollback, configurable home cards and schema4 backups. 624 unique JVM cases, 912 executions, 2 Compose device tests, 4 Python tests and full builds/lint passed. Signed release installed on emulator; no physical device connected. P2 committed and archived. Next: 10-09-reimbursement-lending (P3).
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1513fe8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
