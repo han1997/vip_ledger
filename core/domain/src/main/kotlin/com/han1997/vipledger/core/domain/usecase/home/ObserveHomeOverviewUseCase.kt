@@ -71,7 +71,7 @@ class ObserveHomeOverviewUseCase(
                 todayExpense = todayExpense(monthTxns, today, zone),
                 usableAccountCount = accounts.count { it.isUsable },
                 recentTxns = recentTxns,
-                totalAssets = Money.sum(accounts.filter { it.isUsable && it.includeInNetWorth && it.currentBalance.cents > 0 }.map { it.currentBalance }),
+                totalAssets = BalanceCalculator.totalAssetsFromCache(accounts),
                 todayIncome = TxnDayGrouper.countedSum(monthTxns.filter { it.occurredAt.toLocalDate(zone) == today }, TransactionType.INCOME),
                 recentGroups = TxnDayGrouper.group(recentTxns, zone),
                 lastSevenDays = StatsCalculator.byPeriod(monthTxns, PeriodGranularity.DAY, weekRange, zone),

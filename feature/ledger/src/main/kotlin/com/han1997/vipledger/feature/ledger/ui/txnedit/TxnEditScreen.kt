@@ -73,6 +73,7 @@ import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.Category
 import com.han1997.vipledger.core.domain.model.CategoryNode
+import com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard
 import com.han1997.vipledger.core.domain.nlp.ParsedEntry
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.CategoryKind
@@ -122,6 +123,13 @@ internal fun TxnEditContent(
     var showDiscardDialog by remember { mutableStateOf(false) }
     val invalidAmountMessage = stringResource(R.string.txn_edit_amount_invalid)
     val failedMessage = stringResource(R.string.common_error_unknown)
+    val saveFailureMessage = when (state.saveFailureMessage) {
+        SavingsTxnGuard.INVALID_LINK -> stringResource(R.string.wealth_link_invalid)
+        SavingsTxnGuard.DIRECTION -> stringResource(R.string.wealth_link_direction)
+        SavingsTxnGuard.NEGATIVE -> stringResource(R.string.wealth_link_negative)
+        SavingsTxnGuard.OVERFLOW -> stringResource(R.string.wealth_link_overflow)
+        else -> state.saveFailureMessage ?: failedMessage
+    }
     val aiNoEntryMessage = stringResource(R.string.txn_edit_ai_no_entry)
     val aiMultipleEntriesMessage = stringResource(R.string.txn_edit_ai_multiple_entries)
 
@@ -153,7 +161,7 @@ internal fun TxnEditContent(
     LaunchedEffect(state.error) {
         when (state.error) {
             TxnEditError.INVALID_AMOUNT -> snackbarHostState.showSnackbar(invalidAmountMessage)
-            TxnEditError.SAVE_FAILED -> snackbarHostState.showSnackbar(state.saveFailureMessage ?: failedMessage)
+            TxnEditError.SAVE_FAILED -> snackbarHostState.showSnackbar(saveFailureMessage)
             TxnEditError.AI_PARSE_FAILED -> snackbarHostState.showSnackbar(aiNoEntryMessage)
             TxnEditError.AI_MULTIPLE_ENTRIES -> snackbarHostState.showSnackbar(aiMultipleEntriesMessage)
             null -> Unit

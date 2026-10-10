@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 /** 账户管理：新建 / 编辑 / 归档 / 删除（有流水时只能归档）。 */
@@ -40,7 +41,15 @@ class AccountManageViewModel @Inject constructor(
 
     private val local = MutableStateFlow(AccountManageLocal())
 
-    private val content = observeAccounts(ledgerId, includeArchived = true)
+    private val content = observeAccounts(ledgerId, includeArchived = true).onEach { accounts ->
+        val requested = savedStateHandle.get<String>("editAccountId")
+        if (savedStateHandle.get<Boolean>("editorOpened") != true && !requested.isNullOrBlank()) {
+            accounts.find { it.id == requested }?.let { account ->
+                savedStateHandle["editorOpened"] = true
+                local.update { it.copy(editor = account.toEditor()) }
+            }
+        }
+    }
 
     val uiState: StateFlow<AccountManageUiState> = combine(content, local) { accounts, local ->
         AccountManageUiState(

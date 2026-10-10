@@ -77,6 +77,8 @@ class TxnEditViewModel @Inject constructor(
             isLoading = true,
             isEditing = txnId != null,
             ledgerId = ledgerId,
+            accountId = if (txnId == null) savedStateHandle.get<String>("accountId")?.takeIf { it.isNotBlank() } else null,
+            type = if (txnId == null && savedStateHandle.get<String>("entryType") == "TRANSFER") TransactionType.TRANSFER else TransactionType.EXPENSE,
             occurredAt = timeProvider.nowMillis(),
             todayMillis = timeProvider.nowMillis(),
             yesterdayMillis = timeProvider.nowMillis(),

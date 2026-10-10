@@ -10,9 +10,26 @@ Keep this README current as you work: **important updates and necessary content 
 
 ## Features
 
+**Assets and savings (P2):** the five tabs are Home / Calendar / Assets / Statistics / Me.
+Assets groups funds, credit, prepaid, receivable/payable, loan and investment accounts. Totals
+use the same included, unarchived account set: positive balances are assets and negative balances
+are debt. Account detail exposes its entries, edit/archive, transfers, and balance calibration
+(an adjustment entry, excluded from income/expense). The app records a verifiable balance baseline
+on upgrade or first asset observation; historical trend charts are reserved for P7.
+
+Savings goals bind to a non-debt account. Deposits and withdrawals create one real transfer each;
+progress derives from the linked entries and never posts a second balance change. Reaching the target
+marks it achieved; goals can be edited, archived and restored. Withdrawals and linked-entry edits,
+deletion or restoration cannot make saved progress negative. Linked transfers retain their savings
+direction/account. Home's settings icon controls card visibility and order, with a reset action;
+the default cards are Budget / Today / Savings / Seven days. Goals, transfer links, layout and asset
+baselines are included in format-4 backups, which remain compatible with format 1–3 snapshots.
+Ledger renames and edits to linked entries update rows in place, preserving their child records.
+Transaction-and-tag writes and savings transfers roll back together on failure.
+
 The home dashboard now combines monthly spending, assets, remaining budget, today's income and
 expense, a seven-day trend, pending drafts/payment reviews, and recent entries grouped by date.
-Tap a recent entry to edit it directly. The bottom navigation is Home / Calendar / Statistics / Me.
+Tap a recent entry to edit it directly. Card order and visibility are customizable per ledger.
 
 **Monthly budgets:** tap the Budget card on Home to set a total or first/second-level expense
 category limit, including zero limits. Limits carry forward, unspent money does not. Historical
@@ -28,8 +45,8 @@ and statistics share the same confirmed-entry/refund rules.
 The complete agreed feature roadmap and later phases are in [docs/FEATURE-ROADMAP.md](docs/FEATURE-ROADMAP.md).
 Category expansion now uses stable row containers; a Compose device test repeatedly expands,
 switches and collapses parent categories to prevent a reproduced node-insertion crash.
-Assets/savings, reimbursement/lending, extended finance, voice/image entry and report improvements
-are tracked separately; they are not represented as completed by this first dashboard delivery.
+Reimbursement/lending, extended finance, voice/image entry and report improvements remain in the
+later phases; P0/P1 and P2 do not mark those as implemented.
 
 JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
 

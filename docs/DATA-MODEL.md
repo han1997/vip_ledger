@@ -1,5 +1,13 @@
 # VipLedger 数据模型
 
+## 2026-10-10：schema 4 资产、储蓄、首页配置
+
+- `savings_goal`：id UUID、ledger_id账本外键、account_id目标账户、name、target_cents>0、deadline可空ISO日期、archived、created_at/updated_at。达成状态按已存≥目标计算。
+- `savings_link`：txn_id主键且外键txn，goal_id外键目标、created_at。每笔转账最多属于一个目标，金额/方向从txn推导，不另记余额。
+- `home_card`：主键ledger_id/card_key，position、visible；五种固定卡片BUDGET/TODAY/SAVINGS/WEEK/PENDING，完整配置事务替换、快照保存。
+- `asset_baseline`：account_id主键、ledger_id、captured_at、balance_cents、included。记录实际观察到的缓存余额和纳入状态；迁移记录旧账户，新账户首次资产观察补录，已有基线不覆盖。
+- 四表纳入格式4快照/JSON，读取1–4；旧格式缺新表按空表。账户新增枚举PREPAID按TEXT存储。
+
 ## 2026-10-09：schema 3 月预算
 
 新增 `budget_limit`：UUID `id`，`ledger_id` 外键级联，`month` 为月份首日 ISO 日期，`scope_key` 空串代表总预算、其他值为当前账本支出分类 ID，`amount_cents` 可空（null为停用，0为零额度），`updated_at`。唯一索引 `(ledger_id, month, scope_key)`。按 scope 读取目标月之前最后一次设置，额度沿用、余额不结转；编辑历史月会保留下一月原额度。

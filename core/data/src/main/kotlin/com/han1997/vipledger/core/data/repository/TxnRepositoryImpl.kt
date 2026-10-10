@@ -6,7 +6,6 @@ import com.han1997.vipledger.core.data.mapper.toDomain
 import com.han1997.vipledger.core.data.mapper.toEntity
 import com.han1997.vipledger.core.data.support.dataResult
 import com.han1997.vipledger.core.database.dao.TxnDao
-import com.han1997.vipledger.core.database.dao.TxnTagDao
 import com.han1997.vipledger.core.database.entity.TxnTagEntity
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.model.TxnFilter
@@ -66,7 +65,6 @@ internal object TxnFilterSql {
 
 class TxnRepositoryImpl @Inject constructor(
     private val txnDao: TxnDao,
-    private val txnTagDao: TxnTagDao,
     private val timeProvider: TimeProvider,
 ) : TxnRepository {
 
@@ -118,7 +116,7 @@ class TxnRepositoryImpl @Inject constructor(
 
     override suspend fun insert(txn: Txn): AppResult<Unit> = dataResult { writeWithTags(txn) }
 
-    override suspend fun update(txn: Txn): AppResult<Unit> = dataResult { writeWithTags(txn) }
+    override suspend fun update(txn: Txn): AppResult<Unit> = dataResult { writeWithTags(txn, update = true) }
 
     override suspend fun updateDraftStatus(
         id: String,
@@ -138,10 +136,8 @@ class TxnRepositoryImpl @Inject constructor(
 
     override suspend fun countByCategory(categoryId: String): Int = txnDao.countByCategory(categoryId)
 
-    private suspend fun writeWithTags(txn: Txn) {
-        txnDao.upsert(txn.toEntity())
-        txnTagDao.deleteByTxnId(txn.id)
+    private suspend fun writeWithTags(txn: Txn, update: Boolean = false) {
         val links = txn.tagIds.distinct().map { TxnTagEntity(txnId = txn.id, tagId = it) }
-        if (links.isNotEmpty()) txnTagDao.insertAll(links)
+        txnDao.writeWithTags(txn.toEntity(), links, update)
     }
 }

@@ -49,6 +49,7 @@
 | 设计系统 | `core:designsystem` | 主题、语义色、通用组件、格式化函数（`format/`）与自绘图表（`component/chart/`） |
 
 - 仅供界面偏好使用的轻量持久化由 `core:domain/support` 定义端口、`core:data/support` 用 DataStore 实现（如 `LastAccountStore`）；不要把这类非账务状态放入 Room 业务表或 feature 间共享状态。
+- P2首页卡片布局是用户要求随账本完整快照恢复的持久配置，例外存入Room的home_card，与目标和关联一起备份；不要据此把普通临时UI偏好都放入Room。
 
 ## 硬规则
 

@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tune
+import com.han1997.vipledger.core.domain.model.HomeCard
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,11 +40,13 @@ fun HomeScreen(
     onOpenRange: (String, DateRange) -> Unit,
     onOpenDrafts: (String) -> Unit,
     onOpenAuto: () -> Unit,
+    onOpenSavings: (String) -> Unit,
+    onHomeLayout: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    HomeContent(state, viewModel::onAction, onAddTxn, onOpenTxns, onOpenLedgers, onOpenAccounts, onOpenLoanDetail, onEditTxn, onOpenBudget, onOpenSearch, onOpenRange, onOpenDrafts, onOpenAuto, modifier)
+    HomeContent(state, viewModel::onAction, onAddTxn, onOpenTxns, onOpenLedgers, onOpenAccounts, onOpenLoanDetail, onEditTxn, onOpenBudget, onOpenSearch, onOpenRange, onOpenDrafts, onOpenAuto, onOpenSavings, onHomeLayout, modifier)
 }
 
 @Composable
@@ -60,6 +64,8 @@ internal fun HomeContent(
     onOpenRange: (String, DateRange) -> Unit,
     onOpenDrafts: (String) -> Unit,
     onOpenAuto: () -> Unit,
+    onOpenSavings: (String) -> Unit,
+    onHomeLayout: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ledger = state.ledgerId
@@ -67,6 +73,7 @@ internal fun HomeContent(
         VipLedgerTopBar(title = stringResource(R.string.home_title), actions = {
             LedgerSwitcher(state, onAction, onOpenLedgers)
             IconButton(onClick = { ledger?.let(onOpenSearch) }, enabled = ledger != null) { Icon(Icons.Filled.Search, stringResource(R.string.ledger_home_search)) }
+            IconButton(onClick = { ledger?.let(onHomeLayout) }, enabled = ledger != null) { Icon(Icons.Filled.Tune, stringResource(R.string.wealth_home_layout)) }
         })
     }) { padding ->
         val overview = state.overview
@@ -88,37 +95,54 @@ internal fun HomeContent(
                     }
                 }
                 item { PrimaryButton(stringResource(R.string.home_add_txn), { onAddTxn(ledger) }, Modifier.fillMaxWidth()) }
-                item {
-                    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
-                        HomeTile(stringResource(R.string.ledger_home_budget_entry), { onOpenBudget(ledger) }, Modifier.weight(1f).fillMaxHeight()) {
-                            val budget = state.budget?.total
-                            if (budget != null) BudgetProgressContent(budget)
-                            else Text(stringResource(R.string.ledger_budget_set_total), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-                        }
-                        HomeTile(stringResource(R.string.ledger_home_today), {
-                            overview.lastSevenDays.lastOrNull()?.let { onOpenRange(ledger, DateRange(it.start, it.endInclusive)) }
-                        }, Modifier.weight(1f).fillMaxHeight()) {
-                            Text(stringResource(R.string.ledger_home_income), style = MaterialTheme.typography.labelSmall)
-                            AmountText(overview.todayIncome, color = IncomeGreen, style = MaterialTheme.typography.titleMedium)
-                            Text(stringResource(R.string.ledger_home_expense), style = MaterialTheme.typography.labelSmall)
-                            AmountText(overview.todayExpense, color = ExpenseRed, style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                }
-                item {
-                    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
-                        HomeTile(stringResource(R.string.ledger_home_week), {
-                            val days = overview.lastSevenDays
-                            if (days.isNotEmpty()) onOpenRange(ledger, DateRange(days.first().start, days.last().endInclusive))
-                        }, Modifier.weight(1f).fillMaxHeight()) {
-                            BarChart(overview.lastSevenDays.map { BarGroup(it.start.dayOfMonth.toString(), 0, it.expense.cents) }, height = VipLedgerTokens.Space8 * 2, maxLabels = 7, showLegend = false)
-                        }
-                        HomeTile(stringResource(R.string.ledger_home_pending), {
-                            if (state.pendingAutoCount > 0) onOpenAuto() else onOpenDrafts(ledger)
-                        }, Modifier.weight(1f).fillMaxHeight()) {
-                            Text(stringResource(R.string.ledger_home_pending_count, state.pendingDraftCount), Modifier.clickable { onOpenDrafts(ledger) }, style = MaterialTheme.typography.bodyMedium)
-                            Text(stringResource(R.string.ledger_home_auto_count, state.pendingAutoCount), Modifier.clickable { onOpenAuto() }, style = MaterialTheme.typography.bodyMedium)
-                            Text(stringResource(R.string.ledger_home_reminders_count, state.reminders.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                state.cards.filter { it.visible }.chunked(2).forEach { row ->
+                    item(key = row.joinToString { it.card.name }) {
+                        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3)) {
+                            row.forEach { setting ->
+                                key(setting.card) {
+                                    val tileModifier = Modifier.weight(1f).fillMaxHeight()
+                                    when (setting.card) {
+                                        HomeCard.BUDGET -> HomeTile(stringResource(R.string.ledger_home_budget_entry), { onOpenBudget(ledger) }, tileModifier) {
+                                            val budget = state.budget?.total
+                                            if (budget != null) BudgetProgressContent(budget)
+                                            else Text(stringResource(R.string.ledger_budget_set_total), color = MaterialTheme.colorScheme.primary)
+                                        }
+                                        HomeCard.TODAY -> HomeTile(stringResource(R.string.ledger_home_today), {
+                                            overview.lastSevenDays.lastOrNull()?.let { onOpenRange(ledger, DateRange(it.start, it.endInclusive)) }
+                                        }, tileModifier) {
+                                            Text(stringResource(R.string.ledger_home_income), style = MaterialTheme.typography.labelSmall)
+                                            AmountText(overview.todayIncome, color = IncomeGreen, style = MaterialTheme.typography.titleMedium)
+                                            Text(stringResource(R.string.ledger_home_expense), style = MaterialTheme.typography.labelSmall)
+                                            AmountText(overview.todayExpense, color = ExpenseRed, style = MaterialTheme.typography.titleMedium)
+                                        }
+                                        HomeCard.SAVINGS -> HomeTile(stringResource(R.string.wealth_savings), { onOpenSavings(ledger) }, tileModifier) {
+                                            val goal = state.savings.firstOrNull { !it.achieved } ?: state.savings.firstOrNull()
+                                            if (goal == null) Text(stringResource(R.string.wealth_goal_new), color = MaterialTheme.colorScheme.primary)
+                                            else {
+                                                Text(goal.goal.name, style = MaterialTheme.typography.bodyMedium)
+                                                AmountText(goal.saved, style = MaterialTheme.typography.titleMedium)
+                                                LinearProgressIndicator(progress = { goal.fraction }, modifier = Modifier.fillMaxWidth())
+                                                Text(goal.goal.target.toDisplayString(), style = MaterialTheme.typography.labelSmall)
+                                                if (goal.achieved) Text(stringResource(R.string.wealth_achieved), style = MaterialTheme.typography.labelSmall)
+                                            }
+                                        }
+                                        HomeCard.WEEK -> HomeTile(stringResource(R.string.ledger_home_week), {
+                                            val days = overview.lastSevenDays
+                                            if (days.isNotEmpty()) onOpenRange(ledger, DateRange(days.first().start, days.last().endInclusive))
+                                        }, tileModifier) {
+                                            BarChart(overview.lastSevenDays.map { BarGroup(it.start.dayOfMonth.toString(), 0, it.expense.cents) }, height = VipLedgerTokens.Space8 * 2, maxLabels = 7, showLegend = false)
+                                        }
+                                        HomeCard.PENDING -> HomeTile(stringResource(R.string.ledger_home_pending), {
+                                            if (state.pendingAutoCount > 0) onOpenAuto() else onOpenDrafts(ledger)
+                                        }, tileModifier) {
+                                            TextButton(onClick = { onOpenDrafts(ledger) }) { Text(stringResource(R.string.ledger_home_pending_count, state.pendingDraftCount)) }
+                                            TextButton(onClick = onOpenAuto) { Text(stringResource(R.string.ledger_home_auto_count, state.pendingAutoCount)) }
+                                            Text(stringResource(R.string.ledger_home_reminders_count, state.reminders.size), style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                            if (row.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
                 }
@@ -176,4 +200,4 @@ private fun LedgerSwitcher(state: HomeUiState, onAction: (HomeAction) -> Unit, o
 
 @Preview(showBackground = true)
 @Composable
-private fun HomePreview() { VipLedgerTheme { HomeContent(HomeUiState(isLoading = false), {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {}, { _, _ -> }, {}, {}) } }
+private fun HomePreview() { VipLedgerTheme { HomeContent(HomeUiState(isLoading = false), {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {}, { _, _ -> }, {}, {}, {}, {}) } }

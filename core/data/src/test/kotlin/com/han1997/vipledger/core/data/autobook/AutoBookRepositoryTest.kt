@@ -99,7 +99,7 @@ class AutoBookRepositoryTest {
     @AfterTest fun close() = db.close()
     private fun repository(syncer: AccountBalanceSyncer = AccountBalanceSyncerImpl(db.accountDao(), db.txnDao())) = RoomAutoBookRepository(
         db, AccountRepositoryImpl(db.accountDao()), LedgerRepositoryImpl(db.ledgerDao(), time), CategoryRepositoryImpl(db.categoryDao()),
-        TxnRepositoryImpl(db.txnDao(), db.txnTagDao(), time), MerchantRuleRepositoryImpl(db.merchantRuleDao()),
+        TxnRepositoryImpl(db.txnDao(), time), MerchantRuleRepositoryImpl(db.merchantRuleDao()),
         object : CategoryClassifier { override suspend fun classify(title: String, remark: String) = emptyList<CategorySuggestion>() }, syncer,
     )
     private suspend fun seed(verified: Boolean = true): RoomAutoBookRepository {

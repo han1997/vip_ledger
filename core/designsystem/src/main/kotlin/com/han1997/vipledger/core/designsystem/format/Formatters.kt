@@ -121,6 +121,7 @@ fun accountTypeLabel(type: AccountType): String = stringResource(
         AccountType.PAYABLE -> R.string.account_type_payable
         AccountType.LOAN -> R.string.account_type_loan
         AccountType.INVESTMENT -> R.string.account_type_investment
+        AccountType.PREPAID -> R.string.account_type_prepaid
     },
 )
 

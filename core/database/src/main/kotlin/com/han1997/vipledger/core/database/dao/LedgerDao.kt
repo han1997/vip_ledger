@@ -4,6 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
+import androidx.room.Transaction
 import com.han1997.vipledger.core.database.entity.LedgerEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -25,8 +27,17 @@ interface LedgerDao {
     @Query("SELECT COUNT(*) FROM ledger")
     suspend fun count(): Int
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(ledger: LedgerEntity)
+    @Insert
+    suspend fun insert(ledger: LedgerEntity)
+
+    @Update
+    suspend fun update(ledger: LedgerEntity): Int
+
+    /** 父表不可用REPLACE：重命名不应级联删除账户、流水及目标。 */
+    @Transaction
+    suspend fun upsert(ledger: LedgerEntity) {
+        if (update(ledger) == 0) insert(ledger)
+    }
 
     /** 默认账本全局唯一：一次性把其他账本降级。 */
     @Query("UPDATE ledger SET is_default = (CASE WHEN id = :id THEN 1 ELSE 0 END), updated_at = :updatedAt")

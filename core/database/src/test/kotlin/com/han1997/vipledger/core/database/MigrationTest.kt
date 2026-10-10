@@ -74,6 +74,7 @@ class MigrationTest {
                 "ml_training_sample",
                 "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
                 "budget_limit", "budget_alert",
+                "savings_goal", "savings_link", "home_card", "asset_baseline",
             ),
             tables,
         )
@@ -102,6 +103,9 @@ class MigrationTest {
 
     @Test
     fun versionTwoUpgradesWithoutLosingExistingRows() = upgradeFrom(2)
+
+    @Test
+    fun versionThreeUpgradesWithoutLosingExistingRows() = upgradeFrom(3)
 
     private fun upgradeFrom(version: Int) {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
@@ -133,6 +137,9 @@ class MigrationTest {
         val upgraded = Room.databaseBuilder(context, LedgerDatabase::class.java, name)
             .addMigrations(*ALL_MIGRATIONS).allowMainThreadQueries().build()
         try {
+            upgraded.openHelper.writableDatabase.query("SELECT balance_cents,included,captured_at FROM asset_baseline WHERE account_id='cash'").use {
+                assertTrue(it.moveToFirst()); assertEquals(8766L, it.getLong(0)); assertEquals(1, it.getInt(1)); assertTrue(it.getLong(2) > 0)
+            }
             upgraded.openHelper.writableDatabase.query("SELECT COUNT(*) FROM budget_limit").use {
                 assertTrue(it.moveToFirst()); assertEquals(0, it.getInt(0))
             }

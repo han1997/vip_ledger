@@ -22,7 +22,7 @@ class BalanceCacheTest {
     }
 
     @Test
-    fun totalDebtCountsOnlyNegativeDebtBalances() {
+    fun totalDebtCountsAllIncludedNegativeBalances() {
         val accounts = listOf(
             account("a1", AccountType.CREDIT_CARD, -30000),
             account("a2", AccountType.LOAN, -120000),
@@ -30,7 +30,7 @@ class BalanceCacheTest {
             account("a4", AccountType.CASH, -8000),
         )
 
-        assertEquals(Money.ofCents(150000), BalanceCalculator.totalDebtFromCache(accounts))
+        assertEquals(Money.ofCents(158000), BalanceCalculator.totalDebtFromCache(accounts))
     }
 
     private fun account(

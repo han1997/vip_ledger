@@ -20,6 +20,8 @@ data class HomeUiState(
     val pendingDraftCount: Int = 0,
     val pendingAutoCount: Int = 0,
     val budget: com.han1997.vipledger.core.domain.model.BudgetReport? = null,
+    val cards: List<com.han1997.vipledger.core.domain.model.HomeCardSetting> = com.han1997.vipledger.core.domain.model.HomeCardLayout.defaults(),
+    val savings: List<com.han1997.vipledger.core.domain.model.SavingsProgress> = emptyList(),
     val accountNames: Map<String, String> = emptyMap(),
     val categoryNames: Map<String, String> = emptyMap(),
     val tagNames: Map<String, String> = emptyMap(),

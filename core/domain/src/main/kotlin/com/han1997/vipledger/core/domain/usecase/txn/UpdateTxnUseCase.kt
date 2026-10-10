@@ -21,6 +21,7 @@ class UpdateTxnUseCase(
     private val transactionRunner: TransactionRunner,
     private val balanceSyncer: AccountBalanceSyncer,
     private val timeProvider: TimeProvider,
+    private val savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard? = null,
 ) {
 
     suspend operator fun invoke(txn: Txn): AppResult<Txn> {
@@ -37,6 +38,7 @@ class UpdateTxnUseCase(
 
         val affected = (existing.affectedAccountIds() + updated.affectedAccountIds()).distinct()
         return transactionRunner.inTransaction {
+            savingsGuard?.validate(updated)?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(updated, txnRepository.listByLedger(updated.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.update(updated)

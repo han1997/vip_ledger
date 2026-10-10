@@ -5,7 +5,9 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import com.han1997.vipledger.core.database.entity.TxnEntity
+import com.han1997.vipledger.core.database.entity.TxnTagEntity
 import com.han1997.vipledger.core.database.entity.TxnWithTagIds
 import kotlinx.coroutines.flow.Flow
 
@@ -78,6 +80,23 @@ interface TxnDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(txn: TxnEntity)
+
+    @Update
+    suspend fun update(txn: TxnEntity): Int
+
+    @Query("DELETE FROM txn_tag WHERE txn_id = :txnId")
+    suspend fun clearTagLinks(txnId: String)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTagLinks(links: List<TxnTagEntity>)
+
+    /** 仓库将SQL异常转为Failure之前，确保流水和标签已整体回滚。 */
+    @Transaction
+    suspend fun writeWithTags(txn: TxnEntity, links: List<TxnTagEntity>, updating: Boolean) {
+        if (updating) check(update(txn) == 1) { "Entry no longer exists" } else upsert(txn)
+        clearTagLinks(txn.id)
+        if (links.isNotEmpty()) insertTagLinks(links)
+    }
 
     @Query("UPDATE txn SET deleted_at = :deletedAt, updated_at = :deletedAt WHERE id = :id")
     suspend fun softDelete(id: String, deletedAt: Long)

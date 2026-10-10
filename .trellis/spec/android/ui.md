@@ -120,12 +120,12 @@
 - 未保存退出（顶栏返回与系统返回）走 `BackHandler` + `VipLedgerConfirmDialog`（判 `hasUnsavedChanges`）；
   保存防重统一看 `isBusy`（`isSaving || isCreatingTag`），不要只判断 `isSaving`。
 
-- 应用主导航使用底部四 Tab：`Home`、`Calendar`、`Stats`、`Settings`。首页概览下方主按钮记账，日历FAB携带选中日期，统计页保留FAB；P2再加入资产Tab。AI从编辑器进入。
+- 应用主导航使用底部五 Tab：`Home`、`Calendar`、`Assets`、`Stats`、`Settings`。首页概览下方主按钮记账，日历FAB携带选中日期，统计页保留FAB；首页卡片设置按账本保存。AI从编辑器进入。
 - `SettingsScreen` 保持无业务 ViewModel；Tab 根由导航层通过 `SettingsTabViewModel` 观察当前账本并传入启用状态与带账本 ID 的回调。没有当前账本时，依赖账本的入口禁用。
 - 「我的」页分组为账本、计划、AI 配置（模型管理/商户规则）、数据（备份）；统计只在独立 Tab 提供，AI 记账入口在记账页金额输入旁。
-- 设置 Tab 根不显示返回箭头；二级管理页仍使用带账本 ID 的路由并显示返回箭头。底部栏只在四个 Tab 根显示，二级页隐藏。
+- 设置 Tab 根不显示返回箭头；二级管理页仍使用带账本 ID 的路由并显示返回箭头。底部栏只在五个 Tab 根显示，二级页隐藏。
 
 ### 动态分类插入的渲染回归
 
 2026-10-09在Release/Debug模拟器复现：分类循环先发射Row，再用`?: return@forEach`跳过后续节点，展开时触发MutableVector.add / LayoutNode.insertAt越界。分类行使用稳定key及独立Column，以结构化if决定子分类，不在已发射节点的循环中用标签return控制后续节点。CategorySectionTest实际重复展开/跨行切换/收起，须通过 `:feature:ledger:connectedDebugAndroidTest`；UiState单测不能验证节点树。
-- 新增设置入口必须走 `strings.xml`，并放进现有分组，不在首页顶栏再加按钮。
+- 通用设置入口走strings.xml和我的页分组；只影响首页本身的卡片配置通过首页顶栏Tune按钮进入（P2）。

@@ -36,6 +36,10 @@ import com.han1997.vipledger.core.database.entity.TxnTagEntity
  */
 @Database(
     entities = [
+        com.han1997.vipledger.core.database.entity.SavingsGoalEntity::class,
+        com.han1997.vipledger.core.database.entity.SavingsLinkEntity::class,
+        com.han1997.vipledger.core.database.entity.HomeCardEntity::class,
+        com.han1997.vipledger.core.database.entity.AssetBaselineEntity::class,
         com.han1997.vipledger.core.database.entity.BudgetLimitEntity::class,
         com.han1997.vipledger.core.database.entity.BudgetAlertEntity::class,
         com.han1997.vipledger.core.database.entity.AutoConfigEntity::class,
@@ -60,6 +64,7 @@ import com.han1997.vipledger.core.database.entity.TxnTagEntity
 )
 @TypeConverters(EnumConverters::class)
 abstract class LedgerDatabase : RoomDatabase() {
+    abstract fun wealthDao(): com.han1997.vipledger.core.database.dao.WealthDao
 
     abstract fun budgetDao(): com.han1997.vipledger.core.database.dao.BudgetDao
 
@@ -90,7 +95,7 @@ abstract class LedgerDatabase : RoomDatabase() {
     abstract fun mlTrainingSampleDao(): MlTrainingSampleDao
 
     companion object {
-        const val SCHEMA_VERSION: Int = 3
+        const val SCHEMA_VERSION: Int = 4
         const val NAME: String = "vipledger.db"
     }
 }

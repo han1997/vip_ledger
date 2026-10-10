@@ -7,6 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
@@ -58,7 +60,7 @@ fun VipLedgerApp(modifier: Modifier = Modifier, openAutoBook: Boolean = false, o
 
     // 只在四个 Tab 根上显示底部栏；次级页进入后隐藏。
     val showBottomBar = when (currentRoute) {
-        LedgerRoutes.HOME, LedgerRoutes.CALENDAR, LedgerRoutes.SETTINGS_TAB, StatsRoutes.STATS_TAB -> true
+        LedgerRoutes.HOME, LedgerRoutes.CALENDAR, LedgerRoutes.ASSETS, LedgerRoutes.SETTINGS_TAB, StatsRoutes.STATS_TAB -> true
         else -> false
     }
 
@@ -77,6 +79,7 @@ fun VipLedgerApp(modifier: Modifier = Modifier, openAutoBook: Boolean = false, o
                 onOpenBackup = { navController.navigate(BackupRoutes.HOME) },
                 onOpenAiModel = { navController.navigate(AiRoutes.MODEL) },
                 onOpenAiRules = { navController.navigate(AiRoutes.RULES) },
+                onOpenAssets = { navigateTab(navController, LedgerRoutes.ASSETS) },
                 onOpenSearch = { navController.navigate(StatsRoutes.search(it)) },
                 onOpenRange = { ledger, range -> navController.navigate(StatsRoutes.drill(com.han1997.vipledger.feature.stats.navigation.DrillArgs(ledgerId = ledger, range = range))) },
             )
@@ -156,6 +159,12 @@ private val TabDestinations: List<TabDestination> = listOf(
         labelRes = DesignSystemR.string.tab_calendar,
         selectedIcon = Icons.Filled.CalendarMonth,
         unselectedIcon = Icons.Outlined.CalendarMonth,
+    ),
+    TabDestination(
+        route = LedgerRoutes.ASSETS,
+        labelRes = DesignSystemR.string.tab_assets,
+        selectedIcon = Icons.Filled.AccountBalanceWallet,
+        unselectedIcon = Icons.Outlined.AccountBalanceWallet,
     ),
     TabDestination(
         route = StatsRoutes.STATS_TAB,

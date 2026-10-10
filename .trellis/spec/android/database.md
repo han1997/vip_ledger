@@ -13,6 +13,7 @@
 - 实体后缀 `Entity`，DAO 后缀 `Dao`；查询返回 `Flow`（读）或 `suspend`（写）。
 - 复杂读模型（统计聚合、搜索结果）用独立的 `@Query` + 投影 data class，禁止在 UI 层做聚合。
 - 多表写入必须 `withTransaction`：流水、账户余额缓存、标签关联要在同一事务里。
+- P2：LedgerDao.upsert采用事务内UPDATE、主键不存在才INSERT；目标用原位Upsert；已有账目用UPDATE。不要将这些路径改回REPLACE，否则会影响子表关联。TxnDao.writeWithTags单独保证流水和标签替换原子性，仓库捕获SQL异常返回Failure时内部更新必须已经回滚。
 
 ## 实现约定（M1 落地时定下的）
 

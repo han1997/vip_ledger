@@ -76,8 +76,7 @@ internal object SnapshotJsonCodec {
         require(version in 1..com.han1997.vipledger.core.database.LedgerDatabase.SCHEMA_VERSION) { "Unsupported database JSON version" }
         val tableJson = document.getJSONObject("tables")
         tables.forEach { table ->
-            if (version == 1 && table.startsWith("auto_") && !tableJson.has(table)) return@forEach
-            if (version < 3 && table.startsWith("budget_") && !tableJson.has(table)) return@forEach
+            if (version < SnapshotArchive.tableVersion(table) && !tableJson.has(table)) return@forEach
             val rows = tableJson.getJSONArray(table)
             if (rows.length() == 0) return@forEach
             val blobColumns = blobColumns(database, table)

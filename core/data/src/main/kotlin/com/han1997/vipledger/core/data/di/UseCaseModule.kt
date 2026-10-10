@@ -109,6 +109,7 @@ object UseCaseModule {
         transactionRunner: TransactionRunner,
         balanceSyncer: AccountBalanceSyncer,
         timeProvider: TimeProvider,
+        savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard,
     ) = UpdateTxnUseCase(
         txnRepository = txnRepository,
         accountRepository = accountRepository,
@@ -116,6 +117,7 @@ object UseCaseModule {
         transactionRunner = transactionRunner,
         balanceSyncer = balanceSyncer,
         timeProvider = timeProvider,
+        savingsGuard = savingsGuard,
     )
 
     @Provides
@@ -125,11 +127,13 @@ object UseCaseModule {
         transactionRunner: TransactionRunner,
         balanceSyncer: AccountBalanceSyncer,
         timeProvider: TimeProvider,
+        savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard,
     ) = DeleteTxnUseCase(
         txnRepository = txnRepository,
         transactionRunner = transactionRunner,
         balanceSyncer = balanceSyncer,
         timeProvider = timeProvider,
+        savingsGuard = savingsGuard,
     )
 
     @Provides

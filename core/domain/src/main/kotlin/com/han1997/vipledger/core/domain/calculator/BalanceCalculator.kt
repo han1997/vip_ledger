@@ -50,10 +50,10 @@ object BalanceCalculator {
 
     /** 负债合计（正数）：信用卡、应付、贷款。 */
     fun totalDebt(accounts: List<Account>, txns: List<Txn>): Money = Money.sum(
-        accounts.filter { it.isDebt && it.isUsable }
+        accounts.filter { it.includeInNetWorth && it.isUsable }
             .map { balanceOf(it, txns) }
             .filter { it.isNegative }
-            .map { -it },
+            .map { Money.ofCents(Math.negateExact(it.cents)) },
     )
 
     /**
@@ -66,8 +66,13 @@ object BalanceCalculator {
 
     /** 负债合计（正数），同样基于余额缓存。 */
     fun totalDebtFromCache(accounts: List<Account>): Money = Money.sum(
-        accounts.filter { it.isDebt && it.isUsable }
+        accounts.filter { it.includeInNetWorth && it.isUsable }
             .map { it.currentBalance }
             .filter { it.isNegative }
-            .map { -it },
-    )}
+            .map { Money.ofCents(Math.negateExact(it.cents)) },
+    )
+
+    fun totalAssetsFromCache(accounts: List<Account>): Money = Money.sum(
+        accounts.filter { it.includeInNetWorth && it.isUsable && it.currentBalance.cents > 0 }.map { it.currentBalance },
+    )
+}

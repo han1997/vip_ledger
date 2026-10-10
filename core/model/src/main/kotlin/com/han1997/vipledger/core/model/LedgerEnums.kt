@@ -35,13 +35,14 @@ enum class AccountType {
     PAYABLE,
     LOAN,
     INVESTMENT,
+    PREPAID,
     ;
 
     /** 负债类账户：余额展示为欠款，参与净资产的负向计算。 */
     val isDebt: Boolean
         get() = when (this) {
             CREDIT_CARD, PAYABLE, LOAN -> true
-            CASH, BANK_DEBIT, VIRTUAL, RECEIVABLE, INVESTMENT -> false
+            CASH, BANK_DEBIT, VIRTUAL, RECEIVABLE, INVESTMENT, PREPAID -> false
         }
 
     /** 是否需要填写账单日/还款日。 */

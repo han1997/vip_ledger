@@ -289,7 +289,7 @@ class SnapshotArchiveTest {
             val counts = SnapshotJsonCodec.export(raw, listOf("stream_fixture"), file)
             assertEquals(1, counts["stream_fixture"])
             assertEquals(
-                """{"schemaVersion":3,"tables":{"stream_fixture":[{"a":1,"b":"quote\"back\\slash","c":2.5,"d":"AP8="}]}}""",
+                """{"schemaVersion":4,"tables":{"stream_fixture":[{"a":1,"b":"quote\"back\\slash","c":2.5,"d":"AP8="}]}}""",
                 file.readText(Charsets.UTF_8),
             )
         } finally {
@@ -323,7 +323,7 @@ class SnapshotArchiveTest {
 
         assertEquals(rowCount, counts["stream_rows"])
         val output = recorder.text.toString()
-        assertTrue(output.startsWith("{\"schemaVersion\":3,\"tables\":{\"stream_rows\":["), "结构前缀必须稳定")
+        assertTrue(output.startsWith("{\"schemaVersion\":4,\"tables\":{\"stream_rows\":["), "结构前缀必须稳定")
         assertTrue(output.endsWith("]}}"), "结构后缀必须稳定")
         assertTrue(
             recorder.chunks.size > rowCount,
@@ -337,7 +337,7 @@ class SnapshotArchiveTest {
 
     /** 旧的整体构建实现的原样复刻，仅作字节级对照，不参与生产路径。 */
     private fun referenceWholeObjectExport(database: SupportSQLiteDatabase, tables: List<String>): String {
-        val json = JSONObject().put("schemaVersion", 3)
+        val json = JSONObject().put("schemaVersion", 4)
         val tableJson = JSONObject()
         tables.forEach { table ->
             val rows = JSONArray()

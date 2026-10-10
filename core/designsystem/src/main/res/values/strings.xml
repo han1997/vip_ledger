@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="account_type_prepaid">充值账户</string>
+    <string name="tab_assets">资产</string>
     <string name="tab_calendar">日历</string>
     <!--
       共用组件文案：feature:ledger 与 feature:stats 都要用，按架构规范下沉到 designsystem，

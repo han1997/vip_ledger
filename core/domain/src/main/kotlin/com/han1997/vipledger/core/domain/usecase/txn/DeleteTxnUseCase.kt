@@ -14,6 +14,7 @@ class DeleteTxnUseCase(
     private val transactionRunner: TransactionRunner,
     private val balanceSyncer: AccountBalanceSyncer,
     private val timeProvider: TimeProvider,
+    private val savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard? = null,
 ) {
 
     suspend operator fun invoke(txnId: String): AppResult<Unit> {
@@ -22,6 +23,7 @@ class DeleteTxnUseCase(
         if (existing.deletedAt != null) return AppResult.success(Unit)
         val now = timeProvider.nowMillis()
         return transactionRunner.inTransaction {
+            savingsGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = now), txnRepository.listByLedger(existing.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.softDelete(txnId, now)
@@ -38,6 +40,7 @@ class DeleteTxnUseCase(
             ?: return AppResult.failure(AppError.NotFound("账目不存在"))
         val now = timeProvider.nowMillis()
         return transactionRunner.inTransaction {
+            savingsGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = null), txnRepository.listByLedger(existing.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.restore(txnId, now)

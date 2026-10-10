@@ -108,7 +108,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
             require(expected.equals(sha256(dbJson), ignoreCase = true)) { "Backup checksum mismatch" }
             val countsJson = manifestJson.getJSONObject("counts")
             val counts = TABLES.associateWith { table ->
-                if ((version == 1 && table.startsWith("auto_")) || (version < 3 && table.startsWith("budget_"))) 0 else countsJson.getInt(table)
+                if (version < tableVersion(table) && !countsJson.has(table)) 0 else countsJson.getInt(table)
             }
             val manifest = SnapshotManifest(version, manifestJson.getLong("createdAt"), counts, expected)
             validateWithTemporaryDatabase(dbJson, counts)
@@ -137,6 +137,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
                 SnapshotJsonCodec.insert(temp.openHelper.writableDatabase, TABLES, file)
                 val result = temp.openHelper.writableDatabase.query("PRAGMA foreign_key_check")
                 check(!result.use { it.moveToNext() }) { "Backup contains invalid references" }
+                validateWealth(temp.openHelper.writableDatabase)
                 TABLES.forEach { table ->
                     temp.openHelper.writableDatabase.query("SELECT COUNT(*) FROM `$table`").use { cursor ->
                         check(cursor.moveToFirst() && cursor.getInt(0) == expectedCounts.getValue(table))
@@ -151,6 +152,19 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
             context.getDatabasePath(name).delete()
             File(context.getDatabasePath(name).path + "-wal").delete()
             File(context.getDatabasePath(name).path + "-shm").delete()
+        }
+    }
+
+    private fun validateWealth(db: SupportSQLiteDatabase) {
+        val checks = listOf(
+            "SELECT 1 FROM savings_goal g LEFT JOIN account a ON a.id=g.account_id WHERE a.id IS NULL OR a.ledger_id!=g.ledger_id OR g.target_cents<=0 LIMIT 1",
+            "SELECT 1 FROM savings_link s JOIN savings_goal g ON g.id=s.goal_id JOIN txn t ON t.id=s.txn_id WHERE t.ledger_id!=g.ledger_id OR t.type!='TRANSFER' OR t.amount_cents<=0 OR t.draft_status!='CONFIRMED' OR t.account_id=COALESCE(t.to_account_id,'') OR (t.account_id!=g.account_id AND COALESCE(t.to_account_id,'')!=g.account_id) LIMIT 1",
+            "SELECT g.id FROM savings_goal g JOIN savings_link s ON s.goal_id=g.id JOIN txn t ON t.id=s.txn_id WHERE t.deleted_at IS NULL GROUP BY g.id HAVING SUM(CASE WHEN t.to_account_id=g.account_id THEN t.amount_cents ELSE -t.amount_cents END)<0 LIMIT 1",
+            "SELECT 1 FROM asset_baseline b LEFT JOIN account a ON a.id=b.account_id WHERE a.id IS NULL OR a.ledger_id!=b.ledger_id LIMIT 1",
+        )
+        checks.forEach { query -> check(!db.query(query).use { it.moveToFirst() }) { "Invalid savings or asset relationships" } }
+        db.query("SELECT deadline FROM savings_goal WHERE deadline IS NOT NULL").use { cursor ->
+            while (cursor.moveToNext()) kotlinx.datetime.LocalDate.parse(cursor.getString(0))
         }
     }
 
@@ -231,7 +245,13 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
     }
 
     companion object {
-        const val FORMAT_VERSION = 3
+        const val FORMAT_VERSION = 4
+        fun tableVersion(table: String): Int = when {
+            table in setOf("savings_goal", "savings_link", "home_card", "asset_baseline") -> 4
+            table.startsWith("budget_") -> 3
+            table.startsWith("auto_") -> 2
+            else -> 1
+        }
         const val PBKDF2_ITERATIONS = 150_000
         const val SAFETY_COPY_DIR = "backups"
         const val SAFETY_COPY_PREFIX = "pre-restore-"
@@ -244,6 +264,7 @@ class SnapshotArchive(private val context: Context, private val database: Ledger
             "installment_plan", "installment_period", "merchant_rule", "attachment", "ml_training_sample",
             "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
             "budget_limit", "budget_alert",
+            "savings_goal", "savings_link", "home_card", "asset_baseline",
         )
     }
 }

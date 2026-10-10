@@ -39,6 +39,7 @@
 | [ui.md](./ui.md) | Compose 与 ViewModel 约定、主题、designsystem 组件与 token（V2）、预览、单屏单 `LazyColumn`、统计口径 |
 | [charts.md](./charts.md) | 自绘图表的几何契约、数据契约、边界与测试要求 |
 | [budget-calendar.md](./budget-calendar.md) | 预算继承/提醒、日历首页口径、日期路由及schema3备份 |
+| [assets-savings.md](./assets-savings.md) | 资产口径、储蓄关联事务、布局、基线与schema4恢复 |
 | [error-handling.md](./error-handling.md) | `AppResult` 与 `AppError` 使用方式 |
 | [logging-guidelines.md](./logging-guidelines.md) | 日志级别与敏感信息红线 |
 | [testing.md](./testing.md) | 测试分层、命名与命令、跨模块口径一致性测试 |

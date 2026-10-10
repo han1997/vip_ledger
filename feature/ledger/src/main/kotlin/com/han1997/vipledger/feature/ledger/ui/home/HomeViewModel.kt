@@ -17,6 +17,8 @@ import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
 import com.han1997.vipledger.core.domain.usecase.budget.ObserveBudgetUseCase
 import com.han1997.vipledger.core.domain.usecase.home.ObserveLocalDayUseCase
 import com.han1997.vipledger.core.domain.usecase.home.ObservePendingAutoCountUseCase
+import com.han1997.vipledger.core.domain.usecase.wealth.HomeCardUseCases
+import com.han1997.vipledger.core.domain.usecase.wealth.ObserveSavingsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,6 +49,8 @@ class HomeViewModel @Inject constructor(
     observeBudget: ObserveBudgetUseCase,
     localDay: ObserveLocalDayUseCase,
     pendingAuto: ObservePendingAutoCountUseCase,
+    cards: HomeCardUseCases,
+    savings: ObserveSavingsUseCase,
 ) : ViewModel() {
     private val retry = MutableStateFlow(0)
 
@@ -67,7 +71,7 @@ class HomeViewModel @Inject constructor(
                     HomeUiState(
                         isLoading = false,
                         ledgerId = ledger.id,
-                        ledgerName = ledger.name,
+                        ledgerName = overview.ledgerName,
                         ledgers = ledgers,
                         overview = overview,
                         accountNames = accounts.accountNameMap(),
@@ -83,6 +87,8 @@ class HomeViewModel @Inject constructor(
                     }
                     .combine(localDay().flatMapLatest { day -> observeBudget(ledger.id, day.date, day.zone) }) { state, budget -> state.copy(budget = budget) }
                     .combine(pendingAuto(ledger.id)) { state, count -> state.copy(pendingAutoCount = count) }
+                    .combine(cards.observe(ledger.id)) { state, settings -> state.copy(cards = settings) }
+                    .combine(savings(ledger.id)) { state, goals -> state.copy(savings = goals.filterNot { it.goal.archived }) }
                     .onStart { emit(HomeUiState()) }
                     .catch { emit(HomeUiState(isLoading = false, failed = true)) }
             }
