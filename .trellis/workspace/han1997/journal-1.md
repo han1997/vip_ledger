@@ -716,3 +716,70 @@ Delivered 0.1.4 (5): reimbursement projects with shared refund caps and guarded 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: P4 installment, mortgage and investment delivered
+
+**Date**: 2026-10-11
+**Task**: P4 installment, mortgage and investment delivered
+**Branch**: `master`
+
+### Summary
+
+Delivered 0.1.5 (6): installment/mortgage split postings, prepay/rate change/legacy correction, investment ledgers, schema6 migration; full gate green; emulator walkthrough partial; P4 committed and archived.
+
+### Main Changes
+
+### Summary
+
+Delivered 0.1.5 (6): installment/mortgage plans with split postings (principal transfer, interest/fee expense), per-period settlement with partial repayment (fee → interest → principal), settle-in-full, partial prepayment rewriting only unpaid periods, rate change from a chosen unpaid period, custom per-period amounts, and legacy-period preview plus explicit correction. Investment amount ledgers (invest/redeem as transfers, realized gain/loss as income/expense) with `investment` + `investment_link`, schema6 migration and format-6 backups. P4 committed (`a78dafe`) and archived (`ba19e2a`). Next: 10-09-voice-image-entry (P5).
+
+### Main Changes
+
+- Schema 6: `MIGRATION_5_6` adds `installment_link`, `investment`, `investment_link` and the `installment_plan`/`installment_period` columns (`origin`, `disbursement_account_id`, `disbursed_at`, `paid_principal_cents`, `paid_interest_cents`, `paid_fee_cents`), backfilling legacy paid periods without inventing split links; snapshot format 6 with per-table first-version map.
+- Domain: `InstallmentScheduleRewrite` (prepay/rate-change pure functions), `InvestmentCalculator`, repayment use cases (`RepayInstallmentPeriodUseCase`, `SettleInstallmentPlanUseCase`, `PrepayInstallmentPlanUseCase`, `ChangeInstallRateUseCase`, `PreviewLegacyInstallmentRepaymentsUseCase`, `CorrectLegacyInstallmentRepaymentUseCase`) plus `InstallmentTxnGuard` and `InvestmentTxnGuard`; all cross-table writes use `checkedWrite`/`orRollback` so `AppResult.Failure` never escapes a transaction.
+- Feature UI: `LoanEdit` gains plan origin (existing debt vs new disbursement), disbursement account, custom per-period amounts; `LoanDetail` gains unpaid principal, repay/settle/prepay/rate dialogs with a split preview and legacy-difference banner; new `ui/investment` screens; Assets exposes 分期房贷/理财 entries.
+- Tests: 730 unit cases overall (new: schedule rewrite, investment calculator, repayment/guard/investment use cases, UI state) plus `MigrationTest` 5→6, `LedgerDatabaseTest` tables/indices and `FinanceIntegrationTest` (acceptance split 1000/50/10 → funds −1060, debt −1000, spending 60; trigger-forced rollback; disbursement counted once; investment + snapshot round trip).
+- Docs: new `.trellis/spec/android/finance-plans.md` (indexed), README P4 section, roadmap P4 checkbox, CHANGELOG 0.1.5 (6).
+- Delivery: full gate `test assembleDebug assembleRelease lintDebug` green; signed release `fun.han1997.vipledger-v0.1.5-6-release.apk` installed over the emulator (data preserved). Emulator walkthrough verified the P4 entries, the new-plan form (origin/disbursement/method/parameters), plan detail with the repay split preview, and the full investment flow (invest 1000 → redeem 200 → gain 30 → outstanding 800/realized 30/net worth +30). Repayment submission and prepay/rate-change clicks were not completed on the emulator: the AVD runs with GPU disabled and periodically returns stale or clipped frames and inconsistent data (its quick-boot snapshot also reverted mid-session rows). No physical device connected.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a78dafe` | (see git log) |
+| `ba19e2a` | (see git log) |
+
+### Testing
+
+- [OK] `test` (730 JVM cases), `assembleDebug`, `assembleRelease`, `lintDebug` all green
+- [OK] Emulator (emulator-5554): P4 entries, new-plan form, plan detail + repay split preview, investment invest/redeem/gain flow
+- [SKIP] Repayment提交/提前还款/利率变更/旧口径修正 emulator clicks (AVD rendering/data instability); covered by domain/data tests
+- [SKIP] Physical device (none connected)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- Start 10-09-voice-image-entry (P5): unified text/voice/screenshot entry with draft confirmation and multi-entry review.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a78dafe` | (see git log) |
+| `ba19e2a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
