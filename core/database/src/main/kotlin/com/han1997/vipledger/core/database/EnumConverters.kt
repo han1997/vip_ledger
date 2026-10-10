@@ -8,6 +8,8 @@ import com.han1997.vipledger.core.model.GenerateMode
 import com.han1997.vipledger.core.model.InstallmentMethod
 import com.han1997.vipledger.core.model.InstallmentPeriodStatus
 import com.han1997.vipledger.core.model.InstallmentPlanStatus
+import com.han1997.vipledger.core.model.LendingDirection
+import com.han1997.vipledger.core.model.LendingLinkKind
 import com.han1997.vipledger.core.model.MissedPolicy
 import com.han1997.vipledger.core.model.MlSampleSource
 import com.han1997.vipledger.core.model.RecurrenceEndType
@@ -95,6 +97,18 @@ class EnumConverters {
 
     @TypeConverter
     fun toInstallmentPeriodStatus(value: String): InstallmentPeriodStatus = InstallmentPeriodStatus.valueOf(value)
+
+    @TypeConverter
+    fun fromLendingDirection(value: LendingDirection): String = value.name
+
+    @TypeConverter
+    fun toLendingDirection(value: String): LendingDirection = LendingDirection.valueOf(value)
+
+    @TypeConverter
+    fun fromLendingLinkKind(value: LendingLinkKind): String = value.name
+
+    @TypeConverter
+    fun toLendingLinkKind(value: String): LendingLinkKind = LendingLinkKind.valueOf(value)
 
     @TypeConverter
     fun fromRuleMatchType(value: RuleMatchType): String = value.name

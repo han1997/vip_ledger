@@ -3,6 +3,7 @@ package com.han1997.vipledger.core.domain.calculator
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.InstallmentPeriod
 import com.han1997.vipledger.core.domain.model.InstallmentPlan
+import com.han1997.vipledger.core.domain.model.LendingProgress
 import com.han1997.vipledger.core.domain.model.Reminder
 import com.han1997.vipledger.core.domain.model.ReminderKind
 import com.han1997.vipledger.core.model.InstallmentPeriodStatus
@@ -27,6 +28,7 @@ object ReminderCalculator {
         plans: List<InstallmentPlan>,
         periodsByPlan: Map<String, List<InstallmentPeriod>>,
         accounts: List<Account>,
+        lendings: List<LendingProgress> = emptyList(),
         windowDays: Int = DEFAULT_WINDOW_DAYS,
     ): List<Reminder> {
         val result = ArrayList<Reminder>()
@@ -85,6 +87,24 @@ object ReminderCalculator {
                             accountId = account.id,
                         )
                     }
+                }
+            }
+
+        lendings.asSequence()
+            .filter { it.active }
+            .forEach { progress ->
+                val due = progress.record.dueDate ?: return@forEach
+                val days = today.daysUntil(due)
+                if (days <= windowDays) {
+                    result += Reminder(
+                        kind = if (days < 0) ReminderKind.LENDING_OVERDUE else ReminderKind.LENDING_DUE,
+                        ledgerId = ledgerId,
+                        dueDate = due,
+                        daysUntilDue = days,
+                        amount = progress.outstanding,
+                        name = progress.record.counterparty,
+                        lendingId = progress.record.id,
+                    )
                 }
             }
 

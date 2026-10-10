@@ -9,6 +9,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
@@ -75,6 +76,7 @@ class MigrationTest {
                 "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
                 "budget_limit", "budget_alert",
                 "savings_goal", "savings_link", "home_card", "asset_baseline",
+                "reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link",
             ),
             tables,
         )
@@ -107,6 +109,9 @@ class MigrationTest {
     @Test
     fun versionThreeUpgradesWithoutLosingExistingRows() = upgradeFrom(3)
 
+    @Test
+    fun versionFourUpgradesWithoutLosingExistingRows() = upgradeFrom(4)
+
     private fun upgradeFrom(version: Int) {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val name = "migration-${System.nanoTime()}.db"
@@ -138,7 +143,11 @@ class MigrationTest {
             .addMigrations(*ALL_MIGRATIONS).allowMainThreadQueries().build()
         try {
             upgraded.openHelper.writableDatabase.query("SELECT balance_cents,included,captured_at FROM asset_baseline WHERE account_id='cash'").use {
-                assertTrue(it.moveToFirst()); assertEquals(8766L, it.getLong(0)); assertEquals(1, it.getInt(1)); assertTrue(it.getLong(2) > 0)
+                if (version < 4) {
+                    assertTrue(it.moveToFirst()); assertEquals(8766L, it.getLong(0)); assertEquals(1, it.getInt(1)); assertTrue(it.getLong(2) > 0)
+                } else {
+                    assertFalse(it.moveToFirst(), "从 schema $version 升级不会补写基线，基线应在首次资产观察时生成")
+                }
             }
             upgraded.openHelper.writableDatabase.query("SELECT COUNT(*) FROM budget_limit").use {
                 assertTrue(it.moveToFirst()); assertEquals(0, it.getInt(0))
@@ -154,6 +163,11 @@ class MigrationTest {
             }
             upgraded.openHelper.writableDatabase.query("SELECT current_balance_cents FROM account WHERE id='cash'").use {
                 assertTrue(it.moveToFirst()); assertEquals(8766L, it.getLong(0))
+            }
+            listOf("reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link").forEach { table ->
+                upgraded.openHelper.writableDatabase.query("SELECT COUNT(*) FROM $table").use {
+                    assertTrue(it.moveToFirst()); assertEquals(0, it.getInt(0), "迁移后 $table 应为空")
+                }
             }
         } finally { upgraded.close(); context.deleteDatabase(name) }
     }

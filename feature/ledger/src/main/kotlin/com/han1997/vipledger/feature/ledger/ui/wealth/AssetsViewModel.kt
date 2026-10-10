@@ -4,18 +4,36 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.han1997.vipledger.core.domain.usecase.wealth.ObserveAssetsUseCase
 import com.han1997.vipledger.core.domain.usecase.ledger.ObserveCurrentLedgerUseCase
+import com.han1997.vipledger.core.domain.usecase.lending.ObserveLendingsUseCase
+import com.han1997.vipledger.core.domain.usecase.reimburse.ObserveReimbursementsUseCase
+import com.han1997.vipledger.core.domain.model.ReimbursementCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.*
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class AssetsViewModel @Inject constructor(ledger: ObserveCurrentLedgerUseCase, assets: ObserveAssetsUseCase) : ViewModel() {
+class AssetsViewModel @Inject constructor(
+    ledger: ObserveCurrentLedgerUseCase,
+    assets: ObserveAssetsUseCase,
+    reimbursements: ObserveReimbursementsUseCase,
+    lendings: ObserveLendingsUseCase,
+) : ViewModel() {
     private val archived = MutableStateFlow(false)
     private val retry = MutableStateFlow(0)
     private val base = combine(ledger(), retry) { current, _ -> current }.flatMapLatest { current ->
         if (current == null) flowOf(AssetsUiState(loading = false))
-        else assets(current.id).map { AssetsUiState(loading = false, ledgerId = current.id, ledgerName = current.name, report = it) }
+        else combine(assets(current.id), reimbursements(current.id), lendings(current.id)) { report, projects, records ->
+            AssetsUiState(
+                loading = false,
+                ledgerId = current.id,
+                ledgerName = current.name,
+                report = report,
+                reimbursementPending = ReimbursementCalculator.pendingTotal(projects),
+                lendingOutstanding = com.han1997.vipledger.core.model.money.Money.sum(records.filter { it.active }.map { it.outstanding }),
+                lendingActive = records.count { it.active },
+            )
+        }
             .onStart { emit(AssetsUiState()) }.catch { emit(AssetsUiState(loading = false, failed = true)) }
     }
     val uiState = combine(base, archived) { state, show -> state.copy(showArchived = show) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), AssetsUiState())

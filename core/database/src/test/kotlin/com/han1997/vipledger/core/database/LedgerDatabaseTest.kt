@@ -7,12 +7,19 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.han1997.vipledger.core.database.entity.AccountEntity
 import com.han1997.vipledger.core.database.entity.CategoryEntity
 import com.han1997.vipledger.core.database.entity.LedgerEntity
+import com.han1997.vipledger.core.database.entity.LendingEntity
+import com.han1997.vipledger.core.database.entity.LendingLinkEntity
+import com.han1997.vipledger.core.database.entity.ReimbursementEntity
+import com.han1997.vipledger.core.database.entity.ReimbursementItemEntity
+import com.han1997.vipledger.core.database.entity.ReimbursementReceiptEntity
 import com.han1997.vipledger.core.database.entity.TagEntity
 import com.han1997.vipledger.core.database.entity.TxnEntity
 import com.han1997.vipledger.core.database.entity.TxnTagEntity
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.CategoryKind
 import com.han1997.vipledger.core.model.DraftStatus
+import com.han1997.vipledger.core.model.LendingDirection
+import com.han1997.vipledger.core.model.LendingLinkKind
 import com.han1997.vipledger.core.model.TransactionType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -315,6 +322,7 @@ class LedgerDatabaseTest {
                 "auto_config", "auto_binding", "auto_candidate", "auto_evidence",
                 "budget_limit", "budget_alert",
                 "savings_goal", "savings_link", "home_card", "asset_baseline",
+                "reimbursement", "reimbursement_item", "reimbursement_receipt", "lending", "lending_link",
             ),
             tables - setOf("room_master_table", "android_metadata", "sqlite_sequence"),
         )
@@ -334,6 +342,53 @@ class LedgerDatabaseTest {
             "index_txn_ledger_id_draft_status",
             "index_txn_import_hash",
         ).forEach { assertTrue(it in txnIndices, "缺少索引 $it") }
+    }
+
+    @Test
+    fun reimbursementAndLendingDaosPersistAndJoinByLedger() = runTest {
+        seedWorld()
+        db.txnDao().upsert(txn("tx1"))
+        db.txnDao().upsert(txn("tx2", type = TransactionType.REFUND, categoryId = "food"))
+        db.txnDao().upsert(txn("tx3", type = TransactionType.TRANSFER, toAccountId = "card"))
+
+        db.reimbursementDao().save(ReimbursementEntity("r1", "l1", "出差", "公司", "备注", false, 1, 1))
+        db.reimbursementDao().insertItems(listOf(ReimbursementItemEntity("tx1", "r1", 1)))
+        db.reimbursementDao().insertReceipt(ReimbursementReceiptEntity("tx2", "r1", 1))
+
+        assertEquals("r1", db.reimbursementDao().itemForTxn("tx1")?.reimbursementId)
+        assertEquals("r1", db.reimbursementDao().receiptForTxn("tx2")?.reimbursementId)
+        assertEquals(listOf("tx1"), db.reimbursementDao().items("r1").map { it.txnId })
+        assertEquals(1, db.reimbursementDao().itemsByLedger("l1").first().size)
+        assertEquals(1, db.reimbursementDao().receiptsByLedger("l1").first().size)
+        assertEquals("出差", db.reimbursementDao().projects("l1").first().single().title)
+
+        db.lendingDao().save(
+            LendingEntity("ld1", "l1", LendingDirection.LEND, "张三", 10_000, "cash", "2026-10-31", "", false, 1, 1),
+        )
+        db.lendingDao().link(LendingLinkEntity("tx3", "ld1", LendingLinkKind.DISBURSE, 1))
+        assertEquals(LendingLinkKind.DISBURSE, db.lendingDao().linkForTxn("tx3")?.kind)
+        assertEquals(listOf("tx3"), db.lendingDao().links("ld1").map { it.txnId })
+        assertEquals(1, db.lendingDao().linksByLedger("l1").first().size)
+        assertEquals(LendingDirection.LEND, db.lendingDao().record("ld1")?.direction)
+
+        db.reimbursementDao().clearItems("r1")
+        assertEquals(0, db.reimbursementDao().items("r1").size)
+    }
+
+    @Test
+    fun schemaKeepsReimbursementAndLendingIndexes() {
+        val names = queryStrings(
+            "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name IN " +
+                "('reimbursement','reimbursement_item','reimbursement_receipt','lending','lending_link')",
+        ).toSet()
+        listOf(
+            "index_reimbursement_ledger_id",
+            "index_reimbursement_item_reimbursement_id",
+            "index_reimbursement_receipt_reimbursement_id",
+            "index_lending_ledger_id",
+            "index_lending_account_id",
+            "index_lending_link_lending_id",
+        ).forEach { assertTrue(it in names, "缺少索引 $it") }
     }
 
     private fun queryStrings(sql: String): List<String> {

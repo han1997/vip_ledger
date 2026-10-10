@@ -9,9 +9,14 @@ import com.han1997.vipledger.core.domain.model.Category
 import com.han1997.vipledger.core.domain.model.InstallmentPeriod
 import com.han1997.vipledger.core.domain.model.InstallmentPlan
 import com.han1997.vipledger.core.domain.model.Ledger
+import com.han1997.vipledger.core.domain.model.LendingLink
+import com.han1997.vipledger.core.domain.model.LendingRecord
 import com.han1997.vipledger.core.domain.model.MerchantRule
 import com.han1997.vipledger.core.domain.model.MlTrainingSample
 import com.han1997.vipledger.core.domain.model.RecurringRule
+import com.han1997.vipledger.core.domain.model.Reimbursement
+import com.han1997.vipledger.core.domain.model.ReimbursementItem
+import com.han1997.vipledger.core.domain.model.ReimbursementReceipt
 import com.han1997.vipledger.core.domain.model.Tag
 import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.domain.model.TxnFilter
@@ -20,9 +25,11 @@ import com.han1997.vipledger.core.domain.repository.AttachmentRepository
 import com.han1997.vipledger.core.domain.repository.CategoryRepository
 import com.han1997.vipledger.core.domain.repository.InstallmentRepository
 import com.han1997.vipledger.core.domain.repository.LedgerRepository
+import com.han1997.vipledger.core.domain.repository.LendingRepository
 import com.han1997.vipledger.core.domain.repository.MerchantRuleRepository
 import com.han1997.vipledger.core.domain.repository.MlSampleRepository
 import com.han1997.vipledger.core.domain.repository.RecurringRuleRepository
+import com.han1997.vipledger.core.domain.repository.ReimbursementRepository
 import com.han1997.vipledger.core.domain.repository.TagRepository
 import com.han1997.vipledger.core.domain.repository.TxnRepository
 import com.han1997.vipledger.core.domain.support.AccountBalanceSyncer
@@ -503,4 +510,81 @@ class FakeMlSampleRepository(private val samples: MutableList<MlTrainingSample> 
     }
 
     override suspend fun countByLedger(ledgerId: String): Int = listByLedger(ledgerId).size
+}
+
+class FakeReimbursementRepository(
+    private val projects: MutableList<Reimbursement> = mutableListOf(),
+    private val items: MutableList<ReimbursementItem> = mutableListOf(),
+    private val receipts: MutableList<ReimbursementReceipt> = mutableListOf(),
+) : ReimbursementRepository {
+    override fun observeProjects(ledgerId: String): Flow<List<Reimbursement>> =
+        MutableStateFlow(projects.filter { it.ledgerId == ledgerId })
+
+    override fun observeItems(ledgerId: String): Flow<List<ReimbursementItem>> =
+        MutableStateFlow(items.filter { it.reimbursementId in projectIds(ledgerId) })
+
+    override fun observeReceipts(ledgerId: String): Flow<List<ReimbursementReceipt>> =
+        MutableStateFlow(receipts.filter { it.reimbursementId in projectIds(ledgerId) })
+
+    private fun projectIds(ledgerId: String): Set<String> = projects.filter { it.ledgerId == ledgerId }.map { it.id }.toSet()
+
+    override suspend fun project(id: String): Reimbursement? = projects.firstOrNull { it.id == id }
+
+    override suspend fun items(projectId: String): List<ReimbursementItem> = items.filter { it.reimbursementId == projectId }
+
+    override suspend fun receipts(projectId: String): List<ReimbursementReceipt> = receipts.filter { it.reimbursementId == projectId }
+
+    override suspend fun itemForTxn(txnId: String): ReimbursementItem? = items.firstOrNull { it.txnId == txnId }
+
+    override suspend fun receiptForTxn(txnId: String): ReimbursementReceipt? = receipts.firstOrNull { it.txnId == txnId }
+
+    override suspend fun save(project: Reimbursement, itemTxnIds: List<String>): AppResult<Unit> {
+        projects.removeAll { it.id == project.id }
+        projects += project
+        items.removeAll { it.reimbursementId == project.id }
+        items += itemTxnIds.map { ReimbursementItem(project.id, it) }
+        return AppResult.success(Unit)
+    }
+
+    override suspend fun addReceipt(receipt: ReimbursementReceipt): AppResult<Unit> {
+        receipts.removeAll { it.txnId == receipt.txnId }
+        receipts += receipt
+        return AppResult.success(Unit)
+    }
+
+    fun snapshots(): Triple<List<Reimbursement>, List<ReimbursementItem>, List<ReimbursementReceipt>> =
+        Triple(projects.toList(), items.toList(), receipts.toList())
+}
+
+class FakeLendingRepository(
+    private val records: MutableList<LendingRecord> = mutableListOf(),
+    private val links: MutableList<LendingLink> = mutableListOf(),
+) : LendingRepository {
+    override fun observeRecords(ledgerId: String): Flow<List<LendingRecord>> =
+        MutableStateFlow(records.filter { it.ledgerId == ledgerId })
+
+    override fun observeLinks(ledgerId: String): Flow<List<LendingLink>> =
+        MutableStateFlow(links.filter { it.lendingId in recordIds(ledgerId) })
+
+    private fun recordIds(ledgerId: String): Set<String> = records.filter { it.ledgerId == ledgerId }.map { it.id }.toSet()
+
+    override suspend fun record(id: String): LendingRecord? = records.firstOrNull { it.id == id }
+
+    override suspend fun links(lendingId: String): List<LendingLink> = links.filter { it.lendingId == lendingId }
+
+    override suspend fun linkForTxn(txnId: String): LendingLink? = links.firstOrNull { it.txnId == txnId }
+
+    override suspend fun save(record: LendingRecord): AppResult<Unit> {
+        records.removeAll { it.id == record.id }
+        records += record
+        return AppResult.success(Unit)
+    }
+
+    override suspend fun link(link: LendingLink): AppResult<Unit> {
+        links.removeAll { it.txnId == link.txnId }
+        links += link
+        return AppResult.success(Unit)
+    }
+
+    fun snapshots(): Pair<List<LendingRecord>, List<LendingLink>> = records.toList() to links.toList()
 }

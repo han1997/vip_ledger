@@ -15,6 +15,8 @@ class DeleteTxnUseCase(
     private val balanceSyncer: AccountBalanceSyncer,
     private val timeProvider: TimeProvider,
     private val savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard? = null,
+    private val reimbursementGuard: com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard? = null,
+    private val lendingGuard: com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard? = null,
 ) {
 
     suspend operator fun invoke(txnId: String): AppResult<Unit> {
@@ -24,6 +26,8 @@ class DeleteTxnUseCase(
         val now = timeProvider.nowMillis()
         return transactionRunner.inTransaction {
             savingsGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
+            reimbursementGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
+            lendingGuard?.validate(existing.copy(deletedAt = now))?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = now), txnRepository.listByLedger(existing.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.softDelete(txnId, now)
@@ -41,6 +45,8 @@ class DeleteTxnUseCase(
         val now = timeProvider.nowMillis()
         return transactionRunner.inTransaction {
             savingsGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
+            reimbursementGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
+            lendingGuard?.validate(existing.copy(deletedAt = null))?.let { return@inTransaction AppResult.failure(it) }
             com.han1997.vipledger.core.domain.calculator.RefundValidator.validate(existing.copy(deletedAt = null), txnRepository.listByLedger(existing.ledgerId))
                 ?.let { return@inTransaction AppResult.failure(it) }
             val result = txnRepository.restore(txnId, now)

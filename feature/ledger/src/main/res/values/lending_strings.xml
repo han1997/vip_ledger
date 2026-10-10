@@ -1,0 +1,37 @@
+<resources>
+    <!-- 借贷（前缀 lending_） -->
+    <string name="lending_title">借贷</string>
+    <string name="lending_create">新建借贷</string>
+    <string name="lending_direction">方向</string>
+    <string name="lending_direction_lend">借出</string>
+    <string name="lending_direction_borrow">借入</string>
+    <string name="lending_counterparty">对方名称</string>
+    <string name="lending_principal">本金（元）</string>
+    <string name="lending_cash_account">资金账户</string>
+    <string name="lending_due_date">到期日（可选）</string>
+    <string name="lending_remark">备注（可选）</string>
+    <string name="lending_progress">本金 %1$s　已结清 %2$s　剩余 %3$s</string>
+    <string name="lending_interest_total">累计利息 %1$s</string>
+    <string name="lending_outstanding">剩余本金 %1$s</string>
+    <string name="lending_due_value">到期 %1$s</string>
+    <string name="lending_settled">已结清</string>
+    <string name="lending_closed">已终止</string>
+    <string name="lending_settle">结清</string>
+    <string name="lending_interest">登记利息</string>
+    <string name="lending_close">终止</string>
+    <string name="lending_restore">恢复</string>
+    <string name="lending_show_closed">显示已终止</string>
+    <string name="lending_empty">还没有借贷记录</string>
+    <string name="lending_settle_title">结清 · %1$s</string>
+    <string name="lending_interest_title">利息 · %1$s</string>
+    <string name="lending_settle_amount">结清金额（元）</string>
+    <string name="lending_interest_amount">利息金额（元）</string>
+    <string name="lending_settle_hint">结清是本金回流，不计入收支；利息单独计入收入或支出。</string>
+    <string name="lending_need_account">需要一个可用的非负债资金账户</string>
+    <string name="lending_write_failed">操作失败，请检查金额、账户或关联记录后重试</string>
+    <string name="lending_linked_txns">关联流水</string>
+    <string name="lending_principal_locked">本金发放流水不可修改金额或方向，且在有结清记录时不可删除</string>
+    <string name="lending_direction_locked">此流水关联借贷，请保留原方向与账户</string>
+    <string name="lending_over_settle">累计结清不能超过本金</string>
+    <string name="lending_link_invalid">借贷关联不可用，请返回检查</string>
+</resources>

@@ -42,11 +42,22 @@ to open the existing editor with that date. Today and monthly data refresh while
 open, including timezone changes (within 30 seconds). Calendar income/expense, home, budgets,
 and statistics share the same confirmed-entry/refund rules.
 
+**Reimbursement and lending (P3):** an existing confirmed expense can join a reimbursement project
+(single or multi-item) with counterparty, remark and termination. Receipts post one linked refund per
+item, inherit the original category and stats exclusion, and share the original-expense cap with
+ordinary refunds, so a received amount reduces the month it arrives in while the outstanding claim
+stays visible and never becomes a receivable asset. Lending records disburse principal as a transfer
+to an auto-created receivable/payable account, post interest as income (lent out) or expense
+(borrowed), support partial settlement down to zero (auto-settled) and due-date reminders. Project
+plus item links, receipt plus refund, and principal transfer plus account link each commit in one
+transaction and roll back together. Format-5 backups include the five new tables and stay compatible
+with formats 1–4.
+
 The complete agreed feature roadmap and later phases are in [docs/FEATURE-ROADMAP.md](docs/FEATURE-ROADMAP.md).
 Category expansion now uses stable row containers; a Compose device test repeatedly expands,
 switches and collapses parent categories to prevent a reproduced node-insertion crash.
-Reimbursement/lending, extended finance, voice/image entry and report improvements remain in the
-later phases; P0/P1 and P2 do not mark those as implemented.
+Reimbursement and lending are now implemented; extended finance, voice/image entry and report
+improvements remain in later phases.
 
 JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
 

@@ -3,10 +3,17 @@ package com.han1997.vipledger.core.domain.calculator
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.InstallmentPeriod
 import com.han1997.vipledger.core.domain.model.InstallmentPlan
+import com.han1997.vipledger.core.domain.model.LendingLink
+import com.han1997.vipledger.core.domain.model.LendingProgress
+import com.han1997.vipledger.core.domain.model.LendingRecord
 import com.han1997.vipledger.core.domain.model.ReminderKind
+import com.han1997.vipledger.core.domain.model.Txn
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.InstallmentMethod
 import com.han1997.vipledger.core.model.InstallmentPlanStatus
+import com.han1997.vipledger.core.model.LendingDirection
+import com.han1997.vipledger.core.model.LendingLinkKind
+import com.han1997.vipledger.core.model.TransactionType
 import com.han1997.vipledger.core.model.money.Money
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -119,5 +126,77 @@ class ReminderCalculatorTest {
         assertEquals(LocalDate(2026, 2, 28), ReminderCalculator.nextMonthlyDate(LocalDate(2026, 2, 27), 31))
         assertEquals(LocalDate(2026, 3, 20), ReminderCalculator.nextMonthlyDate(LocalDate(2026, 2, 27), 20))
         assertEquals(LocalDate(2026, 2, 20), ReminderCalculator.nextMonthlyDate(LocalDate(2026, 2, 20), 20))
+    }
+
+    private fun lending(
+        id: String = "lending",
+        due: LocalDate? = null,
+        principal: Money = Money.ofYuan(1000),
+        closed: Boolean = false,
+    ) = LendingRecord(
+        id = id,
+        ledgerId = "l1",
+        direction = LendingDirection.LEND,
+        counterparty = "张三",
+        principal = principal,
+        accountId = "receivable",
+        dueDate = due,
+        closed = closed,
+        createdAt = 0,
+        updatedAt = 0,
+    )
+
+    private fun lendingProgress(record: LendingRecord, settled: Money = Money.ZERO): LendingProgress =
+        if (settled.isZero) {
+            LendingProgress(record, emptyList(), emptyList())
+        } else {
+            LendingProgress(
+                record,
+                listOf(LendingLink("settle", record.id, LendingLinkKind.SETTLE, createdAt = 0)),
+                listOf(
+                    Txn(
+                        id = "settle",
+                        ledgerId = "l1",
+                        type = TransactionType.TRANSFER,
+                        amount = settled,
+                        accountId = record.accountId,
+                        toAccountId = "cash",
+                        occurredAt = 0,
+                        createdAt = 0,
+                        updatedAt = 0,
+                    ),
+                ),
+            )
+        }
+
+    @Test
+    fun lendingDueAndOverdueFollowTheSameWindow() {
+        val due = lending(due = LocalDate(2026, 1, 13))
+        val overdue = lending(id = "late", due = LocalDate(2026, 1, 5))
+        val far = lending(id = "far", due = LocalDate(2026, 3, 1))
+        val noDue = lending(id = "nodue")
+        val reminders = ReminderCalculator.reminders(
+            ledgerId = "l1",
+            today = today,
+            plans = emptyList(),
+            periodsByPlan = emptyMap(),
+            accounts = emptyList(),
+            lendings = listOf(lendingProgress(due), lendingProgress(overdue), lendingProgress(far), lendingProgress(noDue)),
+        )
+        assertEquals(listOf(ReminderKind.LENDING_OVERDUE, ReminderKind.LENDING_DUE), reminders.map { it.kind })
+        assertEquals(-5, reminders[0].daysUntilDue)
+        assertEquals("late", reminders[0].lendingId)
+        assertEquals(3, reminders[1].daysUntilDue)
+        assertEquals(Money.ofYuan(1000), reminders[1].amount)
+        assertEquals("lending", reminders[1].lendingId)
+    }
+
+    @Test
+    fun settledOrClosedLendingsAreNotReminded() {
+        val settled = lendingProgress(lending(due = LocalDate(2026, 1, 13)), settled = Money.ofYuan(1000))
+        val closed = lendingProgress(lending(id = "closed", due = LocalDate(2026, 1, 13), closed = true))
+        assertTrue(
+            ReminderCalculator.reminders("l1", today, emptyList(), emptyMap(), emptyList(), listOf(settled, closed)).isEmpty(),
+        )
     }
 }

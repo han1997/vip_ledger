@@ -1,8 +1,19 @@
 package com.han1997.vipledger.feature.ledger.ui.wealth
 
 import com.han1997.vipledger.core.domain.model.*
+import com.han1997.vipledger.core.model.money.Money
 
-data class AssetsUiState(val loading: Boolean = true, val failed: Boolean = false, val ledgerId: String? = null, val ledgerName: String = "", val report: AssetsReport? = null, val showArchived: Boolean = false)
+data class AssetsUiState(
+    val loading: Boolean = true,
+    val failed: Boolean = false,
+    val ledgerId: String? = null,
+    val ledgerName: String = "",
+    val report: AssetsReport? = null,
+    val showArchived: Boolean = false,
+    val reimbursementPending: Money = Money.ZERO,
+    val lendingOutstanding: Money = Money.ZERO,
+    val lendingActive: Int = 0,
+)
 sealed interface AssetsAction { data object ToggleArchived : AssetsAction; data object Retry : AssetsAction }
 data class AccountDetailUiState(
     val loading: Boolean = true, val failed: Boolean = false,

@@ -10,6 +10,8 @@
     <string name="notify_installment_overdue">「%1$s」第 %2$d 期已逾期 %3$d 天</string>
     <string name="notify_card_billing">「%1$s」账单日 %2$s</string>
     <string name="notify_card_due">「%1$s」还款日 %2$s，欠款 %3$s</string>
+    <string name="notify_lending_due">「%1$s」借贷 %2$s到期</string>
+    <string name="notify_lending_overdue">「%1$s」借贷已逾期 %2$d 天</string>
     <string name="notify_today">今天</string>
     <string name="notify_tomorrow">明天</string>
     <string name="notify_in_days">%1$d 天后</string>

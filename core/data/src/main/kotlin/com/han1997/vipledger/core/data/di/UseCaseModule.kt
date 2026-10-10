@@ -110,6 +110,8 @@ object UseCaseModule {
         balanceSyncer: AccountBalanceSyncer,
         timeProvider: TimeProvider,
         savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard,
+        reimbursementGuard: com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard,
+        lendingGuard: com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard,
     ) = UpdateTxnUseCase(
         txnRepository = txnRepository,
         accountRepository = accountRepository,
@@ -118,6 +120,8 @@ object UseCaseModule {
         balanceSyncer = balanceSyncer,
         timeProvider = timeProvider,
         savingsGuard = savingsGuard,
+        reimbursementGuard = reimbursementGuard,
+        lendingGuard = lendingGuard,
     )
 
     @Provides
@@ -128,12 +132,16 @@ object UseCaseModule {
         balanceSyncer: AccountBalanceSyncer,
         timeProvider: TimeProvider,
         savingsGuard: com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard,
+        reimbursementGuard: com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard,
+        lendingGuard: com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard,
     ) = DeleteTxnUseCase(
         txnRepository = txnRepository,
         transactionRunner = transactionRunner,
         balanceSyncer = balanceSyncer,
         timeProvider = timeProvider,
         savingsGuard = savingsGuard,
+        reimbursementGuard = reimbursementGuard,
+        lendingGuard = lendingGuard,
     )
 
     @Provides
@@ -356,8 +364,9 @@ object UseCaseModule {
     fun provideObserveRemindersUseCase(
         installmentRepository: InstallmentRepository,
         accountRepository: AccountRepository,
+        observeLendings: com.han1997.vipledger.core.domain.usecase.lending.ObserveLendingsUseCase,
         timeProvider: TimeProvider,
-    ) = ObserveRemindersUseCase(installmentRepository, accountRepository, timeProvider)
+    ) = ObserveRemindersUseCase(installmentRepository, accountRepository, observeLendings, timeProvider)
 
     @Provides
     @Singleton

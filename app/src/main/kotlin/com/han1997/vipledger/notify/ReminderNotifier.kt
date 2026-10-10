@@ -99,6 +99,18 @@ object ReminderNotifier {
             reminder.dueDate.toString(),
             reminder.amount.toDisplayString(),
         )
+
+        ReminderKind.LENDING_DUE -> context.getString(
+            R.string.notify_lending_due,
+            reminder.name,
+            relativeDay(context, reminder.daysUntilDue),
+        )
+
+        ReminderKind.LENDING_OVERDUE -> context.getString(
+            R.string.notify_lending_overdue,
+            reminder.name,
+            -reminder.daysUntilDue,
+        )
     }
 
     private fun relativeDay(context: Context, daysUntilDue: Int): String = when {

@@ -13,6 +13,8 @@ import com.han1997.vipledger.feature.ledger.ui.home.HomeScreen
 import com.han1997.vipledger.feature.ledger.ui.loan.LoanDetailScreen
 import com.han1997.vipledger.feature.ledger.ui.loan.LoanEditScreen
 import com.han1997.vipledger.feature.ledger.ui.loan.LoanListScreen
+import com.han1997.vipledger.feature.ledger.ui.lending.LendingScreen
+import com.han1997.vipledger.feature.ledger.ui.reimburse.ReimbursementScreen
 import com.han1997.vipledger.feature.ledger.ui.manage.AccountManageScreen
 import com.han1997.vipledger.feature.ledger.ui.manage.CategoryManageScreen
 import com.han1997.vipledger.feature.ledger.ui.manage.LedgerManageScreen
@@ -33,9 +35,13 @@ object LedgerRoutes {
     const val ASSETS = "ledger/assets"
     const val ACCOUNT_DETAIL = "ledger/account/{ledgerId}/{accountId}"
     const val SAVINGS = "ledger/savings/{ledgerId}"
+    const val REIMBURSEMENT = "ledger/reimbursements/{ledgerId}"
+    const val LENDING = "ledger/lending/{ledgerId}"
     const val HOME_LAYOUT = "ledger/home-layout/{ledgerId}"
     fun accountDetail(ledgerId: String, accountId: String) = "ledger/account/$ledgerId/$accountId"
     fun savings(ledgerId: String) = "ledger/savings/$ledgerId"
+    fun reimbursements(ledgerId: String) = "ledger/reimbursements/$ledgerId"
+    fun lending(ledgerId: String) = "ledger/lending/$ledgerId"
     fun homeLayout(ledgerId: String) = "ledger/home-layout/$ledgerId"
     const val CALENDAR: String = "ledger/calendar"
     const val BUDGET: String = "ledger/budget/{ledgerId}"
@@ -108,7 +114,21 @@ fun NavGraphBuilder.ledgerGraph(
             onAccount = { ledger, account -> navController.navigate(LedgerRoutes.accountDetail(ledger, account)) },
             onManage = { navController.navigate(LedgerRoutes.accountManage(it)) },
             onSavings = { navController.navigate(LedgerRoutes.savings(it)) },
+            onReimburse = { navController.navigate(LedgerRoutes.reimbursements(it)) },
+            onLending = { navController.navigate(LedgerRoutes.lending(it)) },
             onLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
+        )
+    }
+    composable(LedgerRoutes.REIMBURSEMENT, arguments = listOf(navArgument("ledgerId") { type = NavType.StringType })) {
+        ReimbursementScreen(
+            onBack = { navController.popBackStack() },
+            onEditTxn = { ledger, txn -> navController.navigate(LedgerRoutes.txnEdit(ledger, txn)) },
+        )
+    }
+    composable(LedgerRoutes.LENDING, arguments = listOf(navArgument("ledgerId") { type = NavType.StringType })) {
+        LendingScreen(
+            onBack = { navController.popBackStack() },
+            onEditTxn = { ledger, txn -> navController.navigate(LedgerRoutes.txnEdit(ledger, txn)) },
         )
     }
     composable(LedgerRoutes.ACCOUNT_DETAIL, arguments = listOf(navArgument("ledgerId") { type = NavType.StringType }, navArgument("accountId") { type = NavType.StringType })) {

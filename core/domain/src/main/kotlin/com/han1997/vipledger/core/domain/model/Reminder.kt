@@ -16,6 +16,12 @@ enum class ReminderKind {
 
     /** 信用卡/贷款的还款日临近且当前有欠款。 */
     CARD_DUE,
+
+    /** 借出/借入临近到期（还没过期）。 */
+    LENDING_DUE,
+
+    /** 借出/借入已经逾期。 */
+    LENDING_OVERDUE,
 }
 
 /**
@@ -34,11 +40,12 @@ data class Reminder(
     val planId: String? = null,
     val periodNo: Int? = null,
     val accountId: String? = null,
+    val lendingId: String? = null,
 ) {
     val isOverdue: Boolean get() = daysUntilDue < 0
 
     /** 稳定标识：同一目标同一天只提醒一次（通知去重用）。 */
     val stableId: String
-        get() = listOf(kind.name, planId ?: accountId ?: "", periodNo?.toString() ?: "", dueDate.toString())
+        get() = listOf(kind.name, planId ?: lendingId ?: accountId ?: "", periodNo?.toString() ?: "", dueDate.toString())
             .joinToString("-")
 }

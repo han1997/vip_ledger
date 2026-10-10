@@ -74,6 +74,8 @@ import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.Category
 import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.domain.usecase.wealth.SavingsTxnGuard
+import com.han1997.vipledger.core.domain.usecase.reimburse.ReimbursementTxnGuard
+import com.han1997.vipledger.core.domain.usecase.lending.LendingTxnGuard
 import com.han1997.vipledger.core.domain.nlp.ParsedEntry
 import com.han1997.vipledger.core.model.AccountType
 import com.han1997.vipledger.core.model.CategoryKind
@@ -128,6 +130,12 @@ internal fun TxnEditContent(
         SavingsTxnGuard.DIRECTION -> stringResource(R.string.wealth_link_direction)
         SavingsTxnGuard.NEGATIVE -> stringResource(R.string.wealth_link_negative)
         SavingsTxnGuard.OVERFLOW -> stringResource(R.string.wealth_link_overflow)
+        ReimbursementTxnGuard.ITEM_LOCKED -> stringResource(R.string.reimburse_item_locked)
+        ReimbursementTxnGuard.RECEIPT_LOCKED -> stringResource(R.string.reimburse_receipt_locked)
+        LendingTxnGuard.PRINCIPAL_LOCKED -> stringResource(R.string.lending_principal_locked)
+        LendingTxnGuard.DIRECTION -> stringResource(R.string.lending_direction_locked)
+        LendingTxnGuard.OVER_SETTLE -> stringResource(R.string.lending_over_settle)
+        LendingTxnGuard.LINK_INVALID -> stringResource(R.string.lending_link_invalid)
         else -> state.saveFailureMessage ?: failedMessage
     }
     val aiNoEntryMessage = stringResource(R.string.txn_edit_ai_no_entry)

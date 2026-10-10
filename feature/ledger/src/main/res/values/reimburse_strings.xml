@@ -1,0 +1,35 @@
+<resources>
+    <!-- 报销（前缀 reimburse_） -->
+    <string name="reimburse_title">报销</string>
+    <string name="reimburse_pending">待报销 %1$s</string>
+    <string name="reimburse_create">新建报销</string>
+    <string name="reimburse_edit">编辑报销</string>
+    <string name="reimburse_name">报销名称</string>
+    <string name="reimburse_counterparty">报销对象（可选）</string>
+    <string name="reimburse_remark">备注（可选）</string>
+    <string name="reimburse_pick_items">选择要报销的支出</string>
+    <string name="reimburse_no_expenses">暂无可选的支出，请先记一笔支出</string>
+    <string name="reimburse_selected_count">已选 %1$d 笔，合计 %2$s</string>
+    <string name="reimburse_progress">已到账 %1$s / %2$s　待报销 %3$s</string>
+    <string name="reimburse_settled">已全部到账</string>
+    <string name="reimburse_closed">已终止</string>
+    <string name="reimburse_terminate">终止报销</string>
+    <string name="reimburse_restore">恢复报销</string>
+    <string name="reimburse_show_closed">显示已终止</string>
+    <string name="reimburse_empty">还没有报销项目，从一笔支出开始</string>
+    <string name="reimburse_need_account">登记到账需要一个可用账户</string>
+    <string name="reimburse_receive">登记到账</string>
+    <string name="reimburse_receive_title">报销到账 · %1$s</string>
+    <string name="reimburse_receive_item">到账对应支出</string>
+    <string name="reimburse_receive_account">到账账户</string>
+    <string name="reimburse_receive_amount">到账金额（元）</string>
+    <string name="reimburse_receive_hint">到账会生成一条关联原支出的退款，与普通退款共用原消费金额上限，并在到账月份冲减支出。</string>
+    <string name="reimburse_items">关联支出</string>
+    <string name="reimburse_receipts">到账记录</string>
+    <string name="reimburse_item_remaining">可到账 %1$s</string>
+    <string name="reimburse_write_failed">操作失败，请检查所选支出、金额或关联记录后重试</string>
+    <string name="reimburse_item_locked">该支出已加入报销项目，请先在报销项目中移除或终止</string>
+    <string name="reimburse_receipt_locked">此到账关联原支出，请保留退款类型与关联的原支出</string>
+    <string name="reimburse_selected_item">已选</string>
+    <string name="reimburse_expense_fallback">支出</string>
+</resources>

@@ -33,4 +33,19 @@ val MIGRATION_3_4: Migration = object : Migration(3, 4) {
         db.execSQL("INSERT INTO asset_baseline SELECT id,ledger_id,CAST(strftime('%s','now') AS INTEGER)*1000,current_balance_cents,CASE WHEN include_in_net_worth=1 AND is_archived=0 AND deleted_at IS NULL THEN 1 ELSE 0 END FROM account")
     }
 }
-val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+val MIGRATION_4_5: Migration = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS reimbursement (id TEXT NOT NULL PRIMARY KEY, ledger_id TEXT NOT NULL, title TEXT NOT NULL, counterparty TEXT NOT NULL, remark TEXT NOT NULL, closed INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY(ledger_id) REFERENCES ledger(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_reimbursement_ledger_id ON reimbursement(ledger_id)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS reimbursement_item (txn_id TEXT NOT NULL PRIMARY KEY, reimbursement_id TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(reimbursement_id) REFERENCES reimbursement(id) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(txn_id) REFERENCES txn(id) ON UPDATE NO ACTION ON DELETE NO ACTION)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_reimbursement_item_reimbursement_id ON reimbursement_item(reimbursement_id)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS reimbursement_receipt (txn_id TEXT NOT NULL PRIMARY KEY, reimbursement_id TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(reimbursement_id) REFERENCES reimbursement(id) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(txn_id) REFERENCES txn(id) ON UPDATE NO ACTION ON DELETE NO ACTION)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_reimbursement_receipt_reimbursement_id ON reimbursement_receipt(reimbursement_id)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS lending (id TEXT NOT NULL PRIMARY KEY, ledger_id TEXT NOT NULL, direction TEXT NOT NULL, counterparty TEXT NOT NULL, principal_cents INTEGER NOT NULL, account_id TEXT NOT NULL, due_date TEXT, remark TEXT NOT NULL, closed INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY(ledger_id) REFERENCES ledger(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_lending_ledger_id ON lending(ledger_id)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_lending_account_id ON lending(account_id)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS lending_link (txn_id TEXT NOT NULL PRIMARY KEY, lending_id TEXT NOT NULL, kind TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(txn_id) REFERENCES txn(id) ON UPDATE NO ACTION ON DELETE NO ACTION, FOREIGN KEY(lending_id) REFERENCES lending(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_lending_link_lending_id ON lending_link(lending_id)")
+    }
+}
+val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
