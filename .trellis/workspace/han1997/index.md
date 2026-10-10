@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 19
+- **Total Sessions**: 20
 - **Last Active**: 2026-10-10
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~679 | Active |
+| `journal-1.md` | ~718 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 20 | 2026-10-10 | P3 reimbursement and lending delivered | `393b555`, `cc6a63b` | `master` |
 | 19 | 2026-10-10 | P2 assets, savings and home layout delivered | `1513fe8` | `master` |
 | 18 | 2026-10-10 | P0/P1 dashboard delivered and archived | `1c0f160`, `9632faa` | `master` |
 | 17 | 2026-10-09 | 应用版本管理与包名调整 | `9240efd` | `master` |

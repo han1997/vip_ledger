@@ -677,3 +677,42 @@ Delivered 0.1.3 (4): assets/account details, savings transfers with guarded edit
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: P3 reimbursement and lending delivered
+
+**Date**: 2026-10-10
+**Task**: P3 reimbursement and lending delivered
+**Branch**: `master`
+
+### Summary
+
+Delivered 0.1.4 (5): reimbursement projects with shared refund caps and guarded links, lending principal/interest/settlement with due reminders, schema5 migration and format-5 backups. 37 new JVM cases plus migration/integration/snapshot regressions, full gate green, emulator walkthrough passed. P3 committed and archived. Next: 10-09-finance-plans (P4).
+
+### Main Changes
+
+- Schema 5: `MIGRATION_4_5` adds `reimbursement`, `reimbursement_item`, `reimbursement_receipt`, `lending`, `lending_link` with named indices; `LedgerDatabase`/`EnumConverters`/`schemas/5.json` updated; snapshot format 5 with per-table version map and byte-pinned export test bumped.
+- Reimbursement: project + item links + receipts; a receipt posts one linked `REFUND` inheriting the original category/stats flag and sharing the original-expense cap with plain refunds; `ReimbursementTxnGuard` protects item/receipt edits, deletes and restores.
+- Lending: disburse principal as `TRANSFER` into an auto-created receivable/payable account, interest as `INCOME`/`EXPENSE`, partial settlement down to zero (auto-settled), due/overdue reminders via `ReminderCalculator`.
+- UI: Assets gains 报销/借贷 entries; new `ui/reimburse` + `ui/lending` screens, ViewModels and prefixed strings; `TxnEditScreen` maps the new guard error keys; `ReminderNotifier` adds lending-due/overdue branches.
+- Tests: 37 new JVM cases (calculators, use cases, guards, UI state, reminders), `MigrationTest` 1–4→5, `LedgerDatabaseTest` new tables/indices, `ReimbursementLendingIntegrationTest` (cross-month acceptance, trigger-forced atomic rollback, snapshot round trip, legacy format).
+- Delivery: 0.1.4 (5), full gate `test assembleDebug assembleRelease lintDebug` green, signed release installed on emulator-5554; P3 committed (`393b555`) and archived (`cc6a63b`); no physical device connected.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `393b555` | (see git log) |
+| `cc6a63b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
