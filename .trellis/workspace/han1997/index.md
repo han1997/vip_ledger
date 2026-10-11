@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 22
+- **Total Sessions**: 23
 - **Last Active**: 2026-10-11
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~820 | Active |
+| `journal-1.md` | ~858 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 23 | 2026-10-11 | P6/P7/P8 收官：自动记账验收、资产趋势与总验收 | `1a215c2`, `54d1e3e`, `5c541a2`, `2389f52`, `e5b38e1`, `043f2e0` | `master` |
 | 22 | 2026-10-11 | P5 语音与图片记账两个切片 | `a90578b`, `1a883fb`, `0098260` | `master` |
 | 21 | 2026-10-11 | P4 installment, mortgage and investment delivered | `a78dafe`, `ba19e2a` | `master` |
 | 20 | 2026-10-10 | P3 reimbursement and lending delivered | `393b555`, `cc6a63b` | `master` |

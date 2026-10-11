@@ -818,3 +818,41 @@ Delivered 0.1.6 (7) voice slice: SpeechTranscriber seam (core:domain) + SystemSp
 ### Next Steps
 
 - None - task complete
+
+
+## Session 23: P6/P7/P8 收官：自动记账验收、资产趋势与总验收
+
+**Date**: 2026-10-11
+**Task**: P6/P7/P8 收官：自动记账验收、资产趋势与总验收
+**Branch**: `master`
+
+### Summary
+
+Delivered 0.1.8 (9) P6 code-side: capture review filter chips (candidates/posted/ignored with reopen), bidirectional duplicate sharing (capture-side nearbyAiSourceEntry flags DUPLICATE from same-day AI-source entries; AI draft suspectedDuplicate hint via hasSimilarCandidate), platform acceptance conditions in docs/AUTOBOOK-PLATFORMS.md; 0.1.9 (10) P7: AssetHistoryCalculator (baseline replay + backfill correction, conservatively equal to assets-page balance), LineChart multi-series component with ChartGeometry line functions, asset trend page (30d/90d/this-year/all, tap-to-inspect, CSV export), ExportNaming sunk into designsystem with ledger/range/scope in file names across stats/search/drill; 0.1.10 (11) P8: LargeLedgerQueryTest (100k Room rows, correctness + bounded-query time budget) and StatsScaleTest (100k domain aggregation), docs/ACCEPTANCE-RECORD.md covering P0-P8; full gate green each round; emulator walkthroughs discontinued per user decision (2026-10-11), real-device items (P6 platform acceptance, visual checks, 30-day observation) deferred to user; roadmap P0-P8 all complete
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1a215c2` | (see git log) |
+| `54d1e3e` | (see git log) |
+| `5c541a2` | (see git log) |
+| `2389f52` | (see git log) |
+| `e5b38e1` | (see git log) |
+| `043f2e0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
