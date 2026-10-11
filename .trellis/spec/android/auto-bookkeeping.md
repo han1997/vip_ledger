@@ -29,6 +29,15 @@ Room schema 2：`txn.refund_of_txn_id TEXT NULL` 与 `auto_config`、`auto_bindi
 - 商户识别按标签优先级取值：`商户全称/商户名称/收款方/付款方` 优先，`交易对方/商品名称/商家` 仅兜底；不随页面出现顺序变化。
 - 运行时区分「最近读取文本」（读到非空文本）、「最近处理时间」（进入处理器）与「最近记录更新时间」（仓库返回非空候选）。读取未更新不能单独证明应用不暴露文本，须排除页面门禁、服务连接、取证工具干扰；只有实际取证后才决定 OCR 路径。
 
+## 候选入口与判重共享（P6）
+
+- 「识别记录」区按状态筛选：`候选 (n) / 已入账 (n) / 已忽略 (n)` 三个 chip（LINKED 计入已入账），默认候选。
+- 已忽略候选可「重新确认」（`AutoBookRepository.reopen`：IGNORED → PENDING，凭据不变、重放仍不入账）。
+- **截图草稿 ↔ 自动采集双向互查**（P6，同账本 + 同日 + 同额 + 方向一致）：
+  - capture 侧：同日（±1 天容差）存在 `source = 'AI'`、`draft_status IN (PENDING, CONFIRMED)`、未删除、同额的账目（方向一致或候选方向未知）→ 候选标 `DUPLICATE` 待确认，自动入账被挡住；`duplicateTxnId` 指向该账目。
+  - AI 草稿侧：落库前调 `AutoBookRepository.hasSimilarCandidate(ledgerId, 日界零点, 金额, 类型)`（匹配 PENDING/POSTED 候选，方向未知 `null` 的候选也算同向）；命中即在草稿上标「疑似与自动采集重复」，只提示不阻塞。
+  - 两边都只转人工，不自动合并、不自动丢弃；自动入账账目的 `source` 是 `AUTO`，不会与 AI 过滤互相污染。
+
 ## 4. Validation & Error Matrix
 
 - JD + OCR 的浅色主题实测别名包括 `订单蝙号/支付万式/©完成`，仅在标签位置归一为订单编号/支付方式/完成，不更改数字。深浅两种真实 OCR 坐标重放均需通过。
@@ -75,7 +84,8 @@ Room schema 2：`txn.refund_of_txn_id TEXT NULL` 与 `auto_config`、`auto_bindi
 ## 6. Tests Required
 
 - `PaymentParserTest`：金额冲突、失败、借还款、外币、支付时间、退款原单号。
-- `AutoBookRepositoryTest`：重启/撤销后重放、并发捕获、跨应用重复、余额失败回滚、部分退款、历史页面。
+- `AutoBookRepositoryTest`：重启/撤销后重放、并发捕获、跨应用重复、余额失败回滚、部分退款、历史页面、
+  忽略→重新确认→重放不入账、AI 同日草稿把采集候选挡成 DUPLICATE、`hasSimilarCandidate` 只认同日 PENDING/POSTED。
 - `MigrationTest.versionOneUpgradesWithoutLosingExistingRows`：旧账本、流水、余额保留，新关联列为空。
 - `RefundAccountingTest` 与 `StatsMatchesHomeOverviewTest`：跨月退款与首页/统计/余额口径一致。
 - `SnapshotArchiveTest`：旧格式恢复、新格式流式字节契约、恢复后自动记账关闭。

@@ -111,7 +111,13 @@ seconds so entries in the same minute keep a stable order.
 
 Open **Me → Automatic bookkeeping**, choose a fixed ledger, bind payment methods to accounts,
 and grant notification access or accessibility access in Android settings. Chinese OCR is optional
-and bundled for offline use; screenshots and raw notifications are not saved.
+and bundled for offline use; screenshots and raw notifications are not saved. Per-platform pass
+conditions and verification status are recorded in
+[docs/AUTOBOOK-PLATFORMS.md](docs/AUTOBOOK-PLATFORMS.md). Capture candidates are grouped by
+filter chips (candidates / posted / ignored); ignored entries can be reopened for review, and
+replay of the same payment never posts twice. Screenshot drafts from the AI page share duplicate
+detection with automatic capture: same-ledger, same-day, same-amount matches flag both sides for
+manual review instead of double-posting.
 
 Permissions, apps, and account bindings are grouped into expandable sections. A fixed ledger is
 required before capture can be enabled. You can capture a payment first, then select its observed
