@@ -18,6 +18,9 @@ import kotlinx.datetime.LocalDate
 /** 下拉选项：账户（[kind] 为 null）或分类（带收支方向，便于按类型过滤）。 */
 data class AiOption(val id: String, val label: String, val kind: CategoryKind? = null)
 
+/** 图片批量识别进度（[done]/[total] 张）；识别中非空。 */
+data class ImageProgress(val done: Int, val total: Int)
+
 /**
  * 一条「解析出来的候选草稿」在界面上的状态。
  *
@@ -219,6 +222,9 @@ data class AiEntryUiState(
     val input: String = "",
     /** 正在解析：7B 本地模型单次可达 65 s，必须有可见的进行中状态（PRD 硬约束 3）。 */
     val parsing: Boolean = false,
+    /** 正在逐张识别图片（P5 图片切片）；进行中非空进度。 */
+    val readingImages: Boolean = false,
+    val imageProgress: ImageProgress? = null,
     val saving: Boolean = false,
     val drafts: List<AiDraft> = emptyList(),
     val accounts: List<AiOption> = emptyList(),
@@ -246,7 +252,20 @@ data class AiEntryUiState(
 }
 
 /** 一次性提示：界面层查表成文案。 */
-enum class AiNotice { PARSED, NO_ENTRY, CONFIRMED, DISCARDED, SAVED, FAILED }
+enum class AiNotice { PARSED, NO_ENTRY, IMAGES_NO_TEXT, IMAGES_PARTIAL, CONFIRMED, DISCARDED, SAVED, FAILED }
+
+/**
+ * 图片批量识别结果 → 一次性提示（纯函数，便于单测）。
+ *
+ * 全部成功复用 [AiNotice.PARSED]（带解析笔数）；部分失败提示「N 张图片未能识别」；
+ * 全部失败提示改手工输入；无图片时不提示。
+ */
+fun imageParseNotice(parsedCount: Int, failedCount: Int): AiNotice? = when {
+    parsedCount > 0 && failedCount == 0 -> AiNotice.PARSED
+    parsedCount > 0 -> AiNotice.IMAGES_PARTIAL
+    failedCount > 0 -> AiNotice.IMAGES_NO_TEXT
+    else -> null
+}
 
 sealed interface AiAction {
     data class Input(val text: String) : AiAction
@@ -294,6 +313,9 @@ sealed interface AiAction {
 
     /** 失败后可重试：回到 IDLE，等待再次按住。 */
     data object VoiceRetry : AiAction
+
+    /** 主动选图 / 系统分享带入的图片（content:// Uri 字符串）；逐张 OCR 后进入同一解析。 */
+    data class ImagesPicked(val uris: List<String>) : AiAction
 
     data object SaveSettings : AiAction
 

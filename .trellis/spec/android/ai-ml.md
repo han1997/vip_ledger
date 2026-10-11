@@ -276,6 +276,66 @@ SpeechRecognizer.createSpeechRecognizer(context)
 resolveVoiceRecognitionMode(onDeviceAvailable, settings.voiceOnlineTranscription)
 ```
 
+## 图片与系统分享切片（P5）
+
+### 1. Scope / Trigger
+
+P5 图片切片把「主动选图（Photo Picker）与系统分享（`ACTION_SEND`/`SEND_MULTIPLE`，image 类型）」接入 `:feature:ai` 同一草稿链路；逐张本机中文 OCR，不联网、不落盘、不新增表。
+
+### 2. Signatures
+
+```kotlin
+interface ImageTextReader {
+    suspend fun readText(imageUri: String): AppResult<String>
+}
+
+// :core:data —— 复用 autobook 的本机中文识别器
+PaymentOcr.recognizeUri(uri: Uri): String   // InputImage.fromFilePath 自带 EXIF 旋转
+```
+
+接口在 `:core:domain`（URI 以 String 传入保持纯 Kotlin），实现 `MlKitImageTextReader` 在 `:core:data`。
+
+### 3. Contracts
+
+- 选图用 `ActivityResultContracts.PickMultipleVisualMedia`，单批上限 5（与 `AiEntryViewModel.MAX_IMAGES_PER_BATCH` 一致）；系统分享经 MainActivity 的 SEND/SEND_MULTIPLE intent-filter 提取 `EXTRA_STREAM`。
+- 分享 Uri 经导航参数 `ai/home?shared=`（换行分隔、`Uri.encode`）传入；AI 页 ViewModel 从 SavedStateHandle **一次性消费**（读后 remove），并在账本/账户就绪后才逐张识别。
+- 每张图片的 OCR 文本走与文字相同的 `parseIntoDrafts`（规则层 → 端侧分类器 → 可选云端），产出候选草稿；未识别字段照常阻塞确认。
+- 始终先确认、不自动入账；原图识别后即丢弃（可选附件未实现，attachment 表无生产者）。
+- 识别中显示进度（done/total）；单张失败不中断后续图片。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 结果 |
+|---|---|
+| 图片不可读 / Uri 失效（IOException、SecurityException） | `AppError.Storage`，计入失败张数 |
+| 识别引擎失败或未识别出任何文本 | `AppError.Parse`，计入失败张数 |
+| 部分失败 | `AiNotice.IMAGES_PARTIAL`（「N 张图片未能识别出文本」） |
+| 全部失败 | `AiNotice.IMAGES_NO_TEXT`（提示改手工输入） |
+| 全部成功 | `AiNotice.PARSED`（带解析笔数） |
+| 正在解析 / 识别中再次选图 | 静默忽略（按钮已禁用，ViewModel 再拦一道） |
+
+### 5. Good / Base / Bad Cases
+
+- Good：相册选 2 张账单截图 → 逐张 OCR → 4 条候选草稿，逐条补齐未识别字段后确认。
+- Base：分享 3 张图，其中 1 张无文本 → 出草稿 + 「1 张图片未能识别出文本」。
+- Bad：分享图片后自动入账、把 OCR 原文直接落库、或把图片文件写进应用存储。
+
+### 6. Tests Required
+
+- `ImageParseNoticeTest`：全成功/部分/全失败/空批量四分支的提示归类。
+- OCR 与图片解码是外部依赖，JVM 不可测：真机/模拟器走查背书（选图、分享、进度、失败提示）。
+- 交付前运行 `test assembleDebug assembleRelease lintDebug`。
+
+### 7. Wrong vs Correct
+
+```kotlin
+// Wrong：KDoc 里写 `image/*` —— Kotlin 块注释支持嵌套，`/*` 会开启未闭合注释（编译错）
+/** 系统分享（ACTION_SEND image/*） */
+
+// Correct：KDoc 中避免字面 `/*`，改写成「image 类型」
+/** 系统分享（ACTION_SEND，image 类型） */
+```
+
 ## 未实现（后续里程碑）
 
 - **ONNX 导入与外部模型**：ARCHITECTURE §7 原本规划 M7 引入 ONNX Runtime Android，已决定

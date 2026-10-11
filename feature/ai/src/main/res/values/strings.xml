@@ -73,6 +73,12 @@
     <string name="ai_setting_voice_online">允许联网转写</string>
     <string name="ai_setting_voice_online_disclosure">关闭时只用设备端识别（不联网）；设备端不可用时提示改手工输入。开启后，设备端不可用时会退化为普通系统识别，可能联网。</string>
 
+    <!-- 图片与系统分享（P5 图片切片） -->
+    <string name="ai_pick_images">选图识别</string>
+    <string name="ai_reading_images">正在识别图片（%1$d/%2$d）…</string>
+    <string name="ai_notice_images_no_text">未能从图片中识别出文本，可改用手工输入</string>
+    <string name="ai_notice_images_partial">已解析出草稿；%1$d 张图片未能识别出文本</string>
+
     <!-- 一次性提示 -->
     <string name="ai_notice_parsed">已解析出 %1$d 笔待确认草稿</string>
     <string name="ai_notice_no_entry">没能从这句话里识别出账目，换个说法再试试</string>

@@ -1,7 +1,9 @@
 package com.han1997.vipledger
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -29,12 +31,43 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             VipLedgerTheme {
-                VipLedgerApp(openAutoBook = intent.getBooleanExtra("openAutoBook", false), openBudgetLedger = intent.getStringExtra("openBudgetLedger"))
+                VipLedgerApp(
+                    openAutoBook = intent.getBooleanExtra("openAutoBook", false),
+                    openBudgetLedger = intent.getStringExtra("openBudgetLedger"),
+                    openSharedImages = extractSharedImageUris(intent),
+                )
             }
         }
         lifecycleScope.launch { ensureInitialData() }
         requestNotificationPermissionIfNeeded()
     }
+
+    /** 系统分享（ACTION_SEND / SEND_MULTIPLE，image 类型）：提取图片 Uri 供 AI 页逐张 OCR。 */
+    private fun extractSharedImageUris(intent: Intent?): List<String> {
+        if (intent == null) return emptyList()
+        val uris: List<Uri> = when (intent.action) {
+            Intent.ACTION_SEND -> listOfNotNull(intent.streamExtra())
+            Intent.ACTION_SEND_MULTIPLE -> intent.streamExtras().orEmpty()
+            else -> emptyList()
+        }
+        return uris.distinct().map { it.toString() }
+    }
+
+    private fun Intent.streamExtra(): Uri? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            getParcelableExtra(Intent.EXTRA_STREAM)
+        }
+
+    @Suppress("DEPRECATION")
+    private fun Intent.streamExtras(): ArrayList<Uri>? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            getParcelableArrayListExtra(Intent.EXTRA_STREAM)
+        }
 
     /** API 33+ 的通知权限；未授权时后台通知静默跳过，应用内提醒卡照常可用。 */
     private fun requestNotificationPermissionIfNeeded() {

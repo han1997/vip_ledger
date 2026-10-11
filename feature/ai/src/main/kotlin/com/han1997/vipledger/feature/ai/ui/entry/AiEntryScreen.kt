@@ -3,8 +3,10 @@ package com.han1997.vipledger.feature.ai.ui.entry
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -178,6 +181,21 @@ internal fun AiEntryContent(
                 }
             }
 
+            if (state.readingImages) {
+                item(key = "reading-images") {
+                    Column(Modifier.padding(horizontal = 16.dp)) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Text(
+                            text = state.imageProgress?.let {
+                                stringResource(R.string.ai_reading_images, it.done, it.total)
+                            } ?: stringResource(R.string.ai_reading_images, 0, 0),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
             item(key = "settings") {
                 SettingsSection(state = state, onAction = onAction)
             }
@@ -254,6 +272,10 @@ private fun InputSection(state: AiEntryUiState, onAction: (AiAction) -> Unit) {
             ) {
                 Text(stringResource(R.string.ai_parse))
             }
+            PickImagesButton(
+                enabled = !state.parsing && !state.readingImages && state.ledgerId != null,
+                onPick = { onAction(AiAction.ImagesPicked(it)) },
+            )
             VoiceHoldButton(
                 state = state,
                 hasPermission = hasRecordPermission,
@@ -262,6 +284,50 @@ private fun InputSection(state: AiEntryUiState, onAction: (AiAction) -> Unit) {
             )
         }
         VoiceStatus(state = state, onAction = onAction)
+    }
+}
+
+/**
+ * 主动选图（Photo Picker，P5 图片切片）：多图逐张 OCR 后进入同一解析；
+ * 始终先确认，不自动入账，原图不保存。
+ */
+@Composable
+private fun PickImagesButton(
+    enabled: Boolean,
+    onPick: (List<String>) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pickImages = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(MAX_PICK_IMAGES),
+    ) { uris ->
+        if (uris.isNotEmpty()) onPick(uris.map { it.toString() })
+    }
+    val pickContentDescription = stringResource(R.string.ai_pick_images)
+    Box(
+        modifier = modifier
+            .size(VipLedgerTokens.spacing(14))
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(enabled = enabled) {
+                pickImages.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+            .semantics {
+                role = Role.Button
+                contentDescription = pickContentDescription
+                if (!enabled) disabled()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Image,
+            contentDescription = null,
+            tint = if (enabled) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = VipLedgerTokens.AlphaDisabled)
+            },
+            modifier = Modifier.size(VipLedgerTokens.IconMedium),
+        )
     }
 }
 
@@ -722,11 +788,16 @@ private fun warningLabel(warning: NlpWarning): String = stringResource(
 private fun aiNoticeText(notice: AiNotice, detail: String?): String = when (notice) {
     AiNotice.PARSED -> stringResource(R.string.ai_notice_parsed, detail?.toIntOrNull() ?: 0)
     AiNotice.NO_ENTRY -> stringResource(R.string.ai_notice_no_entry)
+    AiNotice.IMAGES_NO_TEXT -> stringResource(R.string.ai_notice_images_no_text)
+    AiNotice.IMAGES_PARTIAL -> stringResource(R.string.ai_notice_images_partial, detail?.toIntOrNull() ?: 0)
     AiNotice.CONFIRMED -> stringResource(R.string.ai_notice_confirmed)
     AiNotice.DISCARDED -> stringResource(R.string.ai_notice_discarded)
     AiNotice.SAVED -> stringResource(R.string.ai_notice_saved)
     AiNotice.FAILED -> if (!detail.isNullOrBlank()) detail else stringResource(R.string.ai_notice_failed)
 }
+
+/** 单批最多选入的图片数（与 AiEntryViewModel.MAX_IMAGES_PER_BATCH 保持一致）。 */
+private const val MAX_PICK_IMAGES = 5
 
 @Preview(showBackground = true)
 @Composable

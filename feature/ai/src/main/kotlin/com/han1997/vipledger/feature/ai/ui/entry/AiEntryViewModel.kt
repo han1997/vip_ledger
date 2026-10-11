@@ -1,5 +1,6 @@
 package com.han1997.vipledger.feature.ai.ui.entry
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.han1997.vipledger.core.common.result.AppError
@@ -8,6 +9,7 @@ import com.han1997.vipledger.core.common.result.getOrNull
 import com.han1997.vipledger.core.common.result.isSuccess
 import com.han1997.vipledger.core.common.time.TimeProvider
 import com.han1997.vipledger.core.domain.ai.AiSettingsRepository
+import com.han1997.vipledger.core.domain.ai.ImageTextReader
 import com.han1997.vipledger.core.domain.ai.SpeechTranscriber
 import com.han1997.vipledger.core.domain.ai.VoiceEvent
 import com.han1997.vipledger.core.domain.ai.VoiceFailure
@@ -23,6 +25,7 @@ import com.han1997.vipledger.core.domain.nlp.CategoryClassifier
 import com.han1997.vipledger.core.domain.nlp.LlmParserClient
 import com.han1997.vipledger.core.domain.nlp.NlEntryPipeline
 import com.han1997.vipledger.core.domain.repository.MerchantRuleRepository
+import com.han1997.vipledger.core.domain.model.MerchantRule
 import com.han1997.vipledger.core.domain.usecase.account.ObserveAccountsUseCase
 import com.han1997.vipledger.core.domain.usecase.category.ObserveCategoryTreeUseCase
 import com.han1997.vipledger.core.domain.usecase.ledger.ObserveCurrentLedgerUseCase
@@ -55,6 +58,7 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class AiEntryViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val timeProvider: TimeProvider,
     private val settingsRepository: AiSettingsRepository,
     private val merchantRuleRepository: MerchantRuleRepository,
@@ -62,6 +66,8 @@ class AiEntryViewModel @Inject constructor(
     private val classifier: CategoryClassifier,
     /** 语音转写接缝（PRD「语音」切片）；实现是系统 SpeechRecognizer，接口在 :core:domain。 */
     private val transcriber: SpeechTranscriber,
+    /** 图片文本识别接缝（P5 图片切片）；实现是 ML Kit 本机中文识别。 */
+    private val imageTextReader: ImageTextReader,
     observeCurrentLedger: ObserveCurrentLedgerUseCase,
     observeAccounts: ObserveAccountsUseCase,
     observeCategoryTree: ObserveCategoryTreeUseCase,
@@ -78,6 +84,17 @@ class AiEntryViewModel @Inject constructor(
     private var accounts: List<Account> = emptyList()
     private var categories: List<Category> = emptyList()
     private var keyCounter: Int = 0
+
+    /**
+     * 系统分享带入的图片（`ai/home?shared=...` 导航参数，MainActivity 提取 `EXTRA_STREAM`）。
+     * init 即消费并从 SavedStateHandle 移除，避免旋转/恢复后重复入草稿；等账本就绪后逐张识别。
+     */
+    private val pendingSharedImages: List<String> = run {
+        val raw = savedStateHandle.get<String>(SHARED_IMAGES_ARG).orEmpty()
+        savedStateHandle.remove<String>(SHARED_IMAGES_ARG)
+        if (raw.isBlank()) emptyList() else raw.split('\n').filter { it.isNotBlank() }
+    }
+    private var sharedImagesDispatched = false
 
     /**
      * 语音转写回调 → 状态机。
@@ -135,6 +152,11 @@ class AiEntryViewModel @Inject constructor(
                             },
                         )
                     }
+                    // 账本/账户就绪后一次性消费系统分享带入的图片（不自动入账，仍走候选确认）。
+                    if (!sharedImagesDispatched && pendingSharedImages.isNotEmpty()) {
+                        sharedImagesDispatched = true
+                        readImages(pendingSharedImages.take(MAX_IMAGES_PER_BATCH))
+                    }
                 }
             }
         }
@@ -165,6 +187,7 @@ class AiEntryViewModel @Inject constructor(
             AiAction.VoiceRetry -> mutableState.update {
                 it.copy(voice = it.voice.reduce(VoiceEvent.Reset))
             }
+            is AiAction.ImagesPicked -> readImages(action.uris.take(MAX_IMAGES_PER_BATCH))
             AiAction.SaveSettings -> saveSettings()
             AiAction.ConsumeNotice -> mutableState.update { it.copy(notice = null, noticeDetail = null) }
         }
@@ -205,36 +228,79 @@ class AiEntryViewModel @Inject constructor(
 
         mutableState.update { it.copy(parsing = true, notice = null, noticeDetail = null) }
         viewModelScope.launch {
-            val today = timeProvider.nowMillis().toLocalDate(timeProvider.zone)
-            val settings = mutableState.value.settings
-            val rules = runCatching { merchantRuleRepository.listEnabledByPriority(ledgerId) }
-                .getOrDefault(emptyList())
-            val pipeline = NlEntryPipeline(
-                accounts = accounts,
-                categories = categories,
-                merchantRules = rules,
-                classifier = classifier,
-                // 隐私开关关闭时传 null，云端那一级完全不可达（PRD D3）。
-                cloud = cloudClientFor(settings, llmClient),
-            )
-            val result = pipeline.parse(text, today)
-            val entries = result.entries
-            if (entries.isEmpty()) {
-                mutableState.update { it.copy(parsing = false, notice = AiNotice.NO_ENTRY) }
-                return@launch
-            }
-            val drafts = draftsOf(
-                entries = entries,
-                occurredAt = { date -> date.startOfDayEpochMillis(timeProvider.zone) },
-                source = ::sourceOf,
-                keyOf = { nextKey() },
-            ).map { persistIfPossible(ledgerId, it) }
+            val rules = loadRules(ledgerId)
+            val count = parseIntoDrafts(text, ledgerId, rules)
             mutableState.update {
                 it.copy(
                     parsing = false,
-                    drafts = it.drafts + drafts,
-                    notice = AiNotice.PARSED,
-                    noticeDetail = drafts.size.toString(),
+                    notice = if (count == 0) AiNotice.NO_ENTRY else AiNotice.PARSED,
+                    noticeDetail = count.toString(),
+                )
+            }
+        }
+    }
+
+    /** 当前账本的启用规则；查询失败按空规则处理，不阻塞解析。 */
+    private suspend fun loadRules(ledgerId: String): List<MerchantRule> =
+        runCatching { merchantRuleRepository.listEnabledByPriority(ledgerId) }
+            .getOrDefault(emptyList())
+
+    /**
+     * 单段文本 → 候选草稿（文字 / 语音 / 图片四种输入共用的同一解析与确认链路）。
+     * 追加到现有草稿列表并尝试落库，返回解析出的笔数（0 = 没识别出条目）。
+     */
+    private suspend fun parseIntoDrafts(text: String, ledgerId: String, rules: List<MerchantRule>): Int {
+        val today = timeProvider.nowMillis().toLocalDate(timeProvider.zone)
+        val pipeline = NlEntryPipeline(
+            accounts = accounts,
+            categories = categories,
+            merchantRules = rules,
+            classifier = classifier,
+            // 隐私开关关闭时传 null，云端那一级完全不可达（PRD D3）。
+            cloud = cloudClientFor(mutableState.value.settings, llmClient),
+        )
+        val entries = pipeline.parse(text, today).entries
+        if (entries.isEmpty()) return 0
+        val drafts = draftsOf(
+            entries = entries,
+            occurredAt = { date -> date.startOfDayEpochMillis(timeProvider.zone) },
+            source = ::sourceOf,
+            keyOf = { nextKey() },
+        ).map { persistIfPossible(ledgerId, it) }
+        mutableState.update { it.copy(drafts = it.drafts + drafts) }
+        return drafts.size
+    }
+
+    /**
+     * 多图逐张识别（P5 图片切片）：每张图片的 OCR 文本进入与文字相同的解析，产出候选草稿；
+     * 始终先确认、不自动入账；原图不保存。失败不中断后续图片，最后归并成一次性提示。
+     */
+    private fun readImages(uris: List<String>) {
+        val ledgerId = mutableState.value.ledgerId
+        if (uris.isEmpty() || ledgerId == null || mutableState.value.readingImages || mutableState.value.parsing) return
+
+        mutableState.update {
+            it.copy(readingImages = true, imageProgress = ImageProgress(0, uris.size), notice = null, noticeDetail = null)
+        }
+        viewModelScope.launch {
+            val rules = loadRules(ledgerId)
+            var parsedTotal = 0
+            var failedCount = 0
+            uris.forEachIndexed { index, uri ->
+                val text = imageTextReader.readText(uri).getOrNull()
+                if (text.isNullOrBlank()) {
+                    failedCount++
+                } else {
+                    parsedTotal += parseIntoDrafts(text, ledgerId, rules)
+                }
+                mutableState.update { it.copy(imageProgress = ImageProgress(index + 1, uris.size)) }
+            }
+            mutableState.update { state ->
+                state.copy(
+                    readingImages = false,
+                    imageProgress = null,
+                    notice = imageParseNotice(parsedTotal, failedCount),
+                    noticeDetail = if (failedCount > 0) failedCount.toString() else parsedTotal.toString(),
                 )
             }
         }
@@ -382,6 +448,14 @@ class AiEntryViewModel @Inject constructor(
         nodes.flatMap { node -> listOf(node.category) + node.children }
 
     private fun toOption(category: Category): AiOption = AiOption(category.id, category.name, category.kind)
+
+    private companion object {
+        /** 系统分享图片的导航参数名（`ai/home?shared=...`）。 */
+        const val SHARED_IMAGES_ARG = "shared"
+
+        /** 单批最多识别的图片数：逐张 OCR 耗时可控，也避免一次塞入过多草稿。 */
+        const val MAX_IMAGES_PER_BATCH = 5
+    }
 }
 
 private fun AppResult<*>.failureMessage(): String? = (this as? AppResult.Failure)?.error?.message

@@ -20,7 +20,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -47,13 +51,27 @@ import com.han1997.vipledger.feature.sync.navigation.backupGraph
  * 各 feature 模块自带 graph，`:app` 只负责把它们拼起来。
  */
 @Composable
-fun VipLedgerApp(modifier: Modifier = Modifier, openAutoBook: Boolean = false, openBudgetLedger: String? = null) {
+fun VipLedgerApp(
+    modifier: Modifier = Modifier,
+    openAutoBook: Boolean = false,
+    openBudgetLedger: String? = null,
+    /** 系统分享带入的图片（ACTION_SEND，image 类型），进入 AI 页逐张 OCR。 */
+    openSharedImages: List<String> = emptyList(),
+) {
     val navController = rememberNavController()
-    androidx.compose.runtime.LaunchedEffect(openBudgetLedger) {
+    LaunchedEffect(openBudgetLedger) {
         if (!openBudgetLedger.isNullOrBlank()) navController.navigate(LedgerRoutes.budget(openBudgetLedger)) { launchSingleTop = true }
     }
-    androidx.compose.runtime.LaunchedEffect(openAutoBook) {
+    LaunchedEffect(openAutoBook) {
         if (openAutoBook) navController.navigate(LedgerRoutes.AUTO_BOOK) { launchSingleTop = true }
+    }
+    // 一次性消费：rememberSaveable 保证旋转后不重复导航（图片解析在 AI 页 ViewModel 内去重）。
+    var sharedImagesConsumed by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(openSharedImages) {
+        if (openSharedImages.isNotEmpty() && !sharedImagesConsumed) {
+            sharedImagesConsumed = true
+            navController.navigate(AiRoutes.sharedImages(openSharedImages)) { launchSingleTop = true }
+        }
     }
     val backStackEntries by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntries?.destination?.route
