@@ -8,7 +8,13 @@ import com.han1997.vipledger.core.common.result.getOrNull
 import com.han1997.vipledger.core.common.result.isSuccess
 import com.han1997.vipledger.core.common.time.TimeProvider
 import com.han1997.vipledger.core.domain.ai.AiSettingsRepository
+import com.han1997.vipledger.core.domain.ai.SpeechTranscriber
+import com.han1997.vipledger.core.domain.ai.VoiceEvent
+import com.han1997.vipledger.core.domain.ai.VoiceFailure
+import com.han1997.vipledger.core.domain.ai.VoiceInputState
+import com.han1997.vipledger.core.domain.ai.VoiceRecognitionMode
 import com.han1997.vipledger.core.domain.ai.cloudClientFor
+import com.han1997.vipledger.core.domain.ai.reduce
 import com.han1997.vipledger.core.domain.calculator.TxnValidator
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.Category
@@ -54,6 +60,8 @@ class AiEntryViewModel @Inject constructor(
     private val merchantRuleRepository: MerchantRuleRepository,
     private val llmClient: LlmParserClient,
     private val classifier: CategoryClassifier,
+    /** 语音转写接缝（PRD「语音」切片）；实现是系统 SpeechRecognizer，接口在 :core:domain。 */
+    private val transcriber: SpeechTranscriber,
     observeCurrentLedger: ObserveCurrentLedgerUseCase,
     observeAccounts: ObserveAccountsUseCase,
     observeCategoryTree: ObserveCategoryTreeUseCase,
@@ -71,7 +79,38 @@ class AiEntryViewModel @Inject constructor(
     private var categories: List<Category> = emptyList()
     private var keyCounter: Int = 0
 
+    /**
+     * 语音转写回调 → 状态机。
+     *
+     * 只有 [SpeechTranscriber.Listener.onResult]（松开结束的最终结果）会把文本提交到输入框；
+     * 取消 / 离页 / 失败都不会产生 onResult，因此「取消/离页不提交文本」由事件语义保证。
+     */
+    private val voiceListener = object : SpeechTranscriber.Listener {
+        override fun onReady(mode: VoiceRecognitionMode) {
+            if (!mutableState.value.voice.isListening) return
+            mutableState.update { it.copy(voice = it.voice.reduce(VoiceEvent.Ready(mode))) }
+        }
+
+        override fun onPartialResult(text: String) {
+            if (!mutableState.value.voice.isListening) return
+            mutableState.update { it.copy(voice = it.voice.reduce(VoiceEvent.Partial(text))) }
+        }
+
+        override fun onResult(text: String) {
+            if (!mutableState.value.voice.isListening) return
+            mutableState.update {
+                it.copy(input = text, voice = it.voice.reduce(VoiceEvent.Succeeded))
+            }
+        }
+
+        override fun onError(failure: VoiceFailure) {
+            if (!mutableState.value.voice.isListening) return
+            mutableState.update { it.copy(voice = it.voice.reduce(VoiceEvent.Failed(failure))) }
+        }
+    }
+
     init {
+        transcriber.setListener(voiceListener)
         viewModelScope.launch {
             observeCurrentLedger().collectLatest { ledger ->
                 val ledgerId = ledger?.id
@@ -116,9 +155,47 @@ class AiEntryViewModel @Inject constructor(
             is AiAction.Discard -> discard(action.key)
             is AiAction.SettingsChanged -> mutableState.update { it.copy(settings = action.settings) }
             is AiAction.ToggleNetwork -> toggleNetwork(action.enabled)
+            is AiAction.ToggleVoiceOnline -> toggleVoiceOnline(action.enabled)
+            AiAction.VoiceStart -> startVoice()
+            AiAction.VoiceStop -> stopVoice()
+            AiAction.VoiceCancel -> cancelVoice()
+            AiAction.VoicePermissionDenied -> mutableState.update {
+                it.copy(voice = it.voice.reduce(VoiceEvent.Failed(VoiceFailure.PERMISSION_DENIED)))
+            }
+            AiAction.VoiceRetry -> mutableState.update {
+                it.copy(voice = it.voice.reduce(VoiceEvent.Reset))
+            }
             AiAction.SaveSettings -> saveSettings()
             AiAction.ConsumeNotice -> mutableState.update { it.copy(notice = null, noticeDetail = null) }
         }
+    }
+
+    /**
+     * 语音转写回调 → 状态机。
+     *
+     * 只有 [SpeechTranscriber.Listener.onResult]（松开结束的最终结果）会把文本提交到输入框；
+     * 取消 / 离页 / 失败都不会产生 onResult，因此「取消/离页不提交文本」由事件语义保证。
+     */
+    private fun startVoice() {
+        if (mutableState.value.voice.isListening) return
+        mutableState.update { it.copy(voice = it.voice.reduce(VoiceEvent.Start)) }
+        transcriber.start()
+    }
+
+    private fun stopVoice() {
+        if (!mutableState.value.voice.isListening) return
+        transcriber.stop()
+    }
+
+    private fun cancelVoice() {
+        transcriber.cancel()
+        mutableState.update { it.copy(voice = VoiceInputState()) }
+    }
+
+    override fun onCleared() {
+        transcriber.setListener(null)
+        transcriber.cancel()
+        super.onCleared()
     }
 
     private fun parse() {
@@ -284,6 +361,12 @@ class AiEntryViewModel @Inject constructor(
 
     private fun toggleNetwork(enabled: Boolean) {
         val settings = mutableState.value.settings.copy(networkEnabled = enabled)
+        settingsRepository.save(settings)
+        mutableState.update { it.copy(settings = settings) }
+    }
+
+    private fun toggleVoiceOnline(enabled: Boolean) {
+        val settings = mutableState.value.settings.copy(voiceOnlineTranscription = enabled)
         settingsRepository.save(settings)
         mutableState.update { it.copy(settings = settings) }
     }

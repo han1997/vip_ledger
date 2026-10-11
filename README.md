@@ -70,8 +70,7 @@ two investment tables and stay compatible with formats 1–5.
 The complete agreed feature roadmap and later phases are in [docs/FEATURE-ROADMAP.md](docs/FEATURE-ROADMAP.md).
 Category expansion now uses stable row containers; a Compose device test repeatedly expands,
 switches and collapses parent categories to prevent a reproduced node-insertion crash.
-Reimbursement, lending, installment plans and investment ledgers are now implemented; voice/image
-entry and report improvements remain in later phases.
+Reimbursement, lending, installment plans and investment ledgers are now implemented; the first P5 voice-entry slice is implemented, while image/share entry and report improvements remain in later phases.
 
 JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
 
@@ -95,6 +94,7 @@ Payment captures that need review now also produce a notification (when Android 
 - Recurring entries and installment plans
 - Search, statistics, category share, and trends
 - On-device classifier, plus optional OpenAI-compatible natural-language entry
+- Voice entry with press/hold/release/cancel controls, editable transcription, on-device-first system recognition, and an independent online-transcription switch (off by default)
 - CSV and JSON import/export, with encrypted WebDAV snapshots
 - Offline payment capture with a separate review queue and account bindings
 

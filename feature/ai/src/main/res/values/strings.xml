@@ -57,6 +57,22 @@
     <string name="ai_setting_network_disclosure">打开后，规则层产出不足时会把你在本页输入的账目文字发送到上面填写的地址。规则层与端侧分类器始终只在设备上运行，不会上传。</string>
     <string name="ai_setting_save">保存设置</string>
 
+    <!-- 语音输入（PRD「语音」切片） -->
+    <string name="ai_voice_hold">按住说话</string>
+    <string name="ai_voice_listening">松开结束 · 上滑取消</string>
+    <string name="ai_voice_cancel_hint">松开取消</string>
+    <string name="ai_voice_listening_description">松开结束，上滑取消录音</string>
+    <string name="ai_voice_mode_on_device">端侧识别</string>
+    <string name="ai_voice_mode_maybe_online">系统识别可能联网</string>
+    <string name="ai_voice_retry">重试</string>
+    <string name="ai_voice_failed_no_service">没有可用的语音识别服务（端侧不可用且联网转写关闭），可改用手工输入</string>
+    <string name="ai_voice_failed_permission">需要麦克风权限才能语音记账，可改用手工输入</string>
+    <string name="ai_voice_failed_timeout">语音识别超时，可重试或改用手工输入</string>
+    <string name="ai_voice_failed_no_result">没有识别到内容，可重试或改用手工输入</string>
+    <string name="ai_voice_failed_unknown">语音识别失败，可重试或改用手工输入</string>
+    <string name="ai_setting_voice_online">允许联网转写</string>
+    <string name="ai_setting_voice_online_disclosure">关闭时只用设备端识别（不联网）；设备端不可用时提示改手工输入。开启后，设备端不可用时会退化为普通系统识别，可能联网。</string>
+
     <!-- 一次性提示 -->
     <string name="ai_notice_parsed">已解析出 %1$d 笔待确认草稿</string>
     <string name="ai_notice_no_entry">没能从这句话里识别出账目，换个说法再试试</string>

@@ -1,5 +1,12 @@
 package com.han1997.vipledger.feature.ai.ui.entry
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,16 +15,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,6 +38,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,10 +47,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
@@ -49,7 +73,11 @@ import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
 import com.han1997.vipledger.core.designsystem.format.fullDateLabel
 import com.han1997.vipledger.core.designsystem.format.transactionTypeLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.domain.ai.AiSettings
+import com.han1997.vipledger.core.domain.ai.VoiceFailure
+import com.han1997.vipledger.core.domain.ai.VoicePhase
+import com.han1997.vipledger.core.domain.ai.VoiceRecognitionMode
 import com.han1997.vipledger.core.domain.nlp.Confidence
 import com.han1997.vipledger.core.domain.nlp.NlpWarning
 import com.han1997.vipledger.core.domain.nlp.ParsedEntry
@@ -93,6 +121,11 @@ internal fun AiEntryContent(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val noticeText = state.notice?.let { aiNoticeText(it, state.noticeDetail) }
+
+    // 离页停止并复位（PRD「语音」切片）：返回/跳到次级页时取消录音且不提交文本。
+    DisposableEffect(Unit) {
+        onDispose { onAction(AiAction.VoiceCancel) }
+    }
 
     LaunchedEffect(state.notice, state.noticeDetail) {
         if (noticeText != null) {
@@ -186,6 +219,15 @@ internal fun AiEntryContent(
 
 @Composable
 private fun InputSection(state: AiEntryUiState, onAction: (AiAction) -> Unit) {
+    val context = LocalContext.current
+    var hasRecordPermission by remember { mutableStateOf(hasRecordAudioPermission(context)) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        hasRecordPermission = granted
+        if (!granted) onAction(AiAction.VoicePermissionDenied)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,14 +241,184 @@ private fun InputSection(state: AiEntryUiState, onAction: (AiAction) -> Unit) {
             placeholder = stringResource(R.string.ai_input_hint),
             singleLine = false,
         )
-        Button(
-            onClick = { onAction(AiAction.Parse) },
-            enabled = !state.parsing && state.input.isNotBlank() && state.ledgerId != null,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(stringResource(R.string.ai_parse))
+            Button(
+                onClick = { onAction(AiAction.Parse) },
+                enabled = !state.parsing && !state.voice.isListening &&
+                    state.input.isNotBlank() && state.ledgerId != null,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(stringResource(R.string.ai_parse))
+            }
+            VoiceHoldButton(
+                state = state,
+                hasPermission = hasRecordPermission,
+                onRequestPermission = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
+                onAction = onAction,
+            )
+        }
+        VoiceStatus(state = state, onAction = onAction)
+    }
+}
+
+/** 检查 `RECORD_AUDIO` 是否已授权（同意过就不再弹窗，拒绝后仍可手工输入）。 */
+private fun hasRecordAudioPermission(context: android.content.Context): Boolean =
+    ContextCompat.checkSelfPermission(
+        context, Manifest.permission.RECORD_AUDIO,
+    ) == PackageManager.PERMISSION_GRANTED
+
+/**
+ * 按住说话按钮：按住开始、松开结束、上滑取消（PRD「语音」切片）。
+ *
+ * 手势处理在 [pointerInput] 里；[state.voice] 只负责视觉相位（聆听/取消/失败），
+ * 手势状态（是否已上滑取消）是本地瞬时值，不进 UiState。
+ */
+@Composable
+private fun VoiceHoldButton(
+    state: AiEntryUiState,
+    hasPermission: Boolean,
+    onRequestPermission: () -> Unit,
+    onAction: (AiAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var cancelArmed by remember { mutableStateOf(false) }
+    val cancelDistance = with(LocalDensity.current) { 64.dp.toPx() }
+    val listening = state.voice.isListening
+    val enabled = !state.parsing && state.ledgerId != null
+    val holdContentDescription = stringResource(R.string.ai_voice_hold)
+    val listeningContentDescription = stringResource(R.string.ai_voice_listening_description)
+
+    Box(
+        modifier = modifier
+            .size(VipLedgerTokens.spacing(14))
+            .clip(CircleShape)
+            .background(
+                when {
+                    cancelArmed -> MaterialTheme.colorScheme.errorContainer
+                    listening -> MaterialTheme.colorScheme.primaryContainer
+                    else -> MaterialTheme.colorScheme.surfaceVariant
+                },
+            )
+            .pointerInput(enabled, hasPermission) {
+                if (!enabled) return@pointerInput
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    down.consume()
+                    val startY = down.position.y
+                    var armCancel = false
+                    if (!hasPermission) {
+                        onRequestPermission()
+                        // 等抬起：本次不开始录音，等用户授权后再次按住。
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            if (event.changes.none { it.pressed }) break
+                        }
+                        return@awaitEachGesture
+                    }
+                    onAction(AiAction.VoiceStart)
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id }
+                        if (change == null || change.changedToUp()) break
+                        if (change.position.y < startY - cancelDistance) armCancel = true
+                        cancelArmed = armCancel
+                        change.consume()
+                    }
+                    cancelArmed = false
+                    onAction(if (armCancel) AiAction.VoiceCancel else AiAction.VoiceStop)
+                }
+            }
+            .semantics {
+                role = Role.Button
+                contentDescription = if (listening) listeningContentDescription else holdContentDescription
+                if (!enabled) disabled()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Mic,
+            contentDescription = null,
+            tint = when {
+                cancelArmed -> MaterialTheme.colorScheme.onErrorContainer
+                listening -> MaterialTheme.colorScheme.onPrimaryContainer
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.size(VipLedgerTokens.IconMedium),
+        )
+    }
+}
+
+/** 语音状态行：聆听中的实时转写与模式标注（可能联网时显式标注），以及失败提示与重试。 */
+@Composable
+private fun VoiceStatus(state: AiEntryUiState, onAction: (AiAction) -> Unit) {
+    val voice = state.voice
+    when (voice.phase) {
+        VoicePhase.IDLE -> Unit
+
+        VoicePhase.LISTENING -> {
+            Text(
+                text = stringResource(R.string.ai_voice_listening),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            voice.mode?.let { mode ->
+                Text(
+                    text = if (mode == VoiceRecognitionMode.MAYBE_ONLINE) {
+                        stringResource(R.string.ai_voice_mode_maybe_online)
+                    } else {
+                        stringResource(R.string.ai_voice_mode_on_device)
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (mode == VoiceRecognitionMode.MAYBE_ONLINE) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            if (voice.partialText.isNotBlank()) {
+                Text(
+                    text = voice.partialText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+
+        VoicePhase.FAILED -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = voiceFailureText(voice.failure),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { onAction(AiAction.VoiceRetry) }) {
+                    Text(stringResource(R.string.ai_voice_retry))
+                }
+            }
         }
     }
 }
+
+@Composable
+private fun voiceFailureText(failure: VoiceFailure?): String = stringResource(
+    when (failure) {
+        VoiceFailure.NO_SERVICE -> R.string.ai_voice_failed_no_service
+        VoiceFailure.PERMISSION_DENIED -> R.string.ai_voice_failed_permission
+        VoiceFailure.TIMEOUT -> R.string.ai_voice_failed_timeout
+        VoiceFailure.NO_RESULT -> R.string.ai_voice_failed_no_result
+        VoiceFailure.UNKNOWN, null -> R.string.ai_voice_failed_unknown
+    },
+)
 
 @Composable
 private fun SettingsSection(state: AiEntryUiState, onAction: (AiAction) -> Unit) {
@@ -226,6 +438,17 @@ private fun SettingsSection(state: AiEntryUiState, onAction: (AiAction) -> Unit)
         )
         Text(
             text = stringResource(R.string.ai_setting_network_disclosure),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        // 语音联网转写独立开关（PRD「语音」切片，默认关）：端侧不可用且关闭时提示改手工输入。
+        ToggleRow(
+            label = stringResource(R.string.ai_setting_voice_online),
+            checked = settings.voiceOnlineTranscription,
+            onCheckedChange = { onAction(AiAction.ToggleVoiceOnline(it)) },
+        )
+        Text(
+            text = stringResource(R.string.ai_setting_voice_online_disclosure),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

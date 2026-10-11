@@ -4,9 +4,19 @@
     <!-- 分期 / 信用卡到期提醒通知（API 33+ 需要运行时授权）。 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 语音记账（AI 页按住说话）：系统 SpeechRecognizer 需要麦克风，运行时按需申请。 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- 备份/恢复与（后续的）AI 联网；WorkManager 的「仅 Wi-Fi」约束需要读取网络状态。 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Android 11+ 包可见性：系统 SpeechRecognizer 需要查询可用 RecognitionService。 -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <application
         android:name=".VipLedgerApplication"

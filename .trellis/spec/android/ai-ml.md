@@ -201,7 +201,82 @@ val date   = ruleEntry.date ?: trustCloudDate(parsed.opt("occurredAt"), context.
 - **已知限制**：`--selfcheck` 是手动命令，**未接进 `gradlew test`**（让构建依赖 Python 解释器
   超出本项目构建契约）。因此只跑 Gradle 的 CI **抓不到** Python↔Kotlin 漂移。
 
-### 未实现（后续里程碑）
+### 语音输入首切片（P5）
+
+### 1. Scope / Trigger
+
+P5 首切片将系统语音转写接入 `:feature:ai` 的既有文字解析/草稿确认入口；本切片不保存原始音频、不新增数据库表或迁移，图片选取与系统分享属于后续切片。
+
+### 2. Signatures
+
+```kotlin
+interface SpeechTranscriber {
+    fun start()
+    fun stop()
+    fun cancel()
+    fun setListener(listener: Listener?)
+
+    interface Listener {
+        fun onReady(mode: VoiceRecognitionMode)
+        fun onPartialResult(text: String)
+        fun onResult(text: String)
+        fun onError(failure: VoiceFailure)
+    }
+}
+
+fun resolveVoiceRecognitionMode(
+    onDeviceAvailable: Boolean,
+    onlineTranscriptionEnabled: Boolean,
+): VoiceRecognitionMode?
+```
+
+接口位于 `:core:domain`，系统 `SpeechRecognizer` 实现位于 `:core:data`，UI 只依赖接口。`AiSettings.voiceOnlineTranscription` 默认 `false`，并与云端 LLM 的 `networkEnabled` 独立持久化。
+
+### 3. Contracts
+
+- API 31+ 且 `isOnDeviceRecognitionAvailable(context)` 为真时使用 `createOnDeviceSpeechRecognizer`，模式为 `ON_DEVICE`。
+- 端侧不可用且 `voiceOnlineTranscription=true` 时才允许普通 `createSpeechRecognizer`，模式为 `MAYBE_ONLINE`；UI 必须显示「系统识别可能联网」，不得标为离线。
+- 端侧不可用且开关关闭时不启动识别，返回 `NO_SERVICE`，保留手工输入路径。
+- 最终 `onResult` 只写入 AI 输入框，不触发解析或确认；`onPartialResult` 仅用于聆听态预览。
+- 按住开始、松开调用 `stop`、上滑或离页调用 `cancel`；`cancel` 同时释放底层识别器。取消和离页不得提交文本，离页还要清理 listener。
+- `RECORD_AUDIO` 按需运行时申请；Android 11+ manifest 声明 `android.speech.RecognitionService` 的 `<queries>`。原始音频只交给系统识别器处理，不进入应用存储或日志。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 结果 |
+|---|---|
+| 未授予 `RECORD_AUDIO` | `PERMISSION_DENIED`，提示授权或改手工 |
+| 无端侧服务且联网转写关闭 | `NO_SERVICE`，不得偷偷回退联网 |
+| 普通识别网络/服务错误或识别器繁忙 | `NO_SERVICE` |
+| `ERROR_SPEECH_TIMEOUT` | `TIMEOUT` |
+| `ERROR_NO_MATCH` 或最终结果为空 | `NO_RESULT` |
+| 其他系统错误或识别器创建异常 | `UNKNOWN` 或 `NO_SERVICE`，不得抛到 UI |
+
+### 5. Good / Base / Bad Cases
+
+- Good：端侧服务可用，按住说出「午饭35」，松开后文本进入可编辑框，用户仍需手动解析/确认。
+- Base：端侧不可用且用户开启联网转写，使用普通识别并明确显示「可能联网」。
+- Bad：联网开关关闭时使用普通识别、取消后把 partial 文本写入输入框、或把语音识别结果自动入账。
+
+### 6. Tests Required
+
+- `VoiceInputStateTest`：开始、ready 模式、partial、成功、失败、取消和复位；断言取消不保留文本。
+- `VoiceRecognitionModeTest`：端侧优先、联网开关回退、关闭开关时不可用。
+- `SystemSpeechTranscriberTest`：系统错误码到 `VoiceFailure` 的映射。
+- `AiSettingsTest`：联网转写默认关闭、与云端联网开关独立、`toString` 不改变脱敏契约。
+- 交付前运行 `test assembleDebug assembleRelease lintDebug`。
+
+### 7. Wrong vs Correct
+
+```kotlin
+// Wrong：端侧不可用时无条件创建普通识别器，并在界面写「离线」
+SpeechRecognizer.createSpeechRecognizer(context)
+
+// Correct：先根据端侧能力与独立开关判定；普通识别明确标注可能联网
+resolveVoiceRecognitionMode(onDeviceAvailable, settings.voiceOnlineTranscription)
+```
+
+## 未实现（后续里程碑）
 
 - **ONNX 导入与外部模型**：ARCHITECTURE §7 原本规划 M7 引入 ONNX Runtime Android，已决定
   **延后**——验收标准不含它，它是十几 MB 级新依赖，且 `:ml:classifier` 是**纯 JVM 模块

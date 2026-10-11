@@ -2,7 +2,9 @@ package com.han1997.vipledger.core.data.di
 
 import com.han1997.vipledger.core.data.ai.AiSettingsRepositoryImpl
 import com.han1997.vipledger.core.data.ai.OpenAiCompatibleLlmParserClient
+import com.han1997.vipledger.core.data.ai.SystemSpeechTranscriber
 import com.han1997.vipledger.core.domain.ai.AiSettingsRepository
+import com.han1997.vipledger.core.domain.ai.SpeechTranscriber
 import com.han1997.vipledger.core.domain.nlp.LlmParserClient
 import dagger.Binds
 import dagger.Module
@@ -25,6 +27,10 @@ abstract class AiModule {
     @Binds
     @Singleton
     abstract fun bindAiSettingsRepository(impl: AiSettingsRepositoryImpl): AiSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSpeechTranscriber(impl: SystemSpeechTranscriber): SpeechTranscriber
 
     companion object {
 

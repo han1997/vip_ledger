@@ -20,6 +20,14 @@ data class AiSettings(
      * 与 [networkEnabled] 无关：训练完全本地，不联网。
      */
     val autoTrainEnabled: Boolean = false,
+    /**
+     * 语音**联网转写**独立开关，默认关（PRD「语音」切片硬约束）。
+     *
+     * 关闭时只用端侧识别（`createOnDeviceSpeechRecognizer`，API 31+），端侧不可用即提示改手工输入；
+     * 开启后，端侧不可用时可退化为普通系统识别——那种情况界面必须标注「可能联网」，绝不冒称离线。
+     * 与 [networkEnabled]（云端解析）互相独立。
+     */
+    val voiceOnlineTranscription: Boolean = false,
 ) {
     companion object {
         /** 基准实测性价比最高的默认模型（`research/ollama-model-benchmark.md`）。 */
@@ -37,7 +45,8 @@ data class AiSettings(
     override fun toString(): String =
         "AiSettings(baseUrl=${USERINFO.replace(baseUrl, "$1")}, " +
             "apiKey=${if (apiKey.isEmpty()) "" else "***"}, " +
-            "model=$model, networkEnabled=$networkEnabled, autoTrainEnabled=$autoTrainEnabled)"
+            "model=$model, networkEnabled=$networkEnabled, autoTrainEnabled=$autoTrainEnabled, " +
+            "voiceOnlineTranscription=$voiceOnlineTranscription)"
 }
 
 /**

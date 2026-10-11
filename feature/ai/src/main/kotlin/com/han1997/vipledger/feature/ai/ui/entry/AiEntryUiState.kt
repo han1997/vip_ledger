@@ -1,6 +1,8 @@
 package com.han1997.vipledger.feature.ai.ui.entry
 
 import com.han1997.vipledger.core.domain.ai.AiSettings
+import com.han1997.vipledger.core.domain.ai.VoiceFailure
+import com.han1997.vipledger.core.domain.ai.VoiceInputState
 import com.han1997.vipledger.core.domain.model.TxnDraft
 import com.han1997.vipledger.core.domain.nlp.LlmParserClient
 import com.han1997.vipledger.core.domain.nlp.NlpWarning
@@ -222,6 +224,11 @@ data class AiEntryUiState(
     val accounts: List<AiOption> = emptyList(),
     val categories: List<AiOption> = emptyList(),
     val settings: AiSettings = AiSettings(),
+    /**
+     * 语音输入状态机（PRD「语音」切片）。
+     * 按住开始、松开结束、上滑取消、失败可重试；离页停止并复位；取消/离页不提交文本。
+     */
+    val voice: VoiceInputState = VoiceInputState(),
     val notice: AiNotice? = null,
     val noticeDetail: String? = null,
 ) {
@@ -269,6 +276,24 @@ sealed interface AiAction {
 
     /** 隐私开关：立即生效并落库（开关语义必须即时、无歧义）。 */
     data class ToggleNetwork(val enabled: Boolean) : AiAction
+
+    /** 语音联网转写开关：立即生效并落库（与 [ToggleNetwork] 同构，PRD「语音」切片）。 */
+    data class ToggleVoiceOnline(val enabled: Boolean) : AiAction
+
+    /** 按住开始录音：进入 [VoiceInputState] 的 LISTENING 相位。 */
+    data object VoiceStart : AiAction
+
+    /** 松开结束录音：取最终转写结果并提交到输入框。 */
+    data object VoiceStop : AiAction
+
+    /** 上滑取消 / 离页：停止并复位，不提交文本。 */
+    data object VoiceCancel : AiAction
+
+    /** 麦克风权限被拒：进入失败相位并提示可改手工输入。 */
+    data object VoicePermissionDenied : AiAction
+
+    /** 失败后可重试：回到 IDLE，等待再次按住。 */
+    data object VoiceRetry : AiAction
 
     data object SaveSettings : AiAction
 
