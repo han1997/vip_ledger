@@ -11,6 +11,7 @@
 | `component/chart/ChartGeometry.kt` | 纯几何计算（占比、弧度、柱高比例、标签步长） | 纯函数，必须有 `src/test` 单测 |
 | `component/chart/PieChart.kt` | `Canvas` 画环图 + 中心合计 + 图例 | 手工走查 |
 | `component/chart/BarChart.kt` | `Canvas` 画柱状图（收入/支出双柱） | 手工走查 |
+| `component/chart/LineChart.kt` | `Canvas` 画折线图（多序列 + 零线 + 选中列引导，P7 资产趋势） | 手工走查（几何有单测） |
 
 **规则**：把算术从绘制里剥出来。`Canvas` 只能靠手工走查，但「金额 → 弧度」「金额 → 柱高」这类
 计算必须可单测；新图表一律先写几何纯函数，再写 Compose 绘制。
@@ -33,6 +34,7 @@ object ChartGeometry {
 ```kotlin
 data class PieSlice(val label: String, val cents: Long, val color: Color)
 data class BarGroup(val label: String, val incomeCents: Long, val expenseCents: Long)
+data class LineSeries(val points: List<Long>, val color: Color)   // 等长采样点（分，可负）+ 线色（调用方给）
 
 @Composable fun PieChart(
     slices: List<PieSlice>,
@@ -52,6 +54,13 @@ data class BarGroup(val label: String, val incomeCents: Long, val expenseCents: 
     expenseColor: Color = ExpenseRed,
 )
 fun percentLabel(fraction: Float): String   // 「12.0%」（Locale.US，保留一位小数），环图/图例共用
+
+// ── 折线图几何（P7）───────────────────────────────────────────
+fun lineYRange(series: List<List<Long>>): Pair<Long, Long>      // 全序列共用值域，恒含 0；全零 → ±1
+fun lineX(count: Int, index: Int): Float                        // 0..1 等距；单点居中
+fun lineYFraction(value: Long, yMin: Long, yMax: Long): Float   // 0=底部(yMin) .. 1=顶部(yMax)，越界夹取
+fun zeroLineYFraction(yMin: Long, yMax: Long): Float            // 零线位置（值域恒含 0）
+fun guideIndex(xFraction: Float, count: Int): Int?              // 触摸/选中 → 最近采样点；无点 → null
 ```
 
 ## 数据契约

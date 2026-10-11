@@ -70,7 +70,7 @@ two investment tables and stay compatible with formats 1–5.
 The complete agreed feature roadmap and later phases are in [docs/FEATURE-ROADMAP.md](docs/FEATURE-ROADMAP.md).
 Category expansion now uses stable row containers; a Compose device test repeatedly expands,
 switches and collapses parent categories to prevent a reproduced node-insertion crash.
-Reimbursement, lending, installment plans and investment ledgers are now implemented; the P5 voice and image/share entry slices are implemented (optional attachment saving remains), while report improvements remain in later phases.
+Reimbursement, lending, installment plans and investment ledgers are now implemented; the P5 voice and image/share entry slices are implemented (optional attachment saving remains), P6 capture review entries and shared duplicate detection are in, and P7 asset trends are delivered; report walkthroughs on emulators are no longer performed (user decision), real-device acceptance stays user-driven.
 
 JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
 
@@ -96,6 +96,7 @@ Payment captures that need review now also produce a notification (when Android 
 - On-device classifier, plus optional OpenAI-compatible natural-language entry
 - Voice entry with press/hold/release/cancel controls, editable transcription, on-device-first system recognition, and an independent online-transcription switch (off by default)
 - Image entry via the system photo picker and image sharing: multi-image on-device Chinese OCR feeds the same draft review; originals are never saved
+- Asset/liability/net-worth history trends computed from verified baselines with backfill correction, a multi-series line chart, and CSV export named with ledger, range and scope
 - CSV and JSON import/export, with encrypted WebDAV snapshots
 - Offline payment capture with a separate review queue and account bindings
 
