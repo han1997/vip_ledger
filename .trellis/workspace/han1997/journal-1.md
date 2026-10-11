@@ -856,3 +856,38 @@ Delivered 0.1.8 (9) P6 code-side: capture review filter chips (candidates/posted
 ### Next Steps
 
 - None - task complete
+
+
+## Session 24: UI 重设计原型:墨绿金 · 静奢记账
+
+**Date**: 2026-10-11
+**Task**: UI 重设计原型:墨绿金 · 静奢记账
+**Branch**: `master`
+
+### Summary
+
+交付 docs/ui-prototype/ 交互式 HTML 原型(五 Tab + 记账编辑):内存态 SPA、原型与说明文字分离、Playwright 冒烟测试通过;记录 prototype-first 约定到 android/ui.md 与 README。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9b08122` | (see git log) |
+| `d3bda84` | (see git log) |
+| `99cec4b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
