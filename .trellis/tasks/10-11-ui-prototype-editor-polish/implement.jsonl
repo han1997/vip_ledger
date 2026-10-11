@@ -1,0 +1,2 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/android/ui.md", "reason": "记账编辑页口径(时间到秒、二级分类插父级行下、一次展开一个、保存防重)与原型优先约定"}
