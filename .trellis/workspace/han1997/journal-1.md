@@ -891,3 +891,37 @@ Delivered 0.1.8 (9) P6 code-side: capture review filter chips (candidates/posted
 ### Next Steps
 
 - None - task complete
+
+
+## Session 25: 原型打磨:记账页键盘/秒/分类逻辑与功能补全
+
+**Date**: 2026-10-11
+**Task**: 原型打磨:记账页键盘/秒/分类逻辑与功能补全
+**Branch**: `master`
+
+### Summary
+
+数字键盘可折叠+千分位、时间到秒 HH:MM:SS、分类首格清除与二级区插父级行下;补全备注/标签/删除/转账双账户/AI 入口/首页搜索/账户与分类下钻;对齐真实编辑页口径写入 spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `adcde5c` | (see git log) |
+| `e000c55` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
