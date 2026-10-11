@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -144,8 +145,34 @@ private fun AutoBookContent(state: AutoBookUiState, onAction: (AutoBookAction) -
                 TextButton(onClick = { onAction(AutoBookAction.DismissError) }) { Text(stringResource(R.string.auto_dismiss)) }
             }
             item { SectionHeader(title = stringResource(R.string.auto_records)) }
-            if (state.candidates.isEmpty()) item { Hint(stringResource(if (config.enabled) R.string.auto_empty_enabled else R.string.auto_empty_disabled)) }
-            items(state.candidates, key = { it.id }) { candidate ->
+            // 状态筛选（P6）：默认候选；已入账/已忽略可达，已忽略可重新确认。
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(
+                        selected = state.recordFilter == RecordFilter.CANDIDATES,
+                        onClick = { onAction(AutoBookAction.SetRecordFilter(RecordFilter.CANDIDATES)) },
+                        label = { Text(stringResource(R.string.auto_filter_candidates, state.pendingCount)) },
+                    )
+                    FilterChip(
+                        selected = state.recordFilter == RecordFilter.POSTED,
+                        onClick = { onAction(AutoBookAction.SetRecordFilter(RecordFilter.POSTED)) },
+                        label = { Text(stringResource(R.string.auto_filter_posted, state.postedCount)) },
+                    )
+                    FilterChip(
+                        selected = state.recordFilter == RecordFilter.IGNORED,
+                        onClick = { onAction(AutoBookAction.SetRecordFilter(RecordFilter.IGNORED)) },
+                        label = { Text(stringResource(R.string.auto_filter_ignored, state.ignoredCount)) },
+                    )
+                }
+            }
+            val shown = state.filteredCandidates()
+            if (shown.isEmpty()) {
+                item { Hint(stringResource(recordEmptyRes(state.recordFilter, config.enabled))) }
+            }
+            items(shown, key = { it.id }) { candidate ->
                 GroupCard {
                     Text(stringResource(R.string.auto_record_row, appLabel(candidate.app), candidate.facts.merchant,
                         candidate.facts.amountCents?.let { Money.ofCents(it).toDisplayString() } ?: stringResource(R.string.auto_unknown)))
@@ -167,6 +194,11 @@ private fun AutoBookContent(state: AutoBookUiState, onAction: (AutoBookAction) -
                             else -> R.string.auto_status_ignored
                         }))
                         candidate.txnId?.let { id -> TextButton(onClick = { onEditTxn(candidate.ledgerId, id) }) { Text(stringResource(R.string.auto_edit_txn)) } }
+                        if (candidate.status == CandidateStatus.IGNORED) {
+                            TextButton(onClick = { onAction(AutoBookAction.Reopen(candidate.id)) }, enabled = !state.busy) {
+                                Text(stringResource(R.string.auto_reopen))
+                            }
+                        }
                     }
                     if (state.form?.id == candidate.id) CandidateEditor(state, onAction)
                 }
@@ -198,6 +230,13 @@ private fun CandidateEditor(state: AutoBookUiState, onAction: (AutoBookAction) -
     SecondaryButton(text = stringResource(R.string.auto_link), onClick = { onAction(AutoBookAction.Link) }, enabled = !state.busy && form.linkId.isNotBlank())
 }
 @Composable private fun statusLabel(value: Boolean) = stringResource(if (value) R.string.auto_yes else R.string.auto_no)
+
+/** 筛选视图的空态文案：候选区分开关提示，已入账/已忽略用各自文案。 */
+private fun recordEmptyRes(filter: RecordFilter, enabled: Boolean): Int = when (filter) {
+    RecordFilter.CANDIDATES -> if (enabled) R.string.auto_empty_enabled else R.string.auto_empty_disabled
+    RecordFilter.POSTED -> R.string.auto_empty_posted
+    RecordFilter.IGNORED -> R.string.auto_empty_ignored
+}
 @Composable private fun appLabel(value: PaymentApp) = stringResource(when (value) {
     PaymentApp.WECHAT -> R.string.auto_wechat; PaymentApp.ALIPAY -> R.string.auto_alipay
     PaymentApp.JD -> R.string.auto_jd; PaymentApp.PDD -> R.string.auto_pdd; PaymentApp.TAOBAO -> R.string.auto_taobao

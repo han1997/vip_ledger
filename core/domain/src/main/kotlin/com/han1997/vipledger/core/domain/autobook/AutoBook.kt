@@ -65,5 +65,19 @@ interface AutoBookRepository {
     suspend fun capture(observation: PaymentObservation): AppResult<AutoCandidate?>
     suspend fun confirm(id: String, input: CandidateConfirmation): AppResult<Txn>
     suspend fun ignore(id: String): AppResult<Unit>
+    /** 已忽略候选重新确认：置回 PENDING（凭据不变，重放仍不入账）。 */
+    suspend fun reopen(id: String): AppResult<Unit>
     suspend fun link(id: String, txnId: String): AppResult<Unit>
+
+    /**
+     * 截图草稿与自动采集的疑似重复检查（P6 判重共享）：同账本、[occurredAt] 所在自然日
+     * （[occurredAt] 为 AI 草稿的日界零点）内、同额、方向一致（或候选方向未知）且仍待确认/
+     * 已入账的候选是否存在。存在即由界面提示「疑似与自动采集重复」，人工决定，不自动合并。
+     */
+    suspend fun hasSimilarCandidate(
+        ledgerId: String,
+        occurredAt: Long,
+        amountCents: Long,
+        type: TransactionType,
+    ): Boolean
 }

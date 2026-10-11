@@ -49,6 +49,11 @@ data class AiDraft(
     /** 解析层未能确定的字段；必须由用户选择后才能确认（PRD Requirement 8）。 */
     val unresolved: Set<ParsedField>,
     val warnings: List<NlpWarning>,
+    /**
+     * 疑似与自动采集重复（P6 判重共享）：落库前同账本同日存在同额同向的采集候选
+     * （PENDING/POSTED）。只提示、不阻塞，由用户决定丢弃草稿或忽略对应候选。
+     */
+    val suspectedDuplicate: Boolean = false,
     val parsed: ParsedEntry,
 ) {
     val persisted: Boolean get() = txnId != null

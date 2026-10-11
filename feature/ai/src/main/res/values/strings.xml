@@ -78,6 +78,7 @@
     <string name="ai_reading_images">正在识别图片（%1$d/%2$d）…</string>
     <string name="ai_notice_images_no_text">未能从图片中识别出文本，可改用手工输入</string>
     <string name="ai_notice_images_partial">已解析出草稿；%1$d 张图片未能识别出文本</string>
+    <string name="ai_suspected_duplicate">疑似与自动采集重复：若这笔已由自动记账入账，请丢弃本条并到「我的 → 自动记账」忽略对应候选。</string>
 
     <!-- 一次性提示 -->
     <string name="ai_notice_parsed">已解析出 %1$d 笔待确认草稿</string>

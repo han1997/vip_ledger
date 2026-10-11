@@ -17,6 +17,7 @@ import com.han1997.vipledger.core.domain.ai.VoiceInputState
 import com.han1997.vipledger.core.domain.ai.VoiceRecognitionMode
 import com.han1997.vipledger.core.domain.ai.cloudClientFor
 import com.han1997.vipledger.core.domain.ai.reduce
+import com.han1997.vipledger.core.domain.autobook.AutoBookRepository
 import com.han1997.vipledger.core.domain.calculator.TxnValidator
 import com.han1997.vipledger.core.domain.model.Account
 import com.han1997.vipledger.core.domain.model.Category
@@ -68,6 +69,8 @@ class AiEntryViewModel @Inject constructor(
     private val transcriber: SpeechTranscriber,
     /** 图片文本识别接缝（P5 图片切片）；实现是 ML Kit 本机中文识别。 */
     private val imageTextReader: ImageTextReader,
+    /** 自动采集仓库（P6 判重共享）：草稿落库前查同日同额候选做疑似重复提示。 */
+    private val autoBook: AutoBookRepository,
     observeCurrentLedger: ObserveCurrentLedgerUseCase,
     observeAccounts: ObserveAccountsUseCase,
     observeCategoryTree: ObserveCategoryTreeUseCase,
@@ -266,9 +269,21 @@ class AiEntryViewModel @Inject constructor(
             occurredAt = { date -> date.startOfDayEpochMillis(timeProvider.zone) },
             source = ::sourceOf,
             keyOf = { nextKey() },
-        ).map { persistIfPossible(ledgerId, it) }
+        ).map { withDuplicateHint(ledgerId, it) }
+            .map { persistIfPossible(ledgerId, it) }
         mutableState.update { it.copy(drafts = it.drafts + drafts) }
         return drafts.size
+    }
+
+    /**
+     * P6 判重共享（AI 草稿侧）：落库前查同账本同日同额候选（PENDING/POSTED），
+     * 命中即在草稿上标「疑似与自动采集重复」；只提示、不阻塞，人工决定。
+     */
+    private suspend fun withDuplicateHint(ledgerId: String, draft: AiDraft): AiDraft {
+        val suspected = draft.amountCents > 0 && autoBook.hasSimilarCandidate(
+            ledgerId, draft.occurredAt, draft.amountCents, draft.type,
+        )
+        return if (suspected) draft.copy(suspectedDuplicate = true) else draft
     }
 
     /**
@@ -329,10 +344,16 @@ class AiEntryViewModel @Inject constructor(
     private fun persistIfPossibleAsync(ledgerId: String?, draft: AiDraft) {
         if (ledgerId == null || draft.persisted || !draft.canPersist) return
         viewModelScope.launch {
-            val next = persistIfPossible(ledgerId, draft)
+            // 编辑（改金额/类型/账户）后重算疑似重复标记，避免提示过期。
+            val checked = withDuplicateHint(ledgerId, draft)
+            val next = persistIfPossible(ledgerId, checked)
             if (next.persisted) {
                 mutableState.update { state ->
                     state.copy(drafts = state.drafts.map { if (it.key == draft.key) next else it })
+                }
+            } else if (checked.suspectedDuplicate != draft.suspectedDuplicate) {
+                mutableState.update { state ->
+                    state.copy(drafts = state.drafts.map { if (it.key == draft.key) checked else it })
                 }
             }
         }

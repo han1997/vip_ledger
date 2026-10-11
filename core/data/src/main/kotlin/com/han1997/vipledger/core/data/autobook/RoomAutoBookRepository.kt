@@ -3,6 +3,7 @@ package com.han1997.vipledger.core.data.autobook
 import androidx.room.withTransaction
 import com.han1997.vipledger.core.common.result.AppError
 import com.han1997.vipledger.core.common.result.AppResult
+import com.han1997.vipledger.core.common.time.TimeProvider
 import com.han1997.vipledger.core.database.LedgerDatabase
 import com.han1997.vipledger.core.database.entity.AutoEvidenceEntity
 import com.han1997.vipledger.core.domain.autobook.*
@@ -15,6 +16,8 @@ import com.han1997.vipledger.core.domain.repository.*
 import com.han1997.vipledger.core.domain.support.AccountBalanceSyncer
 import com.han1997.vipledger.core.model.*
 import com.han1997.vipledger.core.model.money.Money
+import com.han1997.vipledger.core.model.time.startOfDayEpochMillis
+import com.han1997.vipledger.core.model.time.toLocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.map
 import java.security.MessageDigest
@@ -32,6 +35,7 @@ class RoomAutoBookRepository @Inject constructor(
     private val rules: MerchantRuleRepository,
     private val classifier: CategoryClassifier,
     private val balances: AccountBalanceSyncer,
+    private val timeProvider: TimeProvider,
 ) : AutoBookRepository {
     private val dao get() = database.autoBookDao()
     override fun observeConfig() = dao.observeConfig().map { it.domain() }
@@ -99,19 +103,30 @@ class RoomAutoBookRepository @Inject constructor(
                         it.facts.type == facts.type &&
                         (it.facts.merchant == facts.merchant || it.facts.merchant.isBlank() || facts.merchant.isBlank())
                 }
+            // P6 判重共享：同账本同日（±1 天容差）内同额、方向一致的 AI 页来源账目（截图草稿/已确认）
+            // 也视为疑似重复 → 候选标 DUPLICATE 待确认，自动入账被挡住，交人工处理。
+            val nearAmount = facts.amountCents
+            val nearAi = if (nearAmount != null) {
+                val zone = timeProvider.zone
+                val dayStart = observation.observedAt.toLocalDate(zone).startOfDayEpochMillis(zone)
+                database.txnDao().nearAiSourceEntry(
+                    config.ledgerId, dayStart - DAY_MILLIS, dayStart + DAY_MILLIS,
+                    nearAmount, facts.type?.name,
+                )
+            } else null
             val paidAt = facts.paidAt
             val reason = when {
                 facts.reason != ReviewReason.NONE -> facts.reason
                 paidAt != null && (paidAt < observation.observedAt - 600_000 || paidAt > observation.observedAt + 300_000) -> ReviewReason.TIME
                 accountId == null || (facts.type?.requiresTargetAccount == true && (targetId == null || targetId == accountId)) -> ReviewReason.ACCOUNT
                 facts.type == TransactionType.REFUND && (original == null || !refundAllowed(original, facts.amountCents ?: 0)) -> ReviewReason.REFUND
-                near != null -> ReviewReason.DUPLICATE
+                near != null || nearAi != null -> ReviewReason.DUPLICATE
                 observation.app !in config.verifiedApps -> ReviewReason.UNVERIFIED
                 else -> ReviewReason.NONE
             }
             val candidate = AutoCandidate(knownId ?: UUID.randomUUID().toString(), config.ledgerId, observation.app,
                 observation.source, facts.paidAt ?: observation.observedAt, facts, accountId, targetId, reason = reason,
-                refundOfTxnId = original?.id, duplicateTxnId = near?.txnId)
+                refundOfTxnId = original?.id, duplicateTxnId = near?.txnId ?: nearAi?.id)
             dao.saveCandidate(candidate.entity())
             remember(config.ledgerId, eventKey, candidate.id)
             externalKey?.let { remember(config.ledgerId, it, candidate.id) }
@@ -184,6 +199,31 @@ class RoomAutoBookRepository @Inject constructor(
             dao.saveCandidate(value.copy(status = CandidateStatus.IGNORED).entity())
         }
     }
+
+    override suspend fun reopen(id: String) = guarded {
+        database.withTransaction {
+            val value = requireNotNull(dao.candidate(id)?.domain())
+            require(value.status == CandidateStatus.IGNORED)
+            // 凭据（auto_evidence）保持不变：同一笔支付重放仍不会二次入账。
+            dao.saveCandidate(value.copy(status = CandidateStatus.PENDING).entity())
+        }
+    }
+
+    override suspend fun hasSimilarCandidate(
+        ledgerId: String,
+        occurredAt: Long,
+        amountCents: Long,
+        type: TransactionType,
+    ): Boolean = database.withTransaction {
+        // [occurredAt] 是 AI 草稿的日界零点；同日候选落在 [occurredAt, occurredAt + 24h)。
+        dao.nearby(ledgerId, occurredAt, occurredAt + DAY_MILLIS)
+            .map { it.domain() }
+            .any {
+                (it.status == CandidateStatus.PENDING || it.status == CandidateStatus.POSTED) &&
+                    it.facts.amountCents == amountCents &&
+                    (it.facts.type == null || it.facts.type == type)
+            }
+    }
     override suspend fun link(id: String, txnId: String) = guarded {
         database.withTransaction {
             val value = requireNotNull(dao.candidate(id)?.domain())
@@ -197,6 +237,11 @@ class RoomAutoBookRepository @Inject constructor(
     }
     private fun externalKey(app: PaymentApp, type: TransactionType?, id: String) = "external:$app:$type:$id"
     private fun hash(value: String) = MessageDigest.getInstance("SHA-256").digest(value.toByteArray()).joinToString("") { "%02x".format(it) }
+
+    private companion object {
+        /** AI 草稿 occurredAt 恒为日界零点；±1 天窗口覆盖跨零点截图与次日补拍。 */
+        const val DAY_MILLIS: Long = 24 * 60 * 60 * 1000L
+    }
     private class Rejected(val error: AppError) : RuntimeException()
     private suspend fun <T> guarded(block: suspend () -> T): AppResult<T> = try {
         AppResult.success(block())

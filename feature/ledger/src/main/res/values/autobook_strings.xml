@@ -97,6 +97,13 @@
     <string name="auto_no_accounts">此账本暂无可用账户，请先到“我的 → 账户管理”添加账户。</string>
     <string name="auto_empty_enabled">暂无记录，支付完成后会显示在这里。</string>
     <string name="auto_empty_disabled">开启支付识别后，记录会显示在这里。</string>
+    <!-- 状态筛选（P6：完善候选/已入账/忽略入口） -->
+    <string name="auto_filter_candidates">候选（%1$d）</string>
+    <string name="auto_filter_posted">已入账（%1$d）</string>
+    <string name="auto_filter_ignored">已忽略（%1$d）</string>
+    <string name="auto_reopen">重新确认</string>
+    <string name="auto_empty_posted">还没有已入账的记录。</string>
+    <string name="auto_empty_ignored">还没有已忽略的记录。</string>
     <string name="auto_help_show">%1$s</string>
     <string name="auto_help_hide">收起%1$s</string>
     <string name="auto_expanded">已展开</string>

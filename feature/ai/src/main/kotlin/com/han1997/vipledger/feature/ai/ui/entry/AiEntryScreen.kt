@@ -666,6 +666,14 @@ private fun DraftCard(
                 )
             }
 
+            if (draft.suspectedDuplicate) {
+                Text(
+                    text = "⚠ " + stringResource(R.string.ai_suspected_duplicate),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(

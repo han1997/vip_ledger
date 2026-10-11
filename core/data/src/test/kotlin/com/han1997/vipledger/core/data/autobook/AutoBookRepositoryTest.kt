@@ -101,6 +101,7 @@ class AutoBookRepositoryTest {
         db, AccountRepositoryImpl(db.accountDao()), LedgerRepositoryImpl(db.ledgerDao(), time), CategoryRepositoryImpl(db.categoryDao()),
         TxnRepositoryImpl(db.txnDao(), time), MerchantRuleRepositoryImpl(db.merchantRuleDao()),
         object : CategoryClassifier { override suspend fun classify(title: String, remark: String) = emptyList<CategorySuggestion>() }, syncer,
+        time,
     )
     private suspend fun seed(verified: Boolean = true): RoomAutoBookRepository {
         db.ledgerDao().upsert(LedgerEntity("l", "Ledger", createdAt = 1, updatedAt = 1))
@@ -132,6 +133,29 @@ class AutoBookRepositoryTest {
         repo.confirm(second.id, CandidateConfirmation(TransactionType.EXPENSE, 10000, "a", title = "第二次购买")).getOrThrow()
         assertEquals(2, db.txnDao().countByLedger("l"))
     }
+    @Test fun reopenedIgnoredCandidateReturnsToPendingAndReplayStillDoesNotPost() = runTest {
+        // P6：已忽略可重新确认；凭据保持，同一笔支付重放仍不会二次入账。
+        val repo = seed(verified = false)
+        val candidate = assertNotNull(repo.capture(observation()).getOrThrow())
+        assertEquals(ReviewReason.UNVERIFIED, candidate.reason)
+        repo.ignore(candidate.id).getOrThrow()
+        assertEquals(CandidateStatus.IGNORED, repo.observeCandidates("l").first().single().status)
+
+        repo.reopen(candidate.id).getOrThrow()
+        val reopened = repo.observeCandidates("l").first().single()
+        assertEquals(CandidateStatus.PENDING, reopened.status)
+        assertEquals(ReviewReason.UNVERIFIED, reopened.reason)
+        assertEquals(0, db.txnDao().countByLedger("l"))
+
+        // 重放同一笔支付：凭据仍命中，返回同一条候选、不新增记录，也不会产生新账目。
+        assertEquals(candidate.id, assertNotNull(repo.capture(observation()).getOrThrow()).id)
+        assertEquals(1, repo.observeCandidates("l").first().size)
+        assertEquals(0, db.txnDao().countByLedger("l"))
+
+        // 重新确认后可正常入账。
+        repo.confirm(candidate.id, CandidateConfirmation(TransactionType.EXPENSE, 10000, "a", title = "重新确认")).getOrThrow()
+        assertEquals(1, db.txnDao().countByLedger("l"))
+    }
     @Test fun diagnosticAndUnboundAccountsNeverChangeBalance() = runTest {
         val repo = seed(verified = false)
         assertEquals(ReviewReason.UNVERIFIED, repo.capture(observation()).getOrThrow()!!.reason)
@@ -140,6 +164,45 @@ class AutoBookRepositoryTest {
         assertEquals(0, db.txnDao().countByLedger("l"))
         assertEquals(0, db.accountDao().getById("a")!!.currentBalanceCents)
     }
+    @Test fun aiScreenshotDraftSameDayMakesCapturedCandidateDuplicate() = runTest {
+        // P6 判重共享（capture 侧）：同账本同日同额同向的 AI 页来源草稿 → 候选 DUPLICATE，自动入账被挡。
+        val repo = seed()
+        db.txnDao().upsert(TxnEntity(
+            id = "ai-draft", ledgerId = "l", type = TransactionType.EXPENSE, amountCents = 10000,
+            accountId = "a", occurredAt = 0, title = "超市", source = TxnSource.AI,
+            draftStatus = DraftStatus.PENDING, createdAt = 1, updatedAt = 1,
+        ))
+        val candidate = assertNotNull(repo.capture(observation()).getOrThrow())
+        assertEquals(ReviewReason.DUPLICATE, candidate.reason)
+        assertEquals("ai-draft", candidate.duplicateTxnId)
+        // 只有截图草稿一条账目：采集候选未自动入账。
+        assertEquals(1, db.txnDao().countByLedger("l"))
+
+        // 草稿确认后，同日另一笔同额采集仍被挡（已确认的 AI 账目也算）。
+        db.txnDao().updateDraftStatus("ai-draft", "CONFIRMED", 2)
+        val second = assertNotNull(repo.capture(observation("second", "different456")).getOrThrow())
+        assertEquals(ReviewReason.DUPLICATE, second.reason)
+        assertEquals(1, db.txnDao().countByLedger("l"))
+    }
+
+    @Test fun hasSimilarCandidateMatchesSameDayPendingOrPostedOnly() = runTest {
+        // P6 判重共享（AI 草稿侧）：同日 PENDING/POSTED 候选算疑似重复；IGNORED/不同日/不同额/不同向不算。
+        val repo = seed(verified = false)
+        val candidate = assertNotNull(repo.capture(observation()).getOrThrow())
+        val draftDayStart = 0L // observation(at = 1000, UTC) → 同日日界零点
+        assertTrue(repo.hasSimilarCandidate("l", draftDayStart, 10000, TransactionType.EXPENSE))
+        assertFalse(repo.hasSimilarCandidate("l", draftDayStart, 9999, TransactionType.EXPENSE))
+        assertFalse(repo.hasSimilarCandidate("l", draftDayStart, 10000, TransactionType.INCOME))
+        assertFalse(repo.hasSimilarCandidate("l", draftDayStart + 3 * 24 * 60 * 60 * 1000L, 10000, TransactionType.EXPENSE))
+
+        repo.ignore(candidate.id).getOrThrow()
+        assertFalse(repo.hasSimilarCandidate("l", draftDayStart, 10000, TransactionType.EXPENSE), "已忽略候选不再算重复")
+
+        repo.reopen(candidate.id).getOrThrow()
+        repo.confirm(candidate.id, CandidateConfirmation(TransactionType.EXPENSE, 10000, "a", title = "已入账")).getOrThrow()
+        assertTrue(repo.hasSimilarCandidate("l", draftDayStart, 10000, TransactionType.EXPENSE), "已入账候选仍算重复（防双记）")
+    }
+
     @Test fun historicalPaymentPageRequiresReviewInsteadOfPostingAgain() = runTest {
         val repo = seed()
         val event = observation(at = 1_791_417_600_000).let {

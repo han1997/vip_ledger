@@ -60,6 +60,8 @@ class AutoBookViewModel @Inject constructor(
             AutoBookAction.Confirm -> current.form?.let { form -> form.confirmation()?.let { input -> run { repository.confirm(form.id, input) } } }
             AutoBookAction.Link -> current.form?.let { form -> run { repository.link(form.id, form.linkId) } }
             is AutoBookAction.Ignore -> run { repository.ignore(action.id) }
+            is AutoBookAction.Reopen -> run { repository.reopen(action.id) }
+            is AutoBookAction.SetRecordFilter -> state.update { it.copy(recordFilter = action.value, form = null) }
             is AutoBookAction.OpenSetting -> if (!control.openSetting(action.value)) state.update { it.copy(failed = true) }
             AutoBookAction.Refresh -> state.update { it.copy(permissions = control.permissions()) }
             AutoBookAction.DismissError -> state.update { it.copy(failed = false) }

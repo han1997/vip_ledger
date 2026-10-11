@@ -107,6 +107,25 @@ interface TxnDao {
     @Query("UPDATE txn SET draft_status = :draftStatus, updated_at = :updatedAt WHERE id = :id")
     suspend fun updateDraftStatus(id: String, draftStatus: String, updatedAt: Long)
 
+    /**
+     * 与自动采集候选可能重复的 AI 页来源账目（P6 判重共享）。
+     *
+     * 只匹配 AI 页来源（文字/语音/截图统一入口）且未丢弃的草稿或已确认账目；
+     * 时间窗口由调用方按「观测时刻所在自然日 ±1 天」传入（AI 草稿 occurredAt 恒为日界零点）。
+     */
+    @Query(
+        "SELECT * FROM txn WHERE ledger_id = :ledgerId AND deleted_at IS NULL AND source = 'AI' " +
+            "AND draft_status IN ('PENDING','CONFIRMED') AND amount_cents = :amountCents " +
+            "AND (:type IS NULL OR type = :type) AND occurred_at BETWEEN :from AND :to LIMIT 1",
+    )
+    suspend fun nearAiSourceEntry(
+        ledgerId: String,
+        from: Long,
+        to: Long,
+        amountCents: Long,
+        type: String?,
+    ): TxnEntity?
+
     @Query("DELETE FROM txn WHERE id = :id")
     suspend fun deleteHard(id: String)
 
