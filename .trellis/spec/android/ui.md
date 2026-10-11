@@ -1,4 +1,19 @@
-# UI（Compose）
+# UI(Compose)
+
+## 原型优先(Prototype-First)
+
+本轮(VipLedger Concept 01「墨绿金 · 静奢记账」)起,UI 改动先改原型、后改 Compose。
+
+- 视觉基准在 `docs/ui-prototype/`(`index.html` / `style.css` / `app.js`),BASELINE.md 登记已确认范围
+  与文件 SHA-256。**正式实现不得偏离已确认的原型**;原型没有的界面,先在原型补出来并确认,再写代码。
+- 原型是**交互式应用**(内存态 SPA),不是静态稿:改动要能点、能切换、能记账,并跑
+  `docs/ui-prototype/smoke-test.cjs`(Playwright,需 `PLAYWRIGHT_MODULE` 指向本机模块)。
+- **原型与说明文字分离**:设计说明、章节导航、色卡放手机外的工作台 / 说明面板 / README,
+  手机内只呈现应用界面,不写标注文字。
+- 原型 token → Compose 映射见应用内「设计系统与 Compose 映射」弹层:墨绿主色 `#1A3C34`、
+  纸感底 `#F7F5F0`、黄铜金 `#B08D57`;语义色(支出/收入/转账)与 4dp 网格沿用现有 token,
+  卡片圆角 12→16,衬线金额数字需引入字体资源。
+- 原型变更后同步更新 `BASELINE.md` 的摘要(差异部分回到「待确认」),并在原型 README 记录。
 
 ## 界面与状态
 

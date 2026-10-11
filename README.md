@@ -224,6 +224,14 @@ $releaseApk = "app/build/outputs/apk/release/fun.han1997.vipledger-v$($appVersio
 
 > **Back up the keystore.** `keystore/` and `keystore.properties` are gitignored and never committed. Keep a copy of both in a password manager or secure backup: losing the keystore means future releases are signed with a different key and cannot upgrade an installed app in place.
 
+## UI design prototype
+
+The upcoming Compose redesign follows an interactive HTML prototype: open
+[`docs/ui-prototype/index.html`](docs/ui-prototype/index.html) in a browser (no build step).
+It presents the five tabs and the entry editor as a clickable app, with the design notes kept
+outside the phone frame. The confirmed visual baseline and its Compose token mapping live in
+[`docs/ui-prototype/BASELINE.md`](docs/ui-prototype/BASELINE.md).
+
 ## Modules
 
 | Module | Responsibility |
