@@ -70,7 +70,7 @@ two investment tables and stay compatible with formats 1–5.
 The complete agreed feature roadmap and later phases are in [docs/FEATURE-ROADMAP.md](docs/FEATURE-ROADMAP.md).
 Category expansion now uses stable row containers; a Compose device test repeatedly expands,
 switches and collapses parent categories to prevent a reproduced node-insertion crash.
-Reimbursement, lending, installment plans and investment ledgers are now implemented; the P5 voice and image/share entry slices are implemented (optional attachment saving remains), P6 capture review entries and shared duplicate detection are in, and P7 asset trends are delivered; report walkthroughs on emulators are no longer performed (user decision), real-device acceptance stays user-driven.
+Reimbursement, lending, installment plans and investment ledgers are now implemented; the P5 voice and image/share entry slices are implemented (optional attachment saving remains), P6 capture review entries and shared duplicate detection are in, P7 asset trends are delivered, and P8 acceptance is recorded with 100k-row query regressions (see docs/ACCEPTANCE-RECORD.md). Real-device acceptance items remain user-driven; emulator walkthroughs are no longer performed (user decision).
 
 JD OCR handles the observed light-theme label variants (`订单蝙号`, `支付万式`, `©完成`) as well as the dark-theme variants. Verified JD order pages can retry after expansion or scrolling, with at least two seconds between screenshots and foreground/permission checks repeated before capture; an early incomplete screenshot no longer permanently blocks that page.
 
