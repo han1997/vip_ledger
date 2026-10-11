@@ -33,6 +33,7 @@ import com.han1997.vipledger.feature.ledger.ui.txnlist.TxnListScreen
  */
 object LedgerRoutes {
     const val ASSETS = "ledger/assets"
+    const val ASSET_TREND = "ledger/asset-trend"
     const val ACCOUNT_DETAIL = "ledger/account/{ledgerId}/{accountId}"
     const val SAVINGS = "ledger/savings/{ledgerId}"
     const val REIMBURSEMENT = "ledger/reimbursements/{ledgerId}"
@@ -121,6 +122,12 @@ fun NavGraphBuilder.ledgerGraph(
             onLoans = { navController.navigate(LedgerRoutes.loanList(it)) },
             onInvest = { navController.navigate(LedgerRoutes.investment(it)) },
             onLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
+            onTrend = { navController.navigate(LedgerRoutes.ASSET_TREND) },
+        )
+    }
+    composable(LedgerRoutes.ASSET_TREND) {
+        com.han1997.vipledger.feature.ledger.ui.wealth.trend.AssetTrendScreen(
+            onBack = { navController.popBackStack() },
         )
     }
     composable(LedgerRoutes.REIMBURSEMENT, arguments = listOf(navArgument("ledgerId") { type = NavType.StringType })) {

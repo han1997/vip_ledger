@@ -1,6 +1,7 @@
 package com.han1997.vipledger.feature.stats.ui.common
 
 import com.han1997.vipledger.core.domain.model.Account
+import com.han1997.vipledger.core.designsystem.format.suggestedFileName
 import com.han1997.vipledger.core.domain.model.Category
 import com.han1997.vipledger.core.domain.model.CategoryNode
 import com.han1997.vipledger.core.domain.model.Tag
@@ -46,11 +47,22 @@ class FilterOptionsTest {
     }
 
     @Test
-    fun exportFileNamesAreAsciiWithIsoDate() {
+    fun exportFileNamesCarryLedgerRangeAndScope() {
         val date = LocalDate(2026, 9, 24)
 
-        assertEquals("vipledger-search-20260924.csv", csvSuggestedFileName("search", date))
-        assertEquals("vipledger-stats-20260924.png", imageSuggestedFileName("stats", date))
+        assertEquals(
+            "vipledger-search-默认账本-20260901-0924-20260924.csv",
+            suggestedFileName("search", "默认账本", "20260901-0924", date),
+        )
+        assertEquals(
+            "vipledger-stats-20260924.png",
+            suggestedFileName("stats", "", "", date, extension = "png"),
+        )
+        // 文件系统非法字符与空白折叠为连字符，空段省略。
+        assertEquals(
+            "vipledger-trend-My-Ledger-20260924.csv",
+            suggestedFileName("trend", "My / Ledger?", "", date),
+        )
     }
 
     private fun category(id: String, name: String, parentId: String? = null) = Category(

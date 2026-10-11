@@ -25,7 +25,8 @@ import com.han1997.vipledger.feature.stats.navigation.StatsRoutes
 import com.han1997.vipledger.feature.stats.ui.common.CsvExport
 import com.han1997.vipledger.feature.stats.ui.common.FilterOption
 import com.han1997.vipledger.feature.stats.ui.common.TxnFilterState
-import com.han1997.vipledger.feature.stats.ui.common.csvSuggestedFileName
+import com.han1997.vipledger.core.designsystem.format.rangeLabelOf
+import com.han1997.vipledger.core.designsystem.format.suggestedFileName
 import com.han1997.vipledger.feature.stats.ui.common.toAccountOptions
 import com.han1997.vipledger.feature.stats.ui.common.toCategoryOptions
 import com.han1997.vipledger.feature.stats.ui.common.toTagOptions
@@ -162,10 +163,13 @@ class SearchViewModel @Inject constructor(
 
     private fun currentCsvExport(): CsvExport {
         val snapshot = content.value
+        val today = timeProvider.nowMillis().toLocalDate(timeProvider.zone)
         return CsvExport(
-            fileName = csvSuggestedFileName(
+            fileName = suggestedFileName(
                 prefix = CSV_PREFIX,
-                date = timeProvider.nowMillis().toLocalDate(timeProvider.zone),
+                ledgerName = snapshot.ledgerName,
+                rangeLabel = rangeLabelOf(snapshot.filter.preset, snapshot.filter.customRange, today),
+                date = today,
             ),
             csv = buildCsv(
                 txns = snapshot.txns,

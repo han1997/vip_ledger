@@ -60,4 +60,44 @@ object ChartGeometry {
         if (count <= 0 || maxLabels <= 0) return 1
         return ceil(count.toDouble() / maxLabels.toDouble()).toInt().coerceAtLeast(1)
     }
+
+    // ── 折线图（P7 资产趋势）：横轴等距采样、纵轴线性映射，零线恒在值域内 ──────────
+
+    /**
+     * 纵轴值域（分）：恒包含 0（净资产可为负，零线作参考基线）；
+     * 全零/单值序列时扩展为 ±1，避免除零。所有序列共用同一值域。
+     */
+    fun lineYRange(series: List<List<Long>>): Pair<Long, Long> {
+        val values = series.flatten()
+        if (values.isEmpty()) return 0L to 1L
+        val min = minOf(values.min(), 0L)
+        val max = maxOf(values.max(), 0L)
+        if (min == max) return (min - 1L) to (max + 1L)
+        return min to max
+    }
+
+    /** 横轴第 [index] 个采样点的水平比例（0..1）；单点居中。 */
+    fun lineX(count: Int, index: Int): Float {
+        if (count <= 1) return 0.5f
+        val i = index.coerceIn(0, count - 1)
+        return i.toFloat() / (count - 1).toFloat()
+    }
+
+    /** 金额 → 纵向比例（0 = 底部 [yMin]，1 = 顶部 [yMax]）；值域外夹取。 */
+    fun lineYFraction(value: Long, yMin: Long, yMax: Long): Float {
+        val span = (yMax - yMin).toFloat()
+        if (span <= 0f) return 0.5f
+        return ((value - yMin).coerceIn(0L, yMax - yMin).toDouble() / span.toDouble()).toFloat()
+    }
+
+    /** 零线的纵向比例（值域恒含 0，供绘制参考基线）。 */
+    fun zeroLineYFraction(yMin: Long, yMax: Long): Float = lineYFraction(0L, yMin, yMax)
+
+    /** 触摸/选中点的横轴比例 → 最近采样点下标；无点时返回 null。 */
+    fun guideIndex(xFraction: Float, count: Int): Int? {
+        if (count <= 0) return null
+        if (count == 1) return 0
+        val clamped = xFraction.coerceIn(0f, 1f)
+        return Math.round(clamped * (count - 1)).coerceIn(0, count - 1)
+    }
 }

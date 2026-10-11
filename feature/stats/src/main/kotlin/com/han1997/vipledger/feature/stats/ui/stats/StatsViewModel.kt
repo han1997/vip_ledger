@@ -25,8 +25,8 @@ import com.han1997.vipledger.core.model.time.DateRange
 import com.han1997.vipledger.core.model.time.DateRangePreset
 import com.han1997.vipledger.core.model.time.toLocalDate
 import com.han1997.vipledger.feature.stats.ui.common.CsvExport
-import com.han1997.vipledger.feature.stats.ui.common.csvSuggestedFileName
-import com.han1997.vipledger.feature.stats.ui.common.imageSuggestedFileName
+import com.han1997.vipledger.core.designsystem.format.rangeLabelOf
+import com.han1997.vipledger.core.designsystem.format.suggestedFileName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -182,7 +182,7 @@ class StatsViewModel @Inject constructor(
             StatsAction.ExportCsv -> csvExport.value = currentCsvExport()
 
             StatsAction.ExportImage -> imageExport.value =
-                imageSuggestedFileName(IMAGE_PREFIX, today)
+                suggestedFileName(IMAGE_PREFIX, content.value.ledgerName, rangeLabelOf(selection.value.preset, selection.value.customRange, today), today, extension = "png")
 
             is StatsAction.ExportFinished ->
                 notice.value = if (action.success) StatsNotice.EXPORTED else StatsNotice.EXPORT_FAILED
@@ -198,7 +198,12 @@ class StatsViewModel @Inject constructor(
     private fun currentCsvExport(): CsvExport {
         val snapshot = content.value
         return CsvExport(
-            fileName = csvSuggestedFileName(CSV_PREFIX, today),
+            fileName = suggestedFileName(
+                prefix = CSV_PREFIX,
+                ledgerName = snapshot.ledgerName,
+                rangeLabel = rangeLabelOf(selection.value.preset, selection.value.customRange, today),
+                date = today,
+            ),
             csv = buildCsv(
                 txns = txns.value,
                 categoryNames = snapshot.categoryNames,

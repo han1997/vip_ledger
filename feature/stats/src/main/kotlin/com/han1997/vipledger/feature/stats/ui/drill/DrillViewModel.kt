@@ -26,7 +26,8 @@ import com.han1997.vipledger.core.model.time.toLocalDate
 import com.han1997.vipledger.feature.stats.navigation.StatsRoutes
 import com.han1997.vipledger.feature.stats.navigation.drillArgsOf
 import com.han1997.vipledger.feature.stats.ui.common.CsvExport
-import com.han1997.vipledger.feature.stats.ui.common.csvSuggestedFileName
+import com.han1997.vipledger.core.designsystem.format.rangeLabelOf
+import com.han1997.vipledger.core.designsystem.format.suggestedFileName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -132,10 +133,13 @@ class DrillViewModel @Inject constructor(
 
     private fun currentCsvExport(): CsvExport {
         val snapshot = content.value
+        val today = timeProvider.nowMillis().toLocalDate(timeProvider.zone)
         return CsvExport(
-            fileName = csvSuggestedFileName(
+            fileName = suggestedFileName(
                 prefix = CSV_PREFIX,
-                date = timeProvider.nowMillis().toLocalDate(timeProvider.zone),
+                ledgerName = snapshot.ledgerName,
+                rangeLabel = rangeLabelOf(snapshot.preset, snapshot.range, today),
+                date = today,
             ),
             csv = buildCsv(
                 txns = snapshot.txns,

@@ -61,4 +61,20 @@
     <string name="wealth_installment_remaining">剩余应还 %1$s</string>
     <string name="wealth_investment">理财</string>
     <string name="wealth_investment_outstanding">在投本金 %1$s</string>
+
+    <!-- 资产趋势（P7） -->
+    <string name="wealth_trend">资产趋势</string>
+    <string name="wealth_trend_hint">资产/负债/净资产历史曲线</string>
+    <string name="wealth_trend_title">资产趋势</string>
+    <string name="wealth_trend_range_30">近 30 天</string>
+    <string name="wealth_trend_range_90">近 90 天</string>
+    <string name="wealth_trend_range_year">今年</string>
+    <string name="wealth_trend_range_all">全部</string>
+    <string name="wealth_trend_assets">资产</string>
+    <string name="wealth_trend_debt">负债</string>
+    <string name="wealth_trend_net">净资产</string>
+    <string name="wealth_trend_export_csv">导出 CSV</string>
+    <string name="wealth_trend_export_done">导出完成</string>
+    <string name="wealth_trend_export_failed">导出失败</string>
+    <string name="wealth_trend_empty">还没有资产基线：先在账户详情「校准余额」建立基线，趋势从基线开始重放。</string>
 </resources>
