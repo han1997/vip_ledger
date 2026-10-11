@@ -925,3 +925,37 @@ Delivered 0.1.8 (9) P6 code-side: capture review filter chips (candidates/posted
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: 原型完整化:全页面内嵌 + 无假按钮 + 一屏记一笔
+
+**Date**: 2026-10-12
+**Task**: 原型完整化:全页面内嵌 + 无假按钮 + 一屏记一笔
+**Branch**: `master`
+
+### Summary
+
+所有二级功能改为手机内子页面/底部弹层;遍历 77 个 data-action 断言均有处理器(无假按钮);记一笔改为一屏完成、分类恒有值、横向 chip;新增资产趋势/储蓄存取/统计筛选/AI 子页;偏离真机口径记入 BASELINE 与 spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `95a710f` | (see git log) |
+| `1e9c330` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
