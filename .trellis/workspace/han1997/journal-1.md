@@ -783,3 +783,38 @@ Delivered 0.1.5 (6): installment/mortgage plans with split postings (principal t
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: P5 语音与图片记账两个切片
+
+**Date**: 2026-10-11
+**Task**: P5 语音与图片记账两个切片
+**Branch**: `master`
+
+### Summary
+
+Delivered 0.1.6 (7) voice slice: SpeechTranscriber seam (core:domain) + SystemSpeechTranscriber (core:data, on-device SpeechRecognizer preferred API 31+, MAYBE_ONLINE fallback labeled, online-transcription switch default off), VoiceInputState reducer, press/hold/release/swipe-cancel mic UI, failure categories with manual-input fallback; 0.1.7 (8) image/share slice: ImageTextReader seam + MlKitImageTextReader reusing PaymentOcr recognizer (recognizeUri with EXIF), Photo Picker multi-image (max 5) per-image OCR into the same draft pipeline, ACTION_SEND/SEND_MULTIPLE share entry routed via ai/home?shared= arg consumed once via SavedStateHandle, progress + partial-failure notices; gate test/assembleDebug/assembleRelease/lintDebug green both rounds; spec ai-ml.md gains voice + image contracts (incl. Kotlin nested-comment /* gotcha); optional attachment deferred; no device connected so on-device walkthrough pending
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a90578b` | (see git log) |
+| `1a883fb` | (see git log) |
+| `0098260` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
