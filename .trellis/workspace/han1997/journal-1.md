@@ -959,3 +959,37 @@ Delivered 0.1.8 (9) P6 code-side: capture review filter chips (candidates/posted
 ### Next Steps
 
 - None - task complete
+
+
+## Session 27: 原型第3轮:无浏览器弹窗/日期时间合并/自定义区间/资产可编辑
+
+**Date**: 2026-10-12
+**Task**: 原型第3轮:无浏览器弹窗/日期时间合并/自定义区间/资产可编辑
+**Branch**: `master`
+
+### Summary
+
+prompt 全部改为手机内输入弹层(探针断言未调用);记一笔日期时间合一;统计自定义区间真实过滤;账户详情子页面支持重命名/校准/归档/删除,新增账户字段补全。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b5a2b02` | (see git log) |
+| `924ed2e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
