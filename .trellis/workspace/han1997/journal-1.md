@@ -993,3 +993,37 @@ prompt 全部改为手机内输入弹层(探针断言未调用);记一笔日期�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 28: 原型第4轮:免滑动记账页重设计 + 账户类型/卡号可编辑
+
+**Date**: 2026-10-12
+**Task**: 原型第4轮:免滑动记账页重设计 + 账户类型/卡号可编辑
+**Branch**: `master`
+
+### Summary
+
+记一笔重设计:正文只留类型/金额/分类,账户·时间·标签·备注移到底部四格快捷行,与数字键盘同屏,390x844 无纵向滚动;账户详情可改类型,银行卡类可记录卡号(4位分组)并显示尾号;新增账户选银行卡时出现卡号输入。冒烟测试 85 个动作全通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `860b7a6` | (see git log) |
+| `127a9d1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

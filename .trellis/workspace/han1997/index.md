@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 27
+- **Total Sessions**: 28
 - **Last Active**: 2026-10-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~995 | Active |
+| `journal-1.md` | ~1029 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 28 | 2026-10-12 | 原型第4轮:免滑动记账页重设计 + 账户类型/卡号可编辑 | `860b7a6`, `127a9d1` | `master` |
 | 27 | 2026-10-12 | 原型第3轮:无浏览器弹窗/日期时间合并/自定义区间/资产可编辑 | `b5a2b02`, `924ed2e` | `master` |
 | 26 | 2026-10-12 | 原型完整化:全页面内嵌 + 无假按钮 + 一屏记一笔 | `95a710f`, `1e9c330` | `master` |
 | 25 | 2026-10-11 | 原型打磨:记账页键盘/秒/分类逻辑与功能补全 | `adcde5c`, `e000c55` | `master` |
