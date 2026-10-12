@@ -49,7 +49,7 @@ function initial() {
   return {
     page: 'home', sub: null, sheet: null,
     selectedDate: iso(2025, 10, 11), calYear: 2025, calMonth: 10, statsRange: 'month',
-    query: '', searchOpen: false, keypadOpen: true, aiText: '', inputDraft: '',
+    query: '', searchOpen: false, aiText: '', inputDraft: '',
     ledgers: [{ id: 'l1', name: '日常账本', current: true }, { id: 'l2', name: '家庭账本', current: false }, { id: 'l3', name: '旅行记账', current: false }],
     tags: ['工作餐', '出差', '家庭', '朋友聚会', '通勤', '订阅', '报销', '礼物'],
     disabledCats: [],
@@ -191,12 +191,14 @@ function render() {
   $('#pageCaption').textContent = state.sub ? state.sub.title : (CAPTION[state.page] || '首页');
 
   const dock = $('#editorDock');
-  dock.classList.toggle('hidden', state.page !== 'edit' || !!state.sub);
-  if (state.page === 'edit' && !state.sub) dock.innerHTML = editorDock();
+  const showDock = state.page === 'edit' && !state.sub;
+  dock.classList.toggle('hidden', !showDock);
+  if (showDock) dock.innerHTML = editorDock();
 
   const views = { home: homeView, calendar: calendarView, assets: assetsView, stats: statsView, me: meView, edit: editView };
   $('#content').innerHTML = views[state.page]();
   $('#content').classList.toggle('noscroll', state.page === 'edit');
+  $('#content').classList.toggle('edit-mode', state.page === 'edit');
 
   // 手机内层:子页面 > 底部弹层(弹层可叠加在子页面之上)
   const ov = $('#overlay');
@@ -498,46 +500,78 @@ function editView() {
 
   const typebar = `<div class="typebar">${[['expense', '支出'], ['income', '收入'], ['transfer', '转账']].map(([k, n]) => `<button class="${e.kind === k ? 'on' : ''}" data-action="set-type" data-kind="${k}">${n}</button>`).join('')}</div>`;
 
-  const amount = `<div class="amount-box"><div class="amt-head"><span class="t">金额</span><button class="ai-chip" data-action="open-sub" data-sub="ai">${icon('ai')} AI</button></div>
-      <div class="v amt ${digits === '' ? 'zero' : ''}"><span class="cur">¥</span>${amountInput(digits)}${state.keypadOpen ? '<span class="caret"></span>' : ''}</div></div>`;
-
+  // 分类:一级图标方块(5 列);选中一级的二级区直接插在「它所在那一行下方」
   let catArea = '';
   if (e.kind !== 'transfer' && parent) {
-    const parentChips = cats.map(c => `<button class="chip ${c.id === e.catId ? 'on' : ''}" data-action="pick-cat" data-id="${c.id}">${c.name}</button>`).join('');
-    const subChips = parent.subs.map(([n]) => `<button class="chip sub ${e.sub === n ? 'on' : ''}" data-action="pick-sub" data-sub="${n}">${n}</button>`).join('');
-    catArea = `<div class="chip-block"><div class="chip-label">分类</div><div class="chip-row">${parentChips}</div>
-      <div class="chip-row subs">${subChips}</div></div>`;
+    const perRow = 5;
+    const rows = [];
+    for (let i = 0; i < cats.length; i += perRow) rows.push(cats.slice(i, i + perRow));
+    const rowsHtml = rows.map(rowCats => {
+      const tiles = rowCats.map(c => `<button class="cat-tile ${c.id === e.catId ? 'on' : ''}" data-action="pick-cat" data-id="${c.id}"><span class="ci">${c.name[0]}</span><span class="cl">${c.name}</span></button>`).join('');
+      const active = rowCats.some(c => c.id === e.catId);
+      const subs = active && parent.subs.length
+        ? `<div class="sub-panel">${parent.subs.map(([n]) => `<button class="sub-tile ${e.sub === n ? 'on' : ''}" data-action="pick-sub" data-sub="${n}">${n}</button>`).join('')}</div>`
+        : '';
+      return `<div class="cat-row">${tiles}</div>${subs}`;
+    }).join('');
+    catArea = `<div class="cat-grid">${rowsHtml}</div>`;
   } else if (e.kind === 'transfer') {
-    catArea = `<div class="chip-block"><div class="chip-label">账户</div>
-      <button class="wide-row" data-action="pick-account" data-side="from"><span class="k">转出</span><span class="v">${ACC(e.fromId)?.name || '选择'}</span>${icon('chevron-right')}</button>
-      <button class="wide-row" data-action="pick-account" data-side="to"><span class="k">转入</span><span class="v">${ACC(e.toId)?.name || '选择'}</span>${icon('chevron-right')}</button></div>`;
+    catArea = `<div class="cat-grid transfer">
+      <button class="wide-row" data-action="pick-account" data-side="from"><span class="k">转出</span><span class="v">${ACC(e.fromId)?.name || '选择账户'}</span>${icon('chevron-right')}</button>
+      <button class="wide-row" data-action="pick-account" data-side="to"><span class="k">转入</span><span class="v">${ACC(e.toId)?.name || '选择账户'}</span>${icon('chevron-right')}</button>
+    </div>`;
   }
-  return `${typebar}${amount}${catArea}`;
+
+  // 备注:真实输入框,点按直接弹系统输入法(不弹窗);金额:大点击区,点按收起输入法回到数字键盘
+  const meta = `<div class="meta-row">
+      <span class="note-ico">${icon('note')}</span>
+      <input class="note-input ${e.note ? 'filled' : ''}" type="text" data-field="note" placeholder="添加备注…" value="${esc(e.note || '')}" maxlength="80">
+      <button class="amt-zone" data-action="focus-amount" aria-label="输入金额"><span class="meta-amt amt ${e.kind} ${digits === '' ? 'zero' : ''}"><span class="cur">¥</span>${amountInput(digits)}<span class="caret"></span></span></button>
+    </div>`;
+
+  // 底部一行胶囊:账户 / 时间 / 标签 / AI
+  const chip = (action, ico, label, extra = '') => `<button class="chip-btn" data-action="${action}" ${extra}>${icon(ico)}<span>${esc(label)}</span></button>`;
+  const accLabel = e.kind === 'transfer' ? '账户' : (ACC(e.accountId)?.name || '账户');
+  const chips = `<div class="chip-strip">
+      ${e.kind === 'transfer' ? '' : chip('pick-account', 'card', accLabel)}
+      ${chip('pick-datetime', 'calendar', `${relDate(e.date)} ${hhmm(e.time)}`)}
+      ${chip('pick-tag', 'tag', e.tag || '标签')}
+      <button class="chip-btn ai" data-action="open-sub" data-sub="ai">${icon('ai')}<span>AI 记账</span></button>
+    </div>`;
+
+  return `${typebar}${catArea}${meta}${chips}`;
 }
 
-// 底部停靠:快捷行 + 数字键盘 + 保存(整个记账页不滚动)
+// 相对日期:今天 / 昨天 / M月D日
+function relDate(date) {
+  const today = iso(TODAY.y, TODAY.m, TODAY.d);
+  if (date === today) return '今天';
+  const d = new Date(Date.UTC(TODAY.y, TODAY.m - 1, TODAY.d)); d.setUTCDate(d.getUTCDate() - 1);
+  if (date === iso(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate())) return '昨天';
+  return fmtDateCN(date);
+}
+
+// 选分类后:若二级面板被裁切,自动滚动分类区把它露出来(避免手动滑动找二级)
+function revealSubPanel() {
+  const g = document.querySelector('.cat-grid');
+  const p = document.querySelector('.sub-panel');
+  if (!g || !p) return;
+  const gr = g.getBoundingClientRect();
+  const pr = p.getBoundingClientRect();
+  const cut = pr.bottom - gr.bottom;
+  if (cut > 0) g.scrollTop += Math.ceil(cut) + 10;
+}
+
+// 底部停靠:数字键盘常驻(与参考应用一致),右侧竖条保存
 function editorDock() {
-  const e = state.edit;
-  const digits = e.amountStr || '';
-  const accName = e.kind === 'transfer' ? `${ACC(e.fromId)?.name || ''} → ${ACC(e.toId)?.name || ''}` : (ACC(e.accountId)?.name || '选择');
-  const quick = `<div class="quick-row">
-      <button class="quick" data-action="pick-account" ${e.kind === 'transfer' ? 'data-side="from"' : ''}><span class="k">${icon('card')}账户</span><span class="v">${esc(accName)}</span></button>
-      <button class="quick" data-action="pick-datetime"><span class="k">${icon('calendar')}时间</span><span class="v amt">${fmtDateCN(e.date)} ${hhmm(e.time)}</span></button>
-      <button class="quick" data-action="pick-tag"><span class="k">${icon('tag')}标签</span><span class="v">${e.tag ? esc(e.tag) : '无'}</span></button>
-      <button class="quick" data-action="pick-note"><span class="k">${icon('note')}备注</span><span class="v">${e.note ? esc(e.note) : '无'}</span></button>
-    </div>`;
+  const digits = state.edit.amountStr || '';
+  const save = `<button class="save-btn" data-action="save-entry" ${digits === '' ? 'disabled' : ''}>保 存</button>`;
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫']
-    .map(k => `<button class="key ${k === '⌫' ? 'fn' : ''}" data-action="key" data-key="${k}">${k === '⌫' ? icon('backspace') : k}</button>`).join('');
-  if (!state.keypadOpen) {
-    return `${quick}<button class="save-btn" data-action="save-entry" ${digits === '' ? 'disabled' : ''}>保 存</button>
-      <button class="dock-toggle" data-action="toggle-keypad">${icon('keyboard')} 展开数字键盘</button>`;
-  }
-  return `${quick}<div class="keypad">${keys}</div>
-    <button class="save-btn" data-action="save-entry" ${digits === '' ? 'disabled' : ''}>保 存</button>`;
+    .map(k => `<button class="key ${k === '⌫' ? 'del' : ''}" data-action="key" data-key="${k}">${k === '⌫' ? icon('backspace') : k}</button>`).join('');
+  return `<div class="pad-row"><div class="keypad">${keys}</div><div class="pad-side">${save}</div></div>`;
 }
 function openEdit(idOrNull, presetDate) {
   const existing = idOrNull ? state.txns.find(t => t.id === idOrNull) : null;
-  state.keypadOpen = true;
   const baseKind = existing ? existing.kind : 'expense';
   const cats = currentCats(baseKind);
   const catId = existing ? existing.catId : (cats[0] ? cats[0].id : null);
@@ -791,7 +825,7 @@ const actions = {
   'open-edit': el => openEdit(+el.dataset.id),
 
   // 编辑器
-  'set-type': el => { const e = state.edit; e.kind = el.dataset.kind; const cats = currentCats(e.kind); e.catId = cats[0] ? cats[0].id : null; e.sub = ''; render(); },
+  'set-type': el => { const e = state.edit; e.kind = el.dataset.kind; const cats = currentCats(e.kind); e.catId = cats[0] ? cats[0].id : null; e.sub = ''; render(); revealSubPanel(); },
   'key': el => {
     const k = el.dataset.key, e = state.edit;
     let s = e.amountStr;
@@ -800,10 +834,9 @@ const actions = {
     else { const dot = s.indexOf('.'); if (dot >= 0 && s.length - dot > 2) return; if (s.replace('.', '').length >= 9) return; s = (s === '0' ? '' : s) + k; }
     e.amountStr = s; render();
   },
-  'pick-note': () => inputSheet('备注', { label: '备注', value: state.edit.note || '', placeholder: '例如:和同事聚餐', action: 'save-note', confirm: '保存' }),
-  'save-note': () => { state.edit.note = state.inputDraft || ''; closeSheet(); render(); },
-  'toggle-keypad': () => { state.keypadOpen = !state.keypadOpen; render(); },
-  'pick-cat': el => { const e = state.edit; e.catId = el.dataset.id; e.sub = ''; render(); },
+  'pick-note': () => { const i = document.querySelector('.note-input'); if (i) { i.focus(); i.select?.(); } },
+  'focus-amount': () => { const a = document.activeElement; if (a && a.blur) a.blur(); },
+  'pick-cat': el => { const e = state.edit; e.catId = el.dataset.id; e.sub = ''; render(); revealSubPanel(); },
   'pick-sub': el => { state.edit.sub = el.dataset.sub; render(); },
   'pick-account': el => {
     const side = el.dataset.side;
@@ -965,7 +998,7 @@ const actions = {
   'saving-withdraw': () => { state.savings.saved = Math.max(0, state.savings.saved - 100000); render(); toast('已取出 ¥1,000(演示)'); },
   'ai-sample': el => { state.aiText = el.dataset.v; render(); },
   'ai-parse': () => { const t = ($('#aiText') || {}).value || state.aiText; state.aiText = t; const nums = (t.match(/\d+(\.\d+)?/) || ['0'])[0]; state.aiResult = `${t.includes('打车') ? '交通 / 打车' : t.includes('餐') ? '餐饮 / 午餐' : t.includes('星巴克') ? '餐饮 / 咖啡' : '其他'} · ¥${nums}`; render(); toast('已解析(演示)'); },
-  'ai-apply': () => { const nums = (state.aiText.match(/\d+(\.\d+)?/) || ['0'])[0]; state.edit = { id: null, kind: 'expense', amountStr: nums, catId: state.aiText.includes('打车') ? 'trans' : 'food', sub: state.aiText.includes('打车') ? '打车' : '午餐', accountId: 'cmb_debit', fromId: 'cmb_debit', toId: 'alipay', date: state.selectedDate, time: '12:38:00', tag: '', note: state.aiText }; state.keypadOpen = false; state.sub = null; state.page = 'edit'; render(); toast('已填入,请确认后保存'); },
+  'ai-apply': () => { const nums = (state.aiText.match(/\d+(\.\d+)?/) || ['0'])[0]; state.edit = { id: null, kind: 'expense', amountStr: nums, catId: state.aiText.includes('打车') ? 'trans' : 'food', sub: state.aiText.includes('打车') ? '打车' : '午餐', accountId: 'cmb_debit', fromId: 'cmb_debit', toId: 'alipay', date: state.selectedDate, time: '12:38:00', tag: '', note: state.aiText }; state.sub = null; state.page = 'edit'; render(); toast('已填入,请确认后保存'); },
   'add-ledger-form': () => actions['add-ledger'](),
   'reset': () => confirmPhone('重置演示数据', '本轮新增的账目与改动将清除,恢复初始演示状态。', 'confirm-reset', '重置'),
   'confirm-reset': () => { state = initial(); closeSheet(); go('home'); toast('演示数据已重置'); }
@@ -1031,7 +1064,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (state.sheet) closeSheet(); else if (state.sub) closeSub(); else if (state.searchOpen) actions['close-search'](); return; }
   if (state.sheet || state.sub) return;
   if (e.target && e.target.tagName === 'INPUT') return;
-  if (state.page === 'edit' && state.edit && state.keypadOpen) {
+  if (state.page === 'edit' && state.edit) {
     if (/^[0-9.]$/.test(e.key)) actions['key']({ dataset: { key: e.key } });
     if (e.key === 'Backspace') { e.preventDefault(); actions['key']({ dataset: { key: '⌫' } }); }
   }

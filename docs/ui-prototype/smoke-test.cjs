@@ -61,15 +61,63 @@ const assert = require('node:assert/strict');
   // 正文实际无纵向滚动(含快捷行与键盘同屏)
   const overflow = await page.locator('.content').evaluate(el => el.scrollHeight - el.clientHeight);
   assert.ok(overflow <= 1, `editor fits viewport (overflow=${overflow}px)`);
-  assert.equal(await page.locator('.quick-row .quick').count(), 4, 'four quick cells');
-  assert.equal(await page.locator('.note-field, .note-field input').count(), 0, 'note is a quick sheet, not an input row');
+  assert.equal(await page.locator('.chip-strip .chip-btn').count() >= 3, true, 'chip strip holds account/time/tag/AI');
+  assert.equal(await page.locator('.note-input').count(), 1, 'note is a real inline input');
+  assert.equal(await page.locator('.note-input').evaluate(el => el.tagName), 'INPUT', 'note invokes the system IME, no popup');
+  const az = await page.locator('.amt-zone').evaluate(el => { const r = el.getBoundingClientRect(); return { w: r.width, h: r.height }; });
+  assert.ok(az.w >= 80 && az.h >= 44, `amount tap zone is comfortable (${az.w}x${az.h}px)`);
+  assert.equal(await page.locator('.pad-row .save-btn').count(), 1, 'save bar sits beside the keypad');
+  assert.equal(await page.locator('.keypad .key').count(), 12, '3x4 calculator keypad');
+  // 舒适键尺寸:宽度充裕、键高接近 48dp 触摸目标
+  const kn = await page.locator('.keypad .key').first().evaluate(el => { const r = el.getBoundingClientRect(); return { w: r.width, h: r.height }; });
+  assert.ok(kn.w > 70, `keys wide enough (${kn.w}px)`);
+  assert.ok(kn.h >= 44, `keys meet touch target (${kn.h}px)`);
+  assert.equal(await page.locator('.common-chip').count(), 0, 'no common-amount shortcuts');
+  assert.equal(await page.locator('[data-action="toggle-keypad"]').count(), 0, 'keypad is always visible (no toggle)');
+  // 键盘常驻:点分类后键盘仍在,页面仍零滚动
+  const scrollOf = () => page.locator('.content').evaluate(el => el.scrollHeight - el.clientHeight);
+  const catScrollOf = () => page.locator('.cat-grid').evaluate(el => el.scrollHeight - el.clientHeight);
+  assert.equal(await page.locator('.keypad').isVisible(), true, 'keypad visible on open');
+  await page.locator('[data-action="pick-cat"][data-id="food"]').click();
+  assert.equal(await page.locator('.keypad').isVisible(), true, 'keypad stays after picking a category');
+  assert.equal(await scrollOf(), 0, 'page does not scroll with sub panel open');
+  assert.equal(await catScrollOf(), 0, 'category area fits without internal scroll');
+  // 一级分类 5 列 × 2 行,无横向滚动
+  assert.equal(await page.locator('.cat-row .cat-tile').count(), 10, 'all parent categories visible');
+  assert.equal(await page.locator('.cat-row').count(), 2, 'two parent rows of 5');
+  assert.equal(await page.locator('.cat-row').first().evaluate(el => el.scrollWidth - el.clientWidth), 0, 'category grid does not scroll horizontally');
+  // 二级分类插在选中一级「所在那一行」下方
+  const rowOf = uid => page.locator(`.cat-row`).evaluateAll((rows, id) => rows.findIndex(r => r.querySelector(`[data-action="pick-cat"][data-id="${id}"]`)), uid);
+  assert.equal(await rowOf('food'), 0, 'food is in row 0');
+  assert.equal(await page.locator('.sub-panel').count(), 1, 'sub panel under the active parent');
+  await page.locator('[data-action="pick-cat"][data-id="fun"]').click();
+  assert.equal(await rowOf('fun'), 1, 'fun is in row 1');
+  const subsAfterRow2 = await page.locator('.cat-row + .sub-panel').evaluateAll((els, id) => els.some(s => s.previousElementSibling.querySelector(`[data-action="pick-cat"][data-id="${id}"]`)), 'fun');
+  assert.equal(subsAfterRow2, true, 'sub panel moves to the row of the newly selected parent');
+  assert.equal(await scrollOf(), 0, 'page still does not scroll after switching rows');
+  // 矮屏下(手机壳压缩):点第二行一级后,二级面板自动滚入视野,无需手动滑动
+  await page.setViewportSize({ width: 1520, height: 700 });
+  await page.locator('[data-action="pick-cat"][data-id="fun"]').click();
+  const shortChk = await page.evaluate(() => {
+    const g = document.querySelector('.cat-grid');
+    const p = document.querySelector('.sub-panel');
+    const c = document.querySelector('.content');
+    return { pageScroll: c.scrollHeight - c.clientHeight,
+      panelVisible: p ? p.getBoundingClientRect().bottom <= g.getBoundingClientRect().bottom + 1 : false,
+      catNeeded: g.scrollHeight - g.clientHeight > 0 };
+  });
+  assert.equal(shortChk.pageScroll, 0, 'short screen: page still never scrolls');
+  assert.ok(shortChk.panelVisible, 'short screen: sub panel auto-revealed after picking a row-2 parent');
+  await page.setViewportSize({ width: 1520, height: 1000 });
+  await page.locator('[data-action="pick-cat"][data-id="food"]').click();
+  await page.locator('[data-action="pick-cat"][data-id="food"]').click();
   assert.equal(await page.locator('.chip.none, [data-action="clear-cat"]').count(), 0, 'no "no category" option');
-  assert.equal(await page.locator('.chip-row .chip.on').count() >= 1, true, 'a category is preselected');
+  assert.equal(await page.locator('.cat-tile.on, .sub-tile.on').count() >= 1, true, 'a category is preselected');
   await key('1'); await key('2'); await key('8');
-  assert.match(await page.locator('.amount-box .v').innerText(), /128/);
-  // 分类横向切换
+  assert.match(await page.locator('.meta-amt').innerText(), /128/);
   await page.locator('[data-action="pick-cat"][data-id="food"]').click();
   await page.locator('[data-action="pick-sub"][data-sub="午餐"]').click();
+  assert.equal(await page.locator('.sub-tile.on').innerText(), '午餐', 'sub category selected inline');
   // 账户弹层在手机内
   await page.locator('[data-action="pick-account"]').first().click();
   assert.equal(await inPhone('.phone-sheet').count(), 1, 'account sheet in phone');
@@ -89,10 +137,8 @@ const assert = require('node:assert/strict');
   await page.locator('#overlay .phone-sheet-head [data-close]').click();
   await page.locator('[data-action="pick-tag"]').click();
   await page.locator('#overlay [data-action="set-tag"][data-tag="工作餐"]').click();
-  await page.locator('[data-action="pick-note"]').click();
-  await page.locator('#sheetInput').fill('和同事逛街');
-  await page.locator('#overlay [data-action="save-note"]').click();
-  await page.locator('.save-btn').click();
+  await page.locator('.note-input').fill('和同事逛街');
+  await page.locator(".pad-row .save-btn").click();
   assert.match(await header(), /首页/, 'saved returns home');
 
   // 6. AI 记账子页面(手机内)→ 解析 → 填入
@@ -257,7 +303,7 @@ const assert = require('node:assert/strict');
     await page.locator('#overlay [data-action="close-sub"]').click();
   }
   await go('home'); await act('new-entry'); await collect();
-  for (const pick of ['pick-account', 'pick-datetime', 'pick-tag', 'pick-note']) { await page.locator(`[data-action="${pick}"]`).first().click(); await collect(); await page.locator('#overlay .phone-sheet-head [data-close]').click(); }
+  for (const pick of ['pick-account', 'pick-datetime', 'pick-tag']) { await page.locator(`[data-action="${pick}"]`).first().click(); await collect(); await page.locator('#overlay .phone-sheet-head [data-close]').click(); }
   for (const sub of ['account', 'archived']) { await go('assets'); if (sub === 'account') await page.locator('[data-action="open-account"]').first().click(); else { const b = page.locator('[data-action="show-archived"]'); if (await b.count()) await b.click(); else continue; } await collect(); await page.locator('#overlay [data-action="close-sub"]').click(); }
   await act('delete-entry').catch(() => {});
   if (await page.locator('#overlay .phone-sheet').count()) { await collect(); await page.locator('#overlay [data-action="confirm-delete-entry"]').click(); }
