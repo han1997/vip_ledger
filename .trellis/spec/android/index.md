@@ -14,6 +14,8 @@
    必须在同一变更里同步 `README.md` 对应章节。
 7. 所有新增/修改文件统一 UTF-8（无 BOM），详见 `build-and-env.md`「文件编码」；
    PowerShell 查看中文用 `Get-Content -Encoding UTF8`，控制台乱码不代表文件编码错误。
+8. **任何 UI 改动先读 `ui-contract.md`（原型优先 UI 开发契约）**：基于已确认原型、
+   范围不增不减、状态全覆盖、单一设计来源、平台要求优先、验收不止于编译。
 
 ## Quality Check（提交前必跑）
 
@@ -37,6 +39,7 @@
 | [database.md](./database.md) | Room 实体、DAO、迁移与测试约定 |
 | [auto-bookkeeping.md](./auto-bookkeeping.md) | 支付采集、候选幂等、原子入账、退款、真实平台验收 |
 | [ui.md](./ui.md) | Compose 与 ViewModel 约定、主题、designsystem 组件与 token（V2）、预览、单屏单 `LazyColumn`、统计口径 |
+| [ui-contract.md](./ui-contract.md) | **原型优先 UI 开发契约**：基于已确认原型、范围不增不减、状态全覆盖、单一设计来源、版本记录、平台要求优先、验收标准与像素级比对 |
 | [charts.md](./charts.md) | 自绘图表的几何契约、数据契约、边界与测试要求 |
 | [budget-calendar.md](./budget-calendar.md) | 预算继承/提醒、日历首页口径、日期路由及schema3备份 |
 | [assets-savings.md](./assets-savings.md) | 资产口径、储蓄关联事务、布局、基线与schema4恢复 |

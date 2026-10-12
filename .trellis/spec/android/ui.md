@@ -1,5 +1,8 @@
 # UI(Compose)
 
+> **UI 开发的过程纪律(范围、状态、验收)见 [ui-contract.md](./ui-contract.md)(原型优先 UI 开发契约)**;
+> 本文件是 Compose 实现层的具体约定与原型自身的硬性规则。
+
 ## 原型优先(Prototype-First)
 
 本轮(VipLedger Concept 01「墨绿金 · 静奢记账」)起,UI 改动先改原型、后改 Compose。
