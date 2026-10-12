@@ -1027,3 +1027,37 @@ prompt 全部改为手机内输入弹层(探针断言未调用);记一笔日期�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 29: 原型第5轮:记一笔定稿(永不滑动 + 备注直输 + 金额大点击区 + 二级自动定位)
+
+**Date**: 2026-10-12
+**Task**: 原型第5轮:记一笔定稿(永不滑动 + 备注直输 + 金额大点击区 + 二级自动定位)
+**Branch**: `master`
+
+### Summary
+
+记一笔对标主流记账软件重构:页面永不上下滑动(固定头尾+中间弹性分类区),键盘常驻;备注改真实输入框直接弹系统输入法;金额点击区扩到48x88px;点一级分类后二级面板被裁切时自动滚入视野(revealSubPanel)。冒烟测试84个动作全通过,含矮屏(700px)下的自动定位断言。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f7a2c88` | (see git log) |
+| `3436ae3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
