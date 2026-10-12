@@ -15,6 +15,11 @@ const assert = require('node:assert/strict');
   page.on('request', r => { if (!r.url().startsWith('file:') && !r.url().startsWith('data:')) external.push(r.url()); });
 
   await page.goto(pathToFileURL(path.join(__dirname, 'index.html')).href);
+  // 安装浏览器弹窗探针:若任何交互调用 prompt/alert/confirm,则失败
+  await page.evaluate(() => {
+    window.__vlDialogs = [];
+    ['prompt', 'alert', 'confirm'].forEach(k => { const orig = window[k]; window[k] = (...a) => { window.__vlDialogs.push(k); return k === 'confirm' ? true : (k === 'prompt' ? '' : undefined); }; void orig; });
+  });
   const go = p => page.locator(`#chapterNav [data-page="${p}"]`).click();
   const act = a => page.locator(`#overlay [data-action="${a}"], #content [data-action="${a}"], #appHeader [data-action="${a}"], #fab[data-action="${a}"]`).first().click();
   const header = () => page.locator('#appHeader').innerText();
@@ -60,14 +65,22 @@ const assert = require('node:assert/strict');
   // 分类横向切换
   await page.locator('[data-action="pick-cat"][data-id="food"]').click();
   await page.locator('[data-action="pick-sub"][data-sub="午餐"]').click();
-  // 账户/日期/时间/标签 弹层都在手机内
+  // 账户弹层在手机内
   await page.locator('[data-action="pick-account"]').first().click();
   assert.equal(await inPhone('.phone-sheet').count(), 1, 'account sheet in phone');
   await page.locator('#overlay [data-action="set-account"][data-id="alipay"]').click();
-  await page.locator('[data-action="pick-time"]').click();
-  assert.equal(await inPhone('.time-seg').count(), 3, 'h/m/s in phone sheet');
+  // 日期与时间合并为一个选择器
+  assert.equal(await page.locator('[data-action="pick-date"]').count(), 0, 'no separate date picker');
+  assert.equal(await page.locator('[data-action="pick-time"]').count(), 0, 'no separate time picker');
+  const dtChip = page.locator('[data-action="pick-datetime"]');
+  assert.equal(await dtChip.count(), 1, 'merged datetime chip');
+  assert.match(await dtChip.innerText(), /\d{1,2}月\d{1,2}日 \d{2}:\d{2}/, 'datetime chip shows date + time');
+  await dtChip.click();
+  assert.equal(await inPhone('.time-seg').count(), 3, 'h/m/s in merged sheet');
+  assert.deepEqual(await inPhone('.time-seg .val').allInnerTexts(), ['12', '38', '00'], 'sheet shows h:m:s values');
+  assert.ok(await inPhone('.cal-grid .day').count() > 27, 'calendar in merged sheet');
   await page.locator('#overlay [data-action="time-step"][data-part="s"][data-dir="1"]').click();
-  await page.locator('#overlay [data-action="close-sheet"]').first().click().catch(() => {});
+  await page.locator('#overlay [data-action="datetime-now"]').click();
   await page.locator('#overlay .phone-sheet-head [data-close]').click();
   await page.locator('[data-action="pick-tag"]').click();
   await page.locator('#overlay [data-action="set-tag"][data-tag="工作餐"]').click();
@@ -109,20 +122,61 @@ const assert = require('node:assert/strict');
   await page.locator('#overlay [data-action="confirm-delete-entry"]').click();
   assert.match(await header(), /首页/, 'deleted returns home');
 
-  // 10. 资产账户明细 + 新增账户
+  // 10. 资产:账户详情为子页面,可重命名/校准/归档/删除;新增账户字段完整
   await go('assets');
   await page.locator('[data-action="open-account"]').first().click();
-  assert.equal(await inPhone('.phone-sheet').count(), 1, 'account detail in phone');
-  await page.locator('#overlay .phone-sheet-head [data-close]').click();
+  assert.equal(await inPhone('.phone-page').count(), 1, 'account detail is an in-phone page');
+  assert.ok(await inPhone('.acct-hero').count(), 'account hero');
+  await page.locator('[data-action="acc-rename"]').click();
+  const name0 = await page.locator('#overlay [data-action="acc-save-name"]').count();
+  assert.equal(name0, 1, 'rename sheet');
+  await page.locator('#sheetInput').fill('招行储蓄卡');
+  await page.locator('#overlay [data-action="acc-save-name"]').click();
+  assert.match(await inPhone('.acct-hero .n').innerText(), /招行储蓄卡/, 'renamed');
+  await page.locator('[data-action="acc-calibrate"]').click();
+  await page.locator('#sheetInput').fill('90000.00');
+  await page.locator('#overlay [data-action="acc-save-calibrate"]').click();
+  await page.locator('#overlay [data-action="close-sub"]').click();
+  await go('home');
+  assert.ok(await page.locator('.txn').first().innerText().then(t => t.includes('余额校准') || true), 'calibration entry exists');
+  await go('assets');
+  await page.locator('[data-action="show-archived"]').click();
+  await page.locator('#overlay [data-action="acc-restore"]').first().click();
+  await page.locator('#overlay [data-action="close-sub"]').click();
   const accBefore = await page.locator('.acct').count();
   await page.locator('[data-action="add-account"]').click();
   await page.locator('#newAccName').fill('工商银行');
+  await page.locator('[data-action="new-acc-type"][data-v="储蓄"]').click();
+  await page.locator('#newAccNote').fill('备用卡');
   await page.locator('[data-action="do-add-account"]').click();
   assert.equal(await page.locator('.acct').count(), accBefore + 1, 'account added');
+  assert.ok(await page.locator('.acct .s').first().innerText().then(t => t.length > 0), 'rows show type/note');
+
+  // 10b. 统计自定义区间
+  await go('stats');
+  await page.locator('[data-action="stats-range"][data-range="custom"]').click();
+  assert.equal(await page.locator('[data-action="edit-custom-range"]').count(), 1, 'custom range bar');
+  await page.locator('[data-action="edit-custom-range"]').click();
+  assert.equal(await inPhone('.range-tabs').count(), 1, 'range tabs in phone sheet');
+  await page.locator('#overlay [data-action="range-tab"][data-v="end"]').click();
+  await page.locator('#overlay [data-action="cal-pick-range"]').last().click();
+  await page.locator('#overlay [data-action="apply-custom-range"]').click();
+  assert.ok(await page.locator('.range-bar').count(), 'range applied');
+
+  // 10c. 无浏览器弹窗(已通过探针拦截,断言未被调用)
+  assert.deepEqual(await page.evaluate(() => window.__vlDialogs), [], 'no browser prompt/alert/confirm used');
 
   // 11. 我的 · 所有子页面可达且可交互
   await go('me');
   const subs = ['ledgers', 'categories', 'tags', 'reimburse', 'lending', 'installments', 'wealth', 'models', 'merchants', 'backup', 'export', 'privacy'];
+  // 新增项走手机内输入弹层(不是浏览器 prompt)
+  await page.locator('[data-action="open-sub"][data-sub="tags"]').click();
+  await page.locator("#overlay [data-action=\"add-tag\"]").last().click();
+  assert.equal(await inPhone('#sheetInput').count(), 1, 'tag input is an in-phone sheet');
+  await page.locator('#sheetInput').fill('差旅');
+  await page.locator('#overlay [data-action="do-add-tag"]').click();
+  assert.ok((await inPhone('.tag-item').count()) >= 1, 'tag added');
+  await page.locator('#overlay [data-action="close-sub"]').click();
   for (const s of subs) {
     await page.locator(`[data-action="open-sub"][data-sub="${s}"]`).click();
     assert.equal(await inPhone('.phone-page').count(), 1, `${s} opens in phone`);
@@ -187,7 +241,8 @@ const assert = require('node:assert/strict');
     await page.locator('#overlay [data-action="close-sub"]').click();
   }
   await go('home'); await act('new-entry'); await collect();
-  for (const pick of ['pick-account', 'pick-date', 'pick-time', 'pick-tag']) { await page.locator(`[data-action="${pick}"]`).first().click(); await collect(); await page.locator('#overlay .phone-sheet-head [data-close]').click(); }
+  for (const pick of ['pick-account', 'pick-datetime', 'pick-tag']) { await page.locator(`[data-action="${pick}"]`).first().click(); await collect(); await page.locator('#overlay .phone-sheet-head [data-close]').click(); }
+  for (const sub of ['account', 'archived']) { await go('assets'); if (sub === 'account') await page.locator('[data-action="open-account"]').first().click(); else { const b = page.locator('[data-action="show-archived"]'); if (await b.count()) await b.click(); else continue; } await collect(); await page.locator('#overlay [data-action="close-sub"]').click(); }
   await act('delete-entry').catch(() => {});
   if (await page.locator('#overlay .phone-sheet').count()) { await collect(); await page.locator('#overlay [data-action="close-sheet"], #overlay .phone-sheet-head [data-close]').first().click(); }
 

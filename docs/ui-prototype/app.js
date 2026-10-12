@@ -49,7 +49,7 @@ function initial() {
   return {
     page: 'home', sub: null, sheet: null,
     selectedDate: iso(2025, 10, 11), calYear: 2025, calMonth: 10, statsRange: 'month',
-    query: '', searchOpen: false, keypadOpen: true, aiText: '',
+    query: '', searchOpen: false, keypadOpen: true, aiText: '', inputDraft: '',
     ledgers: [{ id: 'l1', name: '日常账本', current: true }, { id: 'l2', name: '家庭账本', current: false }, { id: 'l3', name: '旅行记账', current: false }],
     tags: ['工作餐', '出差', '家庭', '朋友聚会', '通勤', '订阅', '报销', '礼物'],
     disabledCats: [],
@@ -65,16 +65,20 @@ function initial() {
     cards: [{ id: 'budget', name: '本月预算', on: true }, { id: 'today', name: '今日收支', on: true }, { id: 'savings', name: '储蓄目标', on: true }, { id: 'week', name: '七日趋势', on: true }],
     budgetTotal: 800000,
     statFilter: { accountId: null, catId: null },
+    statsCustom: { start: iso(2025, 10, 1), end: iso(2025, 10, 11), editing: 'start' },
     accounts: [
-      { id: 'cmb_debit', name: '招商银行储蓄卡', group: 'asset', mark: '储', tone: 'green', base: 8642000, sub: '储蓄 · 尾号 6021' },
-      { id: 'alipay', name: '支付宝余额', group: 'asset', mark: '余', tone: 'blue', base: 386000, sub: '电子钱包' },
-      { id: 'wechat', name: '微信零钱', group: 'asset', mark: '零', tone: 'green', base: 124000, sub: '电子钱包' },
-      { id: 'cash', name: '现金', group: 'asset', mark: '现', tone: 'gray', base: 60000, sub: '现金' },
-      { id: 'invest', name: '投资理财', group: 'asset', mark: '投', tone: 'gold', base: 9000000, sub: '理财台账 · 3 只' },
-      { id: 'cmb_credit', name: '招商银行信用卡', group: 'debt', mark: '信', tone: 'red', base: -324000, sub: '信用 · 尾号 3390' },
-      { id: 'huabei', name: '花呗', group: 'debt', mark: '花', tone: 'red', base: -150000, sub: '信用 · 免息期内' },
-      { id: 'loan', name: '住房贷款', group: 'debt', mark: '贷', tone: 'red', base: -5350000, sub: '分期 · 剩余 168 期' }
+      { id: 'cmb_debit', name: '招商银行储蓄卡', group: 'asset', type: '储蓄', mark: '储', tone: 'green', base: 8642000, sub: '储蓄 · 尾号 6021', note: '工资卡', createdAt: '2024-01-05', archived: false },
+      { id: 'alipay', name: '支付宝余额', group: 'asset', type: '电子钱包', mark: '余', tone: 'blue', base: 386000, sub: '电子钱包', note: '', createdAt: '2024-01-05', archived: false },
+      { id: 'wechat', name: '微信零钱', group: 'asset', type: '电子钱包', mark: '零', tone: 'green', base: 124000, sub: '电子钱包', note: '', createdAt: '2024-01-05', archived: false },
+      { id: 'cash', name: '现金', group: 'asset', type: '现金', mark: '现', tone: 'gray', base: 60000, sub: '现金', note: '', createdAt: '2024-01-05', archived: false },
+      { id: 'invest', name: '投资理财', group: 'asset', type: '投资', mark: '投', tone: 'gold', base: 9000000, sub: '理财台账 · 3 只', note: '', createdAt: '2024-03-01', archived: false },
+      { id: 'cmb_credit', name: '招商银行信用卡', group: 'debt', type: '信用', mark: '信', tone: 'red', base: -324000, sub: '信用 · 尾号 3390', note: '每月 20 日还款', createdAt: '2024-01-05', archived: false },
+      { id: 'huabei', name: '花呗', group: 'debt', type: '信用', mark: '花', tone: 'red', base: -150000, sub: '信用 · 免息期内', note: '', createdAt: '2024-02-10', archived: false },
+      { id: 'loan', name: '住房贷款', group: 'debt', type: '分期', mark: '贷', tone: 'red', base: -5350000, sub: '分期 · 剩余 168 期', note: '等额本息', createdAt: '2024-01-20', archived: false },
+      { id: 'old_card', name: '已注销的储蓄卡', group: 'asset', type: '储蓄', mark: '旧', tone: 'gray', base: 0, sub: '储蓄 · 已归档', note: '', createdAt: '2023-06-01', archived: true }
     ],
+    newAcc: { name: '', group: 'asset', type: '储蓄', base: '0', note: '', mark: '' },
+    editingAccount: null,
     savings: { name: '旅行基金', saved: 1840000, target: 3000000 },
     reviews: [
       { id: 'r1', title: '拼多多 · 待确认消费', meta: '10-09 20:14 · 微信支付 · 自动采集', amount: 13400 },
@@ -112,6 +116,7 @@ function initial() {
 let state = initial();
 const ACCOUNTS = () => state.accounts;
 const ACC = id => state.accounts.find(a => a.id === id);
+const ACCOUNTS_ACTIVE = () => state.accounts.filter(a => !a.archived);
 const CATS_ACTIVE = () => CATS.filter(c => !state.disabledCats.includes(c.id));
 
 // ── 派生计算 ─────────────────────────────────────────────
@@ -178,20 +183,29 @@ function render() {
   $('#content').innerHTML = views[state.page]();
   $('#content').classList.toggle('noscroll', state.page === 'edit');
 
-  // 手机内层:子页面 > 底部弹层
+  // 手机内层:子页面 > 底部弹层(弹层可叠加在子页面之上)
   const ov = $('#overlay');
-  if (state.sub) ov.innerHTML = subpageHtml(state.sub);
-  else if (state.sheet) ov.innerHTML = sheetHtml(state.sheet);
-  else ov.innerHTML = '';
+  let inner = '';
+  if (state.sub) inner += subpageHtml(state.sub);
+  if (state.sheet) inner += sheetHtml(state.sheet);
+  ov.innerHTML = inner;
   ov.classList.toggle('open', !!(state.sub || state.sheet));
 }
 
 function go(page) { state.page = page; state.sub = null; state.sheet = null; closeAllSheets(); render(); $('#content').scrollTop = 0; }
 function openSub(sub) { state.sub = sub; state.sheet = null; render(); const c = $('#overlay .sub-body'); if (c) c.scrollTop = 0; }
-function closeSub() { state.sub = null; render(); }
+function closeSub() { state.sub = null; state.sheet = null; render(); }
 function openSheet(sheet) { state.sheet = sheet; render(); }
 function closeSheet() { state.sheet = null; render(); }
 function closeAllSheets() { state.sheet = null; }
+
+// 手机内文本输入弹层(替代浏览器 prompt)
+function inputSheet(title, { label = '', value = '', placeholder = '', action, confirm = '确定' }) {
+  state.inputDraft = value;
+  openSheet({ title, body: `<label class="input-field"><span>${esc(label)}</span><input id="sheetInput" placeholder="${esc(placeholder)}" value="${esc(value)}"></label>
+    <div class="sub-actions two"><button class="action-button secondary" data-close>取消</button><button class="action-button" data-action="${action}" data-confirm="1">${confirm}</button></div>` });
+  const box = $('#sheetInput'); if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+}
 
 // ── 首页 ─────────────────────────────────────────────────
 function homeView() {
@@ -304,7 +318,7 @@ function calendarView() {
     <div class="section-head"><h3>${fmtDateCN(state.selectedDate)} · ${list.length} 笔</h3><button data-action="new-entry-day">记一笔 ${icon('chevron-right')}</button></div>
     <div class="card tight">${list.length ? list.map(txnRow).join('') : `<div class="empty">${icon('note')}<h3>这天还没有记录</h3><p>点右下角「+」记一笔。</p></div>`}</div>`;
 }
-function calCells(y, m, selDate, markDots) {
+function calCells(y, m, selDate, markDots, action = 'cal-pick') {
   const first = new Date(y, m - 1, 1);
   const startIdx = (first.getDay() + 6) % 7;
   const days = new Date(y, m, 0).getDate();
@@ -315,7 +329,7 @@ function calCells(y, m, selDate, markDots) {
     const date = iso(y, m, d);
     const has = markDots && dayTxns(date).length > 0;
     const sel = date === selDate;
-    cells += `<button class="day ${sel ? 'sel' : ''}" data-action="cal-pick" data-date="${date}">${d}${has ? '<i class="dot"></i>' : ''}</button>`;
+    cells += `<button class="day ${sel ? 'sel' : ''}" data-action="${action}" data-date="${date}">${d}${has ? '<i class="dot"></i>' : ''}</button>`;
   }
   const total = startIdx + days, trail = (7 - total % 7) % 7;
   for (let i = 1; i <= trail; i++) cells += `<div class="day dim">${i}</div>`;
@@ -324,13 +338,14 @@ function calCells(y, m, selDate, markDots) {
 
 // ── 资产 ─────────────────────────────────────────────────
 function assetsView() {
-  const assets = state.accounts.filter(a => a.group === 'asset');
-  const debts = state.accounts.filter(a => a.group === 'debt');
+  const assets = state.accounts.filter(a => a.group === 'asset' && !a.archived);
+  const debts = state.accounts.filter(a => a.group === 'debt' && !a.archived);
+  const archivedCount = state.accounts.filter(a => a.archived).length;
   const totalA = assets.reduce((s, a) => s + a.base, 0);
   const totalD = debts.reduce((s, a) => s + a.base, 0);
-  header('资产', `${state.accounts.length} 个账户`, ib('assets-trend', '资产趋势', 'trend') + ib('add-account', '新增账户', 'plus'));
+  header('资产', `${assets.length + debts.length} 个账户`, ib('assets-trend', '资产趋势', 'trend') + ib('add-account', '新增账户', 'plus'));
   const row = a => `<button class="acct" data-action="open-account" data-id="${a.id}"><div class="ico" style="${TONE_BG[a.tone]}">${a.mark}</div>
-      <div class="m"><div class="t">${a.name}</div><div class="s">${a.sub}</div></div>
+      <div class="m"><div class="t">${a.name}</div><div class="s">${a.type}${a.note ? ' · ' + esc(a.note) : ''}</div></div>
       <div class="a amt ${a.base < 0 ? 'exp' : ''}">${money(a.base)}</div></button>`;
   const savedPct = Math.round(state.savings.saved / state.savings.target * 1000) / 10;
   return `
@@ -347,6 +362,7 @@ function assetsView() {
     <div class="card tight">${assets.map(row).join('')}<div class="group-total"><span>资产小计</span><b class="amt">${money(totalA)}</b></div></div>
     <div class="section-head"><h3>负债账户</h3><small>${debts.length} 个</small></div>
     <div class="card tight">${debts.map(row).join('')}<div class="group-total"><span>负债小计</span><b class="amt exp">${money(totalD)}</b></div></div>
+    ${archivedCount ? `<button class="entry-row" style="margin-top:14px" data-action="show-archived"><div class="l"><div class="ico">${icon('database')}</div>已归档账户</div><div class="r">${archivedCount} 个 ${icon('chevron-right')}</div></button>` : ''}
     <div class="section-head"><h3>储蓄目标</h3><small>1 个</small></div>
     <button class="card goal" data-action="open-saving" style="width:100%;text-align:left">
       <div class="gt"><div class="n">${esc(state.savings.name)}</div><div class="p">${savedPct}%</div></div>
@@ -360,11 +376,16 @@ function assetsView() {
 
 // ── 统计 ─────────────────────────────────────────────────
 function statsList() {
-  let list = state.statsRange === 'year' ? state.txns.filter(t => t.date.startsWith(String(TODAY.y))) : monthTxns();
+  let list;
+  if (state.statsRange === 'year') list = state.txns.filter(t => t.date.startsWith(String(TODAY.y)));
+  else if (state.statsRange === 'week') list = state.txns.filter(t => t.date >= iso(2025, 10, 5) && t.date <= iso(2025, 10, 11));
+  else if (state.statsRange === 'custom') list = state.txns.filter(t => t.date >= state.statsCustom.start && t.date <= state.statsCustom.end);
+  else list = monthTxns();
   if (state.statFilter.accountId) list = list.filter(t => t.accountId === state.statFilter.accountId || t.toId === state.statFilter.accountId);
   if (state.statFilter.catId) list = list.filter(t => t.catId === state.statFilter.catId);
   return list;
 }
+const rangeLabel = () => ({ week: '本周', month: '本月', year: '本年', custom: `${state.statsCustom.start.slice(5)} ~ ${state.statsCustom.end.slice(5)}` })[state.statsRange] || '本月';
 function statsView() {
   const filterOn = state.statFilter.accountId || state.statFilter.catId;
   header('统计', '日常账本', ib('stats-filter', '筛选', 'filter') + (filterOn ? `<button class="text-button" data-action="clear-stats-filter">清除</button>` : ''));
@@ -384,8 +405,10 @@ function statsView() {
       <div class="rb"><i style="width:${(r.v / rows[0].v * 100).toFixed(1)}%;background:${CHART_COLORS[i % CHART_COLORS.length]}"></i></div></button>`).join('');
   const bars = [['5月', 70], ['6月', 82], ['7月', 74], ['8月', 97], ['9月', 81], ['10月', Math.max(30, Math.min(100, Math.round(exp / state.budgetTotal * 100)))]]; 
   const filterChip = filterOn ? `<div class="filter-note">${icon('filter')} 已筛选:${state.statFilter.accountId ? ACC(state.statFilter.accountId).name : ''}${state.statFilter.catId ? CAT_BY_ID(state.statFilter.catId).name : ''}</div>` : '';
+  const customBar = range === 'custom' ? `<button class="range-bar" data-action="edit-custom-range">${icon('calendar')} <span>${rangeLabel()}</span><span class="muted">修改</span></button>` : '';
   return `
     <div class="seg">${[['week', '本周'], ['month', '本月'], ['year', '本年'], ['custom', '自定义']].map(([k, n]) => `<button class="${range === k ? 'on' : ''}" data-action="stats-range" data-range="${k}">${n}</button>`).join('')}</div>
+    ${customBar}
     ${filterChip}
     <div class="overview">
       <div class="o"><div class="l">支出</div><div class="v amt exp"><small>¥</small>${(exp / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div></div>
@@ -395,7 +418,7 @@ function statsView() {
     <div class="section-head"><h3>分类占比</h3><small>按支出</small></div>
     <div class="card" style="padding:0"><div class="donut-wrap">
       <div class="donut"><svg width="142" height="142" viewBox="0 0 150 150"><g transform="rotate(-90 75 75)" fill="none" stroke-width="20">${arcs}</g></svg>
-        <div class="ctr"><div class="l">${range === 'year' ? '本年' : range === 'week' ? '本周' : '本月'}支出</div><div class="v amt">${moneyShort(exp)}</div></div></div>
+        <div class="ctr"><div class="l">${rangeLabel()}支出</div><div class="v amt">${moneyShort(exp)}</div></div></div>
       <div class="legend">${legend}</div>
     </div></div>
     <div class="section-head"><h3>分类排行</h3><small>共 ${rows.length} 类</small></div>
@@ -480,10 +503,9 @@ function editView() {
   }
 
   const accChip = e.kind !== 'transfer' ? `<button class="mini-chip" data-action="pick-account"><span class="k">账户</span><span class="v">${ACC(e.accountId)?.name || '选择'}</span></button>` : '';
-  const detailRow = `<div class="mini-row four">
+  const detailRow = `<div class="mini-row">
       ${accChip}
-      <button class="mini-chip" data-action="pick-date"><span class="k">日期</span><span class="v">${fmtDateCN(e.date)}</span></button>
-      <button class="mini-chip" data-action="pick-time"><span class="k">时间</span><span class="v amt">${e.time}</span></button>
+      <button class="mini-chip" data-action="pick-datetime"><span class="k">日期时间</span><span class="v amt">${fmtDateCN(e.date)} ${hhmm(e.time)}</span></button>
       <button class="mini-chip" data-action="pick-tag"><span class="k">标签</span><span class="v">${e.tag ? esc(e.tag) : '添加'}</span></button>
     </div>`;
 
@@ -526,6 +548,9 @@ function sheetHtml(s) {
 }
 function pickSheet(title, items, action) {
   return { title, body: `<div class="pick-list">${items.map(it => `<button class="pick ${it.sel ? 'sel' : ''}" data-action="${action}" ${it.data}>${it.icon ? icon(it.icon) : ''}<span class="grow">${it.label}</span>${it.right ? `<span class="muted small">${it.right}</span>` : ''}${it.sel ? icon('check') : ''}</button>`).join('')}</div>` };
+}
+function timeSeg(part, val, label) {
+  return `<div class="time-seg"><button class="icon-button" data-action="time-step" data-part="${part}" data-dir="1">${icon('chevron-up')}</button><div class="val amt">${val}</div><button class="icon-button" data-action="time-step" data-part="${part}" data-dir="-1">${icon('chevron-down')}</button><div class="lab">${label}</div></div>`;
 }
 
 // ── 子页面 ───────────────────────────────────────────────
@@ -651,9 +676,36 @@ const SUBPAGES = {
     title: '新增账户', actions: '',
     body: `<p class="form-intro">支持储蓄、信用、预付、应收应付、借贷与投资账户。</p>
       <label class="input-field"><span>账户名称</span><input id="newAccName" placeholder="例如:工商银行储蓄卡" value="${esc(state.newAcc.name)}"></label>
-      <div class="chip-label">类型</div><div class="chip-row">${[['asset', '资产'], ['debt', '负债']].map(([k, n]) => `<button class="chip ${state.newAcc.group === k ? 'on' : ''}" data-action="new-acc-group" data-v="${k}">${n}</button>`).join('')}</div>
+      <div class="chip-label">分组</div><div class="chip-row">${[['asset', '资产'], ['debt', '负债']].map(([k, n]) => `<button class="chip ${state.newAcc.group === k ? 'on' : ''}" data-action="new-acc-group" data-v="${k}">${n}</button>`).join('')}</div>
+      <div class="chip-label" style="margin-top:14px">类型</div><div class="chip-row">${['储蓄', '信用', '预付', '应收应付', '借贷', '投资', '电子钱包', '现金'].map(t => `<button class="chip ${state.newAcc.type === t ? 'on' : ''}" data-action="new-acc-type" data-v="${t}">${t}</button>`).join('')}</div>
       <label class="input-field"><span>初始余额</span><input id="newAccBase" type="number" placeholder="0.00" value="${state.newAcc.base}"></label>
+      <label class="input-field"><span>备注(可选)</span><input id="newAccNote" placeholder="例如:工资卡" value="${esc(state.newAcc.note)}"></label>
       <div class="sub-actions"><button class="action-button full" data-action="do-add-account">保存账户</button></div>`
+  }),
+  account: () => {
+    const a = ACC(state.editingAccount) || state.accounts[0];
+    const rows = state.txns.filter(t => t.accountId === a.id || t.toId === a.id).sort((x, y) => (y.date + y.time).localeCompare(x.date + x.time)).slice(0, 10);
+    return {
+      title: '账户详情', actions: ib('acc-archive', '归档', 'database'),
+      body: `<div class="acct-hero"><div class="ico" style="${TONE_BG[a.tone]};width:52px;height:52px;border-radius:16px;font-size:22px;margin:0 auto 10px;display:grid;place-items:center;font-family:var(--serif);font-weight:600">${a.mark}</div>
+          <div class="n">${esc(a.name)}</div>
+          <div class="amt ${a.base < 0 ? 'exp' : ''}" style="font-size:26px;margin-top:6px">${money(a.base)}</div>
+          <div class="small muted">${a.group === 'asset' ? '资产' : '负债'} · ${a.type}</div></div>
+        <div class="sub-actions two" style="margin-top:14px"><button class="action-button secondary" data-action="acc-rename">${icon('pencil')} 重命名</button><button class="action-button secondary" data-action="acc-calibrate">${icon('refresh')} 余额校准</button></div>
+        <div class="setlist" style="margin-top:14px">
+          <div class="pick static"><span class="grow">备注<span class="small muted" style="display:block">${esc(a.note || '未填写')}</span></span><button class="mini-x" data-action="acc-edit-note">${icon('pencil')}</button></div>
+          <div class="pick static"><span class="grow">类型<span class="small muted" style="display:block">${a.type}</span></span></div>
+          <div class="pick static"><span class="grow">创建时间<span class="small muted" style="display:block">${a.createdAt}</span></span></div>
+        </div>
+        <div class="section-head" style="margin-top:16px"><h3>近期流水</h3><small>${rows.length} 笔</small></div>
+        <div class="card tight">${rows.length ? rows.map(txnRow).join('') : '<p class="form-intro" style="padding:10px 4px">该账户暂无流水。</p>'}</div>
+        <div class="sub-actions" style="margin-top:16px"><button class="action-button danger full" data-action="acc-delete">${icon('trash')} 删除账户</button></div>`
+    };
+  },
+  archived: () => ({
+    title: '已归档账户', actions: '',
+    body: `<p class="form-intro">归档账户不计入资产合计,但仍保留流水。可恢复。</p>
+      <div class="setlist">${state.accounts.filter(a => a.archived).map(a => `<div class="pick static"><div class="mark">${a.mark}</div><span class="grow">${esc(a.name)}<span class="small muted" style="display:block">${a.type} · ${money(a.base)}</span></span><button class="action-button secondary" style="min-height:36px;padding:6px 14px;font-size:12px" data-action="acc-restore" data-id="${a.id}">恢复</button></div>`).join('') || '<p class="form-intro">没有已归档的账户。</p>'}</div>`
   }),
   ai: () => ({
     title: 'AI 记账', actions: '',
@@ -666,8 +718,7 @@ const SUBPAGES = {
   })
 };
 
-function subpageHtml(sub) {
-  const def = SUBPAGES[sub.key];
+function subpageHtml(sub) {  const def = SUBPAGES[sub.key];
   if (!def) return '';
   const page = def();
   return `<div class="phone-page">
@@ -747,24 +798,23 @@ const actions = {
     openSheet(pickSheet('选择账户', state.accounts.map(a => ({ label: a.name, right: money(a.base), sel: cur === a.id, data: `data-id="${a.id}" data-side="${side || ''}"` })), 'set-account'));
   },
   'set-account': el => { const id = el.dataset.id, side = el.dataset.side; if (side === 'to') state.edit.toId = id; else if (side === 'from') state.edit.fromId = id; else state.edit.accountId = id; closeSheet(); },
-  'pick-date': () => openSheet({ title: '选择日期', body: `<div class="cal-head"><button class="icon-button" data-action="sheet-cal-nav" data-dir="-1">${icon('chevron-left')}</button><div class="mo">${state.calYear} 年 ${state.calMonth} 月</div><button class="icon-button" data-action="sheet-cal-nav" data-dir="1">${icon('chevron-right')}</button></div>
-    <div class="cal-grid">${['一', '二', '三', '四', '五', '六', '日'].map(w => `<div class="wd">${w}</div>`).join('')}${calCells(state.calYear, state.calMonth, state.edit.date, true)}</div>` }),
-  'sheet-cal-nav': el => { const d = +el.dataset.dir; let m = state.calMonth + d, y = state.calYear; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } state.calMonth = m; state.calYear = y; actions['pick-date'](); },
-  'cal-pick': el => { const date = el.dataset.date; if (state.page === 'edit' && state.edit) { state.edit.date = date; } state.selectedDate = date; closeSheet(); },
-  'pick-time': () => {
-    const [h, mi, se] = state.edit.time.split(':');
-    const seg = (label, part, val) => `<div class="time-seg"><button class="icon-button" data-action="time-step" data-part="${part}" data-dir="1">${icon('chevron-up')}</button><div class="val amt">${val}</div><button class="icon-button" data-action="time-step" data-part="${part}" data-dir="-1">${icon('chevron-down')}</button><div class="lab">${label}</div></div>`;
-    openSheet({ title: '选择时间', body: `<div class="time-picker">${seg('时', 'h', h)}<span class="colon">:</span>${seg('分', 'm', mi)}<span class="colon">:</span>${seg('秒', 's', se)}</div>
-      <div class="sub-actions two"><button class="action-button" data-action="time-now">此刻</button><button class="action-button secondary" data-close>完成</button></div>` });
-  },
-  'time-step': el => { let [h, mi, se] = state.edit.time.split(':').map(Number); const d = +el.dataset.dir; if (el.dataset.part === 'h') h = (h + d + 24) % 24; else if (el.dataset.part === 'm') mi = (mi + d + 60) % 60; else se = (se + d + 60) % 60; state.edit.time = [h, mi, se].map(n => String(n).padStart(2, '0')).join(':'); actions['pick-time'](); },
+  // 合并的日期时间选择器:上方月历 + 下方时分秒步进
+  'pick-datetime': () => openSheet({ title: '选择日期与时间', tall: true, body: `<div class="cal-head"><button class="icon-button" data-action="sheet-cal-nav" data-dir="-1">${icon('chevron-left')}</button><div class="mo">${state.calYear} 年 ${state.calMonth} 月</div><button class="icon-button" data-action="sheet-cal-nav" data-dir="1">${icon('chevron-right')}</button></div>
+    <div class="cal-grid">${['一', '二', '三', '四', '五', '六', '日'].map(w => `<div class="wd">${w}</div>`).join('')}${calCells(state.calYear, state.calMonth, state.edit.date, true)}</div>
+    <div class="datetime-time">${state.edit.time.split(':').map((val, i) => timeSeg(['h', 'm', 's'][i], val, ['时', '分', '秒'][i])).join('<span class="colon">:</span>')}</div>
+    <div class="sub-actions two"><button class="action-button secondary" data-action="datetime-now">此刻</button><button class="action-button" data-close>完成</button></div>` }),
+  'sheet-cal-nav': el => { const d = +el.dataset.dir; let m = state.calMonth + d, y = state.calYear; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } state.calMonth = m; state.calYear = y; actions['pick-datetime'](); },
+  'cal-pick': el => { const date = el.dataset.date; if (state.page === 'edit' && state.edit) { state.edit.date = date; } state.selectedDate = date; if (state.sheet && state.sheet.title.includes('日期与时间')) actions['pick-datetime'](); else closeSheet(); },
+  'time-step': el => { let [h, mi, se] = state.edit.time.split(':').map(Number); const d = +el.dataset.dir; if (el.dataset.part === 'h') h = (h + d + 24) % 24; else if (el.dataset.part === 'm') mi = (mi + d + 60) % 60; else se = (se + d + 60) % 60; state.edit.time = [h, mi, se].map(n => String(n).padStart(2, '0')).join(':'); actions['pick-datetime'](); },
+  'datetime-now': () => { const n = new Date(); state.edit.date = iso(n.getFullYear(), n.getMonth() + 1, n.getDate()); state.edit.time = [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2, '0')).join(':'); actions['pick-datetime'](); toast('已设为当前时刻'); },
   'time-now': () => { const n = new Date(); state.edit.time = [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2, '0')).join(':'); closeSheet(); toast('已设为当前时刻'); },
   'pick-tag': () => {
     openSheet({ title: '选择标签', body: `<div class="tag-list">${state.tags.map(t => `<button class="pick ${state.edit.tag === t ? 'sel' : ''}" data-action="set-tag" data-tag="${esc(t)}">${icon('tag')}<span class="grow">${esc(t)}</span>${state.edit.tag === t ? icon('check') : ''}</button>`).join('')}</div>
       <div class="sub-actions two"><button class="action-button" data-action="new-tag-inline">${icon('plus')} 新建</button><button class="action-button secondary" data-action="set-tag" data-tag="">清除</button></div>` });
   },
   'set-tag': el => { state.edit.tag = el.dataset.tag; closeSheet(); },
-  'new-tag-inline': () => { const t = (prompt('新标签名称') || '').trim(); if (t) { if (!state.tags.includes(t)) state.tags.push(t); state.edit.tag = t; } closeSheet(); },
+  'new-tag-inline': () => inputSheet('新建标签', { label: '标签名称', action: 'do-new-tag-inline' }),
+  'do-new-tag-inline': () => { const t = (state.inputDraft || '').trim(); if (!t) { toast('请输入标签名称'); return; } if (!state.tags.includes(t)) state.tags.push(t); state.edit.tag = t; closeSheet(); toast('标签已新增'); },
   'save-entry': () => {
     const e = state.edit;
     const amount = Math.round(parseFloat(e.amountStr || '0') * 100);
@@ -805,21 +855,52 @@ const actions = {
   'cal-next': () => { state.calMonth++; if (state.calMonth > 12) { state.calMonth = 1; state.calYear++; } render(); },
 
   // 资产
-  'open-account': el => { const a = ACC(el.dataset.id); const rows = state.txns.filter(t => t.accountId === a.id || t.toId === a.id).sort((x, y) => (y.date + y.time).localeCompare(x.date + x.time)).slice(0, 15); openSheet({ title: a.name, body: `<div class="acct-hero"><div class="amt ${a.base < 0 ? 'exp' : ''}">${money(a.base)}</div><div class="small muted">${a.sub}</div></div>${rows.length ? rows.map(txnRow).join('') : '<p class="form-intro">该账户暂无流水。</p>'}`, tall: true }); },
   'assets-trend': () => openSub({ key: 'trend' }),
-  'add-account': () => { state.newAcc = { name: '', group: 'asset', base: '0' }; openSub({ key: 'addaccount' }); },
+  'add-account': () => { state.newAcc = { name: '', group: 'asset', type: '储蓄', base: '0', note: '', mark: '' }; openSub({ key: 'addaccount' }); },
   'new-acc-group': el => { state.newAcc.group = el.dataset.v; render(); },
+  'new-acc-type': el => { state.newAcc.type = el.dataset.v; render(); },
   'do-add-account': () => {
-    const el = $('#newAccName');
-    const name = (el ? el.value : '').trim();
-    if (!name) { toast('请输入账户名称'); return; }
-    const base = Math.round(parseFloat(($('#newAccBase') || {}).value || '0') * 100) * (state.newAcc.group === 'debt' ? -1 : 1);
-    state.accounts.push({ id: 'acc' + nextId(), name, group: state.newAcc.group, mark: name[0], tone: state.newAcc.group === 'asset' ? 'green' : 'red', base, sub: state.newAcc.group === 'asset' ? '资产账户' : '负债账户' });
+    const name = ($('#newAccName') || {}).value;
+    const base = $('#newAccBase') ? $('#newAccBase').value : state.newAcc.base;
+    const note = $('#newAccNote') ? $('#newAccNote').value : state.newAcc.note;
+    const n = (name || '').trim();
+    if (!n) { toast('请输入账户名称'); return; }
+    const v = Math.round(parseFloat(base || '0') * 100) * (state.newAcc.group === 'debt' ? -1 : 1);
+    state.accounts.push({ id: 'acc' + nextId(), name: n, group: state.newAcc.group, type: state.newAcc.type, mark: n[0], tone: state.newAcc.group === 'asset' ? 'green' : 'red', base: v, sub: `${state.newAcc.type} · 新建`, note: (note || '').trim(), createdAt: iso(TODAY.y, TODAY.m, TODAY.d), archived: false });
     closeSub(); toast('账户已新增'); render();
   },
 
+  // 账户详情 / 编辑
+  'open-account': el => { state.editingAccount = el.dataset.id; openSub({ key: 'account' }); },
+  'acc-rename': () => inputSheet('账户名称', { label: '名称', value: ACC(state.editingAccount).name, action: 'acc-save-name' }),
+  'acc-save-name': el => { const v = (state.inputDraft || '').trim(); if (v) { ACC(state.editingAccount).name = v; } closeSheet(); render(); toast('名称已更新'); },
+  'acc-edit-note': () => inputSheet('账户备注', { label: '备注', value: ACC(state.editingAccount).note || '', placeholder: '例如:工资卡', action: 'acc-save-note' }),
+  'acc-save-note': () => { ACC(state.editingAccount).note = state.inputDraft || ''; closeSheet(); render(); toast('备注已更新'); },
+  'acc-calibrate': () => inputSheet('余额校准', { label: '实际余额', value: (ACC(state.editingAccount).base / 100).toFixed(2), placeholder: '0.00', action: 'acc-save-calibrate', confirm: '校准' }),
+  'acc-save-calibrate': () => {
+    const a = ACC(state.editingAccount);
+    const v = Math.round(parseFloat(state.inputDraft || '0') * 100);
+    const diff = v - a.base;
+    if (diff === 0) { closeSheet(); toast('余额未变,不生成调整记录'); return; }
+    const acc = a;
+    state.txns.push({ id: nextId(), date: iso(TODAY.y, TODAY.m, TODAY.d), time: '23:59:00', title: '余额校准', catId: null, sub: '', accountId: acc.id, kind: diff > 0 ? 'income' : 'expense', amount: Math.abs(diff), tag: '', note: '余额校准(不计入收支)', calibrate: true });
+    acc.base = v;
+    closeSheet(); render(); toast(`已校准,生成调整记录 ${money(Math.abs(diff))}`);
+  },
+  'acc-archive': () => { const a = ACC(state.editingAccount); a.archived = true; closeSub(); toast('账户已归档'); render(); },
+  'acc-restore': el => { ACC(el.dataset.id).archived = false; toast('账户已恢复'); render(); },
+  'acc-delete': () => confirmPhone('删除账户', '删除后不可恢复(演示仅从内存移除)。', 'acc-confirm-delete', '删除'),
+  'acc-confirm-delete': () => { state.accounts = state.accounts.filter(x => x.id !== state.editingAccount); closeSheet(); closeSub(); toast('账户已删除'); render(); },
+  'show-archived': () => openSub({ key: 'archived' }),
+
   // 统计
   'stats-range': el => { state.statsRange = el.dataset.range; render(); },
+  'edit-custom-range': () => openSheet({ title: '自定义区间', tall: true, body: `<div class="range-tabs two"><button class="${state.statsCustom.editing === 'start' ? 'on' : ''}" data-action="range-tab" data-v="start">开始 ${state.statsCustom.start.slice(5)}</button><button class="${state.statsCustom.editing === 'end' ? 'on' : ''}" data-action="range-tab" data-v="end">结束 ${state.statsCustom.end.slice(5)}</button></div>
+    <div class="cal-grid">${['一', '二', '三', '四', '五', '六', '日'].map(w => `<div class="wd">${w}</div>`).join('')}${calCells(state.calYear, state.calMonth, state.statsCustom[state.statsCustom.editing], true, 'cal-pick-range')}</div>
+    <div class="sub-actions two"><button class="action-button secondary" data-close>取消</button><button class="action-button" data-action="apply-custom-range">应用</button></div>` }),
+  'range-tab': el => { state.statsCustom.editing = el.dataset.v; actions['edit-custom-range'](); },
+  'cal-pick-range': el => { state.statsCustom[state.statsCustom.editing] = el.dataset.date; actions['edit-custom-range'](); },
+  'apply-custom-range': () => { if (state.statsCustom.start > state.statsCustom.end) { toast('开始日期晚于结束日期'); return; } closeSheet(); render(); toast('已应用自定义区间'); },
   'stats-cat': el => { const cat = CAT_BY_ID(el.dataset.id); const rows = statsList().filter(t => t.kind === 'expense' && t.catId === el.dataset.id).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time)); openSheet({ title: cat.name, body: `<p class="form-intro">${rows.length} 笔 · 合计 <b class="amt">${money(rows.reduce((s, t) => s + t.amount, 0))}</b></p>${rows.map(txnRow).join('')}`, tall: true }); },
   'stats-filter': () => openSub({ key: 'statsfilter' }),
   'set-stat-account': el => { state.statFilter.accountId = state.statFilter.accountId === el.dataset.id ? null : el.dataset.id; render(); },
@@ -828,21 +909,28 @@ const actions = {
   'clear-stats-filter': () => { state.statFilter = { accountId: null, catId: null }; closeSub(); toast('已清除筛选'); render(); },
 
   // 我的 · 子页面数据操作
-  'add-ledger': () => { const n = (prompt('新账本名称') || '').trim(); if (n) { state.ledgers.push({ id: 'l' + nextId(), name: n, current: false }); render(); toast('账本已新增'); } },
+  'add-ledger': () => inputSheet('新建账本', { label: '账本名称', placeholder: '例如:家庭账本', action: 'do-add-ledger' }),
+  'do-add-ledger': () => { const n = (state.inputDraft || '').trim(); if (!n) { toast('请输入账本名称'); return; } state.ledgers.push({ id: 'l' + nextId(), name: n, current: false }); closeSheet(); render(); toast('账本已新增'); },
   'switch-ledger': el => { state.ledgers.forEach(l => l.current = l.id === el.dataset.id); render(); toast('已切换账本'); },
   'toggle-cat': el => { const id = el.dataset.id; if (state.disabledCats.includes(id)) state.disabledCats = state.disabledCats.filter(x => x !== id); else state.disabledCats.push(id); render(); },
-  'add-tag': () => { const t = (prompt('新标签名称') || '').trim(); if (t && !state.tags.includes(t)) { state.tags.push(t); render(); toast('标签已新增'); } },
+  'add-tag': () => inputSheet('新建标签', { label: '标签名称', placeholder: '例如:差旅', action: 'do-add-tag' }),
+  'do-add-tag': () => { const t = (state.inputDraft || '').trim(); if (!t) { toast('请输入标签名称'); return; } if (!state.tags.includes(t)) state.tags.push(t); closeSheet(); render(); toast('标签已新增'); },
   'delete-tag': el => { state.tags = state.tags.filter(t => t !== el.dataset.tag); render(); toast('标签已删除'); },
-  'add-reimburse': () => { const n = (prompt('报销项目名称') || '').trim(); if (n) { state.reimburse.push({ id: 'r' + nextId(), name: n, amount: 0, status: '进行中' }); render(); toast('已新增报销项目'); } },
+  'add-reimburse': () => inputSheet('新建报销项目', { label: '项目名称', placeholder: '例如:差旅报销 · 上海', action: 'do-add-reimburse' }),
+  'do-add-reimburse': () => { const n = (state.inputDraft || '').trim(); if (!n) { toast('请输入名称'); return; } state.reimburse.push({ id: 'r' + nextId(), name: n, amount: 0, status: '进行中' }); closeSheet(); render(); toast('已新增报销项目'); },
   'delete-reimburse': el => { state.reimburse = state.reimburse.filter(r => r.id !== el.dataset.id); render(); toast('已删除'); },
-  'add-lending': () => { const n = (prompt('借贷名称') || '').trim(); if (n) { state.lending.push({ id: 'd' + nextId(), name: n, amount: 0, status: '待收' }); render(); toast('已新增借贷'); } },
+  'add-lending': () => inputSheet('新增借贷', { label: '名称', placeholder: '例如:借给张伟', action: 'do-add-lending' }),
+  'do-add-lending': () => { const n = (state.inputDraft || '').trim(); if (!n) { toast('请输入名称'); return; } state.lending.push({ id: 'd' + nextId(), name: n, amount: 0, status: '待收' }); closeSheet(); render(); toast('已新增借贷'); },
   'delete-lending': el => { state.lending = state.lending.filter(r => r.id !== el.dataset.id); render(); toast('已删除'); },
-  'add-installment': () => { const n = (prompt('分期名称') || '').trim(); if (n) { state.installments.push({ id: 'i' + nextId(), name: n, periods: 12, amount: 0 }); render(); toast('已新增分期'); } },
+  'add-installment': () => inputSheet('新增分期', { label: '计划名称', placeholder: '例如:车贷', action: 'do-add-installment' }),
+  'do-add-installment': () => { const n = (state.inputDraft || '').trim(); if (!n) { toast('请输入名称'); return; } state.installments.push({ id: 'i' + nextId(), name: n, periods: 12, amount: 0 }); closeSheet(); render(); toast('已新增分期'); },
   'delete-installment': el => { state.installments = state.installments.filter(r => r.id !== el.dataset.id); render(); toast('已删除'); },
-  'add-wealth': () => { const n = (prompt('理财产品名称') || '').trim(); if (n) { state.wealth.push({ id: 'w' + nextId(), name: n, invested: 0, realized: 0 }); render(); toast('已新增理财产品'); } },
+  'add-wealth': () => inputSheet('新增理财', { label: '产品名称', placeholder: '例如:稳健理财 B', action: 'do-add-wealth' }),
+  'do-add-wealth': () => { const n = (state.inputDraft || '').trim(); if (!n) { toast('请输入名称'); return; } state.wealth.push({ id: 'w' + nextId(), name: n, invested: 0, realized: 0 }); closeSheet(); render(); toast('已新增理财产品'); },
   'delete-wealth': el => { state.wealth = state.wealth.filter(r => r.id !== el.dataset.id); render(); toast('已删除'); },
   'toggle-model': el => { const m = state.models.find(x => x.id === el.dataset.id); m.enabled = !m.enabled; render(); },
-  'add-merchant': () => { const n = (prompt('商户关键词(可用 | 分隔)') || '').trim(); if (n) { state.merchantRules.push({ id: 'mr' + nextId(), match: n, cat: 'other' }); render(); toast('已新增规则'); } },
+  'add-merchant': () => inputSheet('新增商户规则', { label: '商户关键词(可用 | 分隔)', placeholder: '例如:肯德基|麦当劳', action: 'do-add-merchant' }),
+  'do-add-merchant': () => { const n = (state.inputDraft || '').trim(); if (!n) { toast('请输入关键词'); return; } state.merchantRules.push({ id: 'mr' + nextId(), match: n, cat: 'other' }); closeSheet(); render(); toast('已新增规则'); },
   'delete-merchant': el => { state.merchantRules = state.merchantRules.filter(r => r.id !== el.dataset.id); render(); toast('已删除'); },
   'toggle-webdav': () => { state.webdav.enabled = !state.webdav.enabled; render(); },
   'create-backup': () => { const now = new Date(); state.backups.unshift({ id: 'b' + nextId(), at: `今天 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`, size: '2.4 MB' }); render(); toast('备份已创建(演示)'); },
@@ -914,6 +1002,9 @@ document.addEventListener('input', e => {
   if (el.id === 'searchInput') { state.query = el.value; const box = $('#searchResults'); if (box) box.innerHTML = searchResultBody(state.query.trim(), state.query.trim() ? state.txns.filter(t => matchesQuery(t, state.query.trim())).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time)) : []); return; }
   if (el.dataset && el.dataset.field === 'note') { state.edit.note = el.value; el.closest('.note-field')?.classList.toggle('filled', !!el.value); return; }
   if (el.id === 'newAccName') { state.newAcc.name = el.value; return; }
+  if (el.id === 'newAccBase') { state.newAcc.base = el.value; return; }
+  if (el.id === 'newAccNote') { state.newAcc.note = el.value; return; }
+  if (el.id === 'sheetInput') { state.inputDraft = el.value; return; }
   if (el.id === 'aiText') { state.aiText = el.value; }
 });
 document.addEventListener('keydown', e => {
