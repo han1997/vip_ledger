@@ -58,6 +58,11 @@ const assert = require('node:assert/strict');
   await act('new-entry');
   assert.match(await header(), /记一笔/);
   assert.equal(await page.locator('.content.noscroll').count(), 1, 'editor does not scroll');
+  // 正文实际无纵向滚动(含快捷行与键盘同屏)
+  const overflow = await page.locator('.content').evaluate(el => el.scrollHeight - el.clientHeight);
+  assert.ok(overflow <= 1, `editor fits viewport (overflow=${overflow}px)`);
+  assert.equal(await page.locator('.quick-row .quick').count(), 4, 'four quick cells');
+  assert.equal(await page.locator('.note-field, .note-field input').count(), 0, 'note is a quick sheet, not an input row');
   assert.equal(await page.locator('.chip.none, [data-action="clear-cat"]').count(), 0, 'no "no category" option');
   assert.equal(await page.locator('.chip-row .chip.on').count() >= 1, true, 'a category is preselected');
   await key('1'); await key('2'); await key('8');
@@ -84,7 +89,9 @@ const assert = require('node:assert/strict');
   await page.locator('#overlay .phone-sheet-head [data-close]').click();
   await page.locator('[data-action="pick-tag"]').click();
   await page.locator('#overlay [data-action="set-tag"][data-tag="工作餐"]').click();
-  await page.locator('.note-field input').fill('和同事逛街');
+  await page.locator('[data-action="pick-note"]').click();
+  await page.locator('#sheetInput').fill('和同事逛街');
+  await page.locator('#overlay [data-action="save-note"]').click();
   await page.locator('.save-btn').click();
   assert.match(await header(), /首页/, 'saved returns home');
 
@@ -110,14 +117,14 @@ const assert = require('node:assert/strict');
   await act('new-entry');
   await page.locator('[data-action="set-type"][data-kind="transfer"]').click();
   await key('5'); await key('0'); await key('0');
-  assert.equal(await page.locator('[data-action="pick-account"][data-side="from"]').count(), 1, 'from');
-  assert.equal(await page.locator('[data-action="pick-account"][data-side="to"]').count(), 1, 'to');
+  assert.equal(await page.locator('.wide-row[data-action="pick-account"][data-side="from"]').count(), 1, 'from');
+  assert.equal(await page.locator('.wide-row[data-action="pick-account"][data-side="to"]').count(), 1, 'to');
   await page.locator('.save-btn').click();
   assert.match(await header(), /首页/, 'transfer saved');
 
-  // 9. 删除确认
+  // 9. 删除确认(编辑页顶栏)
   await page.locator('.txn').first().click();
-  await page.locator('[data-action="delete-entry"]').click();
+  await page.locator('#appHeader [data-action="delete-entry"]').click();
   assert.equal(await inPhone('.phone-sheet').count(), 1, 'delete confirm in phone');
   await page.locator('#overlay [data-action="confirm-delete-entry"]').click();
   assert.match(await header(), /首页/, 'deleted returns home');
@@ -133,6 +140,15 @@ const assert = require('node:assert/strict');
   await page.locator('#sheetInput').fill('招行储蓄卡');
   await page.locator('#overlay [data-action="acc-save-name"]').click();
   assert.match(await inPhone('.acct-hero .n').innerText(), /招行储蓄卡/, 'renamed');
+  // 类型可编辑
+  await page.locator('[data-action="acc-edit-type"]').click();
+  await page.locator('#overlay [data-action="acc-set-type"][data-v="信用"]').click();
+  assert.match(await inPhone('.acct-hero .small').innerText(), /信用/, 'type edited');
+  // 卡号可编辑(银行卡)
+  await page.locator('[data-action="acc-edit-card"]').click();
+  await page.locator('#sheetInput').fill('6225880199991234');
+  await page.locator('#overlay [data-action="acc-save-card"]').click();
+  assert.match(await inPhone('[data-action="acc-edit-card"] .grow .small').innerText(), /6225 8801 9999 1234/, 'card formatted');
   await page.locator('[data-action="acc-calibrate"]').click();
   await page.locator('#sheetInput').fill('90000.00');
   await page.locator('#overlay [data-action="acc-save-calibrate"]').click();
@@ -241,9 +257,10 @@ const assert = require('node:assert/strict');
     await page.locator('#overlay [data-action="close-sub"]').click();
   }
   await go('home'); await act('new-entry'); await collect();
-  for (const pick of ['pick-account', 'pick-datetime', 'pick-tag']) { await page.locator(`[data-action="${pick}"]`).first().click(); await collect(); await page.locator('#overlay .phone-sheet-head [data-close]').click(); }
+  for (const pick of ['pick-account', 'pick-datetime', 'pick-tag', 'pick-note']) { await page.locator(`[data-action="${pick}"]`).first().click(); await collect(); await page.locator('#overlay .phone-sheet-head [data-close]').click(); }
   for (const sub of ['account', 'archived']) { await go('assets'); if (sub === 'account') await page.locator('[data-action="open-account"]').first().click(); else { const b = page.locator('[data-action="show-archived"]'); if (await b.count()) await b.click(); else continue; } await collect(); await page.locator('#overlay [data-action="close-sub"]').click(); }
   await act('delete-entry').catch(() => {});
+  if (await page.locator('#overlay .phone-sheet').count()) { await collect(); await page.locator('#overlay [data-action="confirm-delete-entry"]').click(); }
   if (await page.locator('#overlay .phone-sheet').count()) { await collect(); await page.locator('#overlay [data-action="close-sheet"], #overlay .phone-sheet-head [data-close]').first().click(); }
 
   const missing = await page.evaluate(names => names.filter(n => !window.__vlHasAction(n)), [...seen]);
