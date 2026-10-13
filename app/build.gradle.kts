@@ -91,7 +91,7 @@ android {
 
 // AGP 8.13's public APK output API also keeps output-metadata.json in sync.
 android.applicationVariants.all {
-    val apkName = "$applicationId-v$versionName-$versionCode-$name" +
+    val apkName = "vipledger-v$versionName-$versionCode-$name" +
         if (isSigningReady) ".apk" else "-unsigned.apk"
     outputs.all {
         (this as ApkVariantOutput).outputFileName = apkName

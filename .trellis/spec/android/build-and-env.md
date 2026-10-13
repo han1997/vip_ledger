@@ -63,7 +63,7 @@
 - 唯一应用版本来源为根目录 `version.properties`：`versionName` 为无前导零的 major.minor.patch，`versionCode` 为 1..2100000000 的整数。
 - bump 始终将 versionCode 加一，升级 major/minor 时清零低位，同步在 `CHANGELOG.md` 顶部追加日期和单行更新说明。Gradle 仅校验和读取，不写版本。
 - applicationId 为 `fun.han1997.vipledger`，源码包及 namespace 保持 `com.han1997.vipledger`。改 applicationId 是独立安装，保留旧应用及数据，不自动迁移。
-- APK 使用实际 variant 的 `<applicationId>-v<versionName>-<versionCode>-<buildType>[-unsigned].apk`；无签名 Release 加 `-unsigned`。安装时按当前版本精确选取，目录可能残留旧 APK。
+- APK 使用实际 variant 的 `vipledger-v<versionName>-<versionCode>-<buildType>[-unsigned].apk`（固定 `vipledger` 前缀，不带 applicationId）；无签名 Release 加 `-unsigned`。安装时按当前版本精确选取，目录可能残留旧 APK。
 
 ### 4. 校验与错误
 
