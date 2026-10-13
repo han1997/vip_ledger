@@ -47,6 +47,10 @@ data class TxnEditUiState(
     val aiParsing: Boolean = false,
     val aiError: TxnEditError? = null,
     val aiParsed: ParsedEntry? = null,
+    /** 编辑态才允许删除（顶栏删除入口，原型 v2.1）。 */
+    val canDelete: Boolean = false,
+    /** 删除完成，界面收到后返回。 */
+    val deleted: Boolean = false,
 ) {
     val isAiMode: Boolean get() = aiMode
     val isBusy: Boolean get() = isSaving || isCreatingTag
@@ -64,6 +68,16 @@ data class TxnEditUiState(
         if (visibleCategories.none { it.category.id == id }) return this
         return if (categoryParentId == id) copy(expandedCategoryId = id.takeUnless { expandedCategoryId == id })
         else copy(categoryId = id, expandedCategoryId = id, hasUnsavedChanges = true)
+    }
+
+    /**
+     * 分类恒有值（任务决策 D2，原型 v2.1 口径）：未选分类时默认选当前方向的
+     * 第一个一级分类并展开其二级面板。自动默认不破动 [hasUnsavedChanges]。
+     */
+    fun withDefaultCategory(): TxnEditUiState {
+        if (categoryId != null) return this
+        val first = visibleCategories.firstOrNull() ?: return this
+        return copy(categoryId = first.category.id, expandedCategoryId = first.category.id)
     }
 
     /** 当前类型对应的分类方向（支出 / 收入 / 转账各自成树）。 */
@@ -154,6 +168,9 @@ sealed interface TxnEditAction {
     data object ExitAiMode : TxnEditAction
 
     data object Save : TxnEditAction
+
+    /** 编辑态删除当前账目（危险操作，界面必须先二次确认）。 */
+    data object Delete : TxnEditAction
 
     data object ConsumeError : TxnEditAction
 }

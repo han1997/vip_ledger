@@ -151,6 +151,32 @@ class TxnEditUiStateTest {
     }
 
     @Test
+    fun missingCategoryGetsTheFirstOneOfTheCurrentDirection() {
+        // 分类恒有值（D2）：默认选第一个一级分类并展开其二级面板。
+        val state = categoryState().withDefaultCategory()
+        assertEquals("food", state.categoryId)
+        assertEquals("food", state.expandedCategoryId)
+    }
+
+    @Test
+    fun defaultCategoryFollowsTheCurrentKind() {
+        val income = categoryState().copy(type = TransactionType.INCOME).withDefaultCategory()
+        assertEquals("salary", income.categoryId)
+    }
+
+    @Test
+    fun explicitCategoryIsNotOverriddenByTheDefault() {
+        val state = categoryState().copy(categoryId = "travel").withDefaultCategory()
+        assertEquals("travel", state.categoryId)
+    }
+
+    @Test
+    fun defaultCategoryIsSkippedWhenThereAreNoCategories() {
+        val state = TxnEditUiState(isLoading = false, ledgerId = LEDGER_ID).withDefaultCategory()
+        assertNull(state.categoryId)
+    }
+
+    @Test
     fun visibleCategoriesOnlyExposeTheCurrentKind() {
         val state = categoryState()
         assertEquals(listOf("food", "travel"), state.visibleCategories.map { it.category.id })

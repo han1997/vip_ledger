@@ -20,6 +20,7 @@ import com.han1997.vipledger.core.domain.usecase.tag.ObserveTagsUseCase
 import com.han1997.vipledger.core.domain.usecase.tag.SaveTagUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.CreateTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.ConfirmAiEntryUseCase
+import com.han1997.vipledger.core.domain.usecase.txn.DeleteTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.GetTxnUseCase
 import com.han1997.vipledger.core.domain.usecase.txn.UpdateTxnUseCase
 import com.han1997.vipledger.core.domain.support.LastAccountStore
@@ -56,6 +57,7 @@ class TxnEditViewModel @Inject constructor(
     private val getTxn: GetTxnUseCase,
     private val createTxn: CreateTxnUseCase,
     private val updateTxn: UpdateTxnUseCase,
+    private val deleteTxn: DeleteTxnUseCase,
     private val confirmAiEntry: ConfirmAiEntryUseCase,
     private val lastAccountStore: LastAccountStore,
     private val aiSettingsRepository: AiSettingsRepository,
@@ -117,7 +119,8 @@ class TxnEditViewModel @Inject constructor(
         }
         viewModelScope.launch {
             observeCategoryTree(ledgerId).collect { nodes ->
-                _uiState.update { it.copy(categoryNodes = nodes) }
+                // 分类恒有值（D2）：未选分类时默认选当前方向的第一个一级分类。
+                _uiState.update { it.copy(categoryNodes = nodes).withDefaultCategory() }
             }
         }
         viewModelScope.launch {
@@ -156,7 +159,8 @@ class TxnEditViewModel @Inject constructor(
                 }?.category?.id,
                 selectedTagIds = txn.tagIds.toSet(),
                 excludeFromStats = txn.excludeFromStats,
-            )
+                canDelete = true,
+            ).withDefaultCategory()
         }
     }
 
@@ -181,9 +185,9 @@ class TxnEditViewModel @Inject constructor(
                 val next = state.copy(
                     type = action.type,
                     categoryId = if (state.hasCategoryFor(action.type)) state.categoryId else null,
-                )
+                ).withDefaultCategory()
                 next.copy(toAccountId = next.resolvedTargetAccountId(),
-                    expandedCategoryId = if (state.categoryKind == next.categoryKind) state.expandedCategoryId else null)
+                    expandedCategoryId = if (state.categoryKind == next.categoryKind) next.expandedCategoryId else next.categoryParentId)
             }
 
             is TxnEditAction.UpdateAmount -> _uiState.update {
@@ -252,7 +256,27 @@ class TxnEditViewModel @Inject constructor(
 
             TxnEditAction.Save -> save()
 
+            TxnEditAction.Delete -> deleteEntry()
+
             TxnEditAction.ConsumeError -> _uiState.update { it.copy(error = null, saveFailureMessage = null) }
+        }
+    }
+
+    /** 编辑态删除：完成后置 [TxnEditUiState.deleted]，界面收到后返回。 */
+    private fun deleteEntry() {
+        val id = txnId ?: return
+        if (_uiState.value.isBusy) return
+        _uiState.update { it.copy(isSaving = true) }
+        viewModelScope.launch {
+            val result = deleteTxn(id)
+            if (result.isSuccess) {
+                _uiState.update { it.copy(isSaving = false, deleted = true) }
+            } else {
+                val reason = (result as? AppResult.Failure)?.error?.message
+                _uiState.update {
+                    it.copy(isSaving = false, error = TxnEditError.SAVE_FAILED, saveFailureMessage = reason)
+                }
+            }
         }
     }
 

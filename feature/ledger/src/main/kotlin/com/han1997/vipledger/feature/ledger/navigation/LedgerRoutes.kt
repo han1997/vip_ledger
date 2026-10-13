@@ -193,6 +193,7 @@ fun NavGraphBuilder.ledgerGraph(
             appVersion = rememberInstalledAppVersion(),
             pendingDraftCount = pendingDraftCount,
             onBack = null,
+            ledgerName = currentLedger?.name.orEmpty(),
             onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
             onOpenAccounts = { if (ready) navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
             onOpenCategories = { if (ready) navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
@@ -216,8 +217,7 @@ fun NavGraphBuilder.ledgerGraph(
         SettingsScreen(
             ledgerReady = ready,
             appVersion = rememberInstalledAppVersion(),
-            onBack = { navController.popBackStack() },
-            onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
+            onBack = { navController.popBackStack() },            onOpenLedgers = { navController.navigate(LedgerRoutes.LEDGER_MANAGE) },
             onOpenAccounts = { if (ready) navController.navigate(LedgerRoutes.accountManage(ledgerId)) },
             onOpenCategories = { if (ready) navController.navigate(LedgerRoutes.categoryManage(ledgerId)) },
             onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
