@@ -163,8 +163,8 @@ sdk.dir=C:\\Users\\<you>\\AppData\\Local\\Android\\Sdk
 
 When asked to "build" the project, produce both variants: `assembleDebug assembleRelease`.
 
-- Debug APK: `app/build/outputs/apk/debug/vipledger-v<versionName>-<versionCode>-debug.apk`
-- Signed release APK: `app/build/outputs/apk/release/vipledger-v<versionName>-<versionCode>-release.apk`
+- Debug APK: `app/build/outputs/apk/debug/vipledger-v<versionName>-debug.apk`
+- Signed release APK: `app/build/outputs/apk/release/vipledger-v<versionName>-release.apk`
 
 ### Application versions
 
@@ -189,7 +189,7 @@ coexists with the old application, whose data stays intact. No automatic migrati
 Subsequent versions use the same release key and `adb -s <physical-device-serial> install -r $releaseApk`.
 Verify the resulting package version after installation; do not uninstall or automate phone navigation.
 
-APK names use the `vipledger` prefix plus version name, version code, and build type. Unsigned releases
+APK names use the `vipledger` prefix plus version name and build type (no version code). Unsigned releases
 add `-unsigned` before `.apk`. Always select the current version, not a leftover APK from an earlier build.
 
 ### Release signing
@@ -218,7 +218,7 @@ Verify the signed APK:
 
 ```powershell
 $appVersion = ConvertFrom-StringData (Get-Content -Raw version.properties)
-$releaseApk = "app/build/outputs/apk/release/vipledger-v$($appVersion.versionName)-$($appVersion.versionCode)-release.apk"
+$releaseApk = "app/build/outputs/apk/release/vipledger-v$($appVersion.versionName)-release.apk"
 & "$env:LOCALAPPDATA\Android\Sdk\build-tools\36.0.0\apksigner.bat" verify --print-certs $releaseApk
 ```
 
