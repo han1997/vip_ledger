@@ -1199,3 +1199,46 @@ prompt 全部改为手机内输入弹层(探针断言未调用);记一笔日期�
 ### Next Steps
 
 - None - task complete
+
+## Session 33: 取消页面切换动画任务(回滚原型 v2.3 + Compose 过渡)
+
+**Date**: 2026-10-13
+**Task**: 页面切换动画(`10-13-page-transition-animation`,取消)
+**Branch**: `master`
+
+### Summary
+
+用户看过原型 v2.3 动效后判定「还不如不做」,要求取消任务并恢复代码。回滚三处:
+`VipLedgerApp.kt` 的四个过渡 lambda(300ms 前推 / 250ms 返回 / 90ms+it/50 残留值)、
+`style.css` 的 v2.3 动效段与 `.phone-page` 常驻 `vl-slide`、`app.js` 的动效分派与
+幽灵克隆。同工作区的 `app/build.gradle.kts` ABI 拆包**不在回滚范围**(PRD D5 已拆出,
+保留在途)。未 bump 版本、未动 CHANGELOG:回滚后源码回到已发布 v0.1.14 的状态,无净变更。
+
+顺带发现一处既有基准漂移(非本次引入,未处理):HEAD 的 `docs/ui-prototype/app.js`
+SHA-256 为 `3a5f69c0…`,而 `BASELINE.md` v2.1/v2.2 登记的是 `fb8ddd32…`;
+`index.html` 与 `style.css` 哈希均核对一致。疑似提交 `f7a2c88` 的工作区文件带 CRLF,
+行尾差异污染了哈希。需后续单独修正基准记录或统一行尾。
+
+### Main Changes
+
+- `git checkout HEAD --` 恢复:VipLedgerApp.kt、style.css、app.js(无新增提交)
+- 任务目录归档为取消(未 bump 版本、未改 CHANGELOG)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| (pending) | chore: roll back unreleased page-transition animation work |
+
+### Testing
+
+- [OK] `node --check docs/ui-prototype/app.js` 通过;源码级 grep 确认动效痕迹清零
+- [SKIP] 原型 smoke-test 未跑:本地缺 `playwright`(既有环境限制)
+
+### Status
+
+[OK] **Cancelled** — 已回滚,无残留
+
+### Next Steps
+
+- 如需再动页面切换动效,重新建任务(原型确认环节要更早给出「不做」的选项)
