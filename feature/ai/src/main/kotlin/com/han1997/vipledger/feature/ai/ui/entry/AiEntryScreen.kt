@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
@@ -549,7 +550,7 @@ private fun DraftCard(
     saving: Boolean,
 ) {
     val zone = remember { TimeZone.currentSystemDefault() }
-    Card(modifier = Modifier
+    GroupCard(modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 16.dp)) {
         Column(

@@ -14,16 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
@@ -45,6 +41,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.han1997.vipledger.core.designsystem.component.VipLedgerFab
+import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
@@ -99,10 +97,9 @@ internal fun MerchantRuleManageContent(
         topBar = { VipLedgerTopBar(title = stringResource(R.string.ai_rule_title), onBack = onBack) },
         snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            VipLedgerFab(
                 onClick = { onAction(MerchantRuleAction.OpenCreate) },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.ai_rule_add)) },
+                contentDescription = stringResource(R.string.ai_rule_add),
             )
         },
     ) { padding ->
@@ -162,7 +159,7 @@ private fun RuleCard(row: MerchantRuleRow, onAction: (MerchantRuleAction) -> Uni
         stringResource(R.string.ai_rule_priority_label, rule.priority),
     )
 
-    Card(
+    GroupCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp),

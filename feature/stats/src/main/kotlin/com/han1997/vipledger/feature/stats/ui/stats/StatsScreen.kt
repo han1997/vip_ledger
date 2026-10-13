@@ -11,15 +11,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -30,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +55,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.LoadingState
+import com.han1997.vipledger.core.designsystem.component.OverviewStat
+import com.han1997.vipledger.core.designsystem.component.SegmentOption
+import com.han1997.vipledger.core.designsystem.component.SegmentedControl
+import com.han1997.vipledger.core.designsystem.component.StatOverviewRow
+import com.han1997.vipledger.core.designsystem.component.VipLedgerFab
 import com.han1997.vipledger.core.designsystem.component.VipLedgerScaffold
 import com.han1997.vipledger.core.designsystem.component.VipLedgerSnackbarHost
 import com.han1997.vipledger.core.designsystem.component.VipLedgerTopBar
@@ -64,8 +70,13 @@ import com.han1997.vipledger.core.designsystem.component.chart.PieChart
 import com.han1997.vipledger.core.designsystem.component.chart.PieSlice
 import com.han1997.vipledger.core.designsystem.component.chart.percentLabel
 import com.han1997.vipledger.core.designsystem.format.dateRangeLabel
+import com.han1997.vipledger.core.designsystem.format.rangePresetLabel
 import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.core.designsystem.theme.chartColorOf
+import com.han1997.vipledger.core.designsystem.theme.IncomeGreen
+import com.han1997.vipledger.core.designsystem.theme.ExpenseRed
+import com.han1997.vipledger.core.designsystem.theme.displayAmount
 import com.han1997.vipledger.core.domain.model.PeriodGranularity
 import com.han1997.vipledger.core.domain.model.PeriodStat
 import com.han1997.vipledger.core.model.CategoryKind
@@ -178,10 +189,9 @@ internal fun StatsContent(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             if (state.ledgerId.isNotBlank()) {
-                ExtendedFloatingActionButton(
+                VipLedgerFab(
                     onClick = { onAddTxn(state.ledgerId) },
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text(text = stringResource(R.string.stats_add_txn)) },
+                    contentDescription = stringResource(R.string.stats_add_txn),
                 )
             }
         },
@@ -294,6 +304,7 @@ internal fun StatsContent(
                                 ChartGeometry.fractionOf(row.cents, kindTotalCents(state)),
                             ),
                             color = chartColorOf(rowIndex, state.kind),
+                            barFraction = ChartGeometry.fractionOf(row.cents, state.rows.firstOrNull()?.cents ?: kindTotalCents(state)),
                             expanded = rowKey(state.dimension, row) in expandedKeys,
                             onToggleExpand = if (row.children.isEmpty()) {
                                 null
@@ -316,6 +327,10 @@ internal fun StatsContent(
                                         ChartGeometry.fractionOf(child.cents, kindTotalCents(state)),
                                     ),
                                     color = chartColorOf(rowIndex, state.kind).copy(alpha = 0.7f),
+                                    barFraction = ChartGeometry.fractionOf(
+                                        child.cents,
+                                        state.rows.firstOrNull()?.children?.maxOfOrNull { it.cents } ?: kindTotalCents(state),
+                                    ),
                                     expanded = false,
                                     onToggleExpand = null,
                                     onClick = { drillArgsOf(state, child)?.let(onOpenDrill) },
@@ -365,33 +380,34 @@ private fun StatsConditions(
     val dimensionOptions = StatsDimension.entries.map { dimension ->
         FilterOption(id = dimension.name, label = dimensionLabel(dimension))
     }
+    val rangeOptions = SEGMENT_PRESETS.map { SegmentOption(it.name, rangePresetLabel(it)) } + SegmentOption(CUSTOM_ID, stringResource(R.string.search_time_custom))
+    val selectedRangeId = rangeSegmentId(state.preset, state.customRange)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = VipLedgerTokens.Space4, vertical = VipLedgerTokens.Space2),
+        verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
     ) {
-        FilterSection(stringResource(R.string.stats_time_label)) {
-            TimeRangeSelector(
-                preset = state.preset,
-                customRange = state.customRange,
-                onSelectPreset = { preset ->
-                    preset?.let { onAction(StatsAction.SelectPreset(it)) }
-                },
-                onPickCustomRange = onPickCustomRange,
-                includeAll = false,
-            )
-        }
+        SegmentedControl(
+            options = rangeOptions,
+            selectedId = selectedRangeId,
+            onSelect = { id ->
+                if (id == CUSTOM_ID) onPickCustomRange()
+                else DateRangePreset.entries.firstOrNull { it.name == id }?.let { onAction(StatsAction.SelectPreset(it)) }
+            },
+            scrollable = true,
+        )
 
-        FilterSection(stringResource(R.string.stats_granularity_label)) {
-            ChoiceChips(
-                options = granularityOptions,
-                selectedIds = setOf(state.granularity.name),
-                onToggle = { id ->
-                    PeriodGranularity.entries.firstOrNull { it.name == id }
-                        ?.let { onAction(StatsAction.SelectGranularity(it)) }
-                },
+        if (state.customRange != null) {
+            TextButton(onClick = onPickCustomRange) {
+                Text(text = dateRangeLabel(requireNotNull(state.customRange)))
+            }
+        } else {
+            Text(
+                text = timeRangeSummary(state.preset, state.range, state.today),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
@@ -406,21 +422,54 @@ private fun StatsConditions(
             )
         }
 
-        if (state.dimension != StatsDimension.TIME) {
-            ChoiceChips(
-                options = listOf(
-                    FilterOption(CategoryKind.EXPENSE.name, stringResource(R.string.stats_summary_expense)),
-                    FilterOption(CategoryKind.INCOME.name, stringResource(R.string.stats_summary_income)),
-                ),
-                selectedIds = setOf(state.kind.name),
-                onToggle = { id ->
-                    CategoryKind.entries.firstOrNull { it.name == id }
-                        ?.let { onAction(StatsAction.SelectKind(it)) }
-                },
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space3),
+        ) {
+            FilterSection(stringResource(R.string.stats_granularity_label), Modifier.weight(1f)) {
+                ChoiceChips(
+                    options = granularityOptions,
+                    selectedIds = setOf(state.granularity.name),
+                    onToggle = { id ->
+                        PeriodGranularity.entries.firstOrNull { it.name == id }
+                            ?.let { onAction(StatsAction.SelectGranularity(it)) }
+                    },
+                )
+            }
+            if (state.dimension != StatsDimension.TIME) {
+                ChoiceChips(
+                    options = listOf(
+                        FilterOption(CategoryKind.EXPENSE.name, stringResource(R.string.stats_summary_expense)),
+                        FilterOption(CategoryKind.INCOME.name, stringResource(R.string.stats_summary_income)),
+                    ),
+                    selectedIds = setOf(state.kind.name),
+                    onToggle = { id ->
+                        CategoryKind.entries.firstOrNull { it.name == id }
+                            ?.let { onAction(StatsAction.SelectKind(it)) }
+                    },
+                )
+            }
         }
     }
 }
+
+/** 「自定义」在分段控件里的伪 id（不是 DateRangePreset）。 */
+private const val CUSTOM_ID = "CUSTOM"
+
+/** 统计分段控件当前选中项：有自定义区间优先，否则取三段预设之一，其余归自定义。 */
+internal fun rangeSegmentId(preset: DateRangePreset?, customRange: DateRange?): String = when {
+    customRange != null -> CUSTOM_ID
+    preset != null && preset in SEGMENT_PRESETS -> preset.name
+    else -> CUSTOM_ID
+}
+
+internal val SEGMENT_PRESETS = listOf(
+    DateRangePreset.THIS_WEEK,
+    DateRangePreset.THIS_MONTH,
+    DateRangePreset.THIS_YEAR,
+)
+
+internal const val CUSTOM_SEGMENT_ID = CUSTOM_ID
 
 @Composable
 private fun StatisticsCard(
@@ -429,52 +478,29 @@ private fun StatisticsCard(
     modifier: Modifier = Modifier,
 ) {
     val uncategorized = stringResource(R.string.stats_uncategorized)
-    Card(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = VipLedgerTokens.Space4),
+        verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space4),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = timeRangeSummary(state.preset, state.range, state.today),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        StatOverviewRow(
+            stats = listOf(
+                OverviewStat(stringResource(R.string.stats_summary_expense), state.expense.toDisplayString(), ExpenseRed),
+                OverviewStat(stringResource(R.string.stats_summary_income), state.income.toDisplayString(), IncomeGreen),
+                OverviewStat(stringResource(R.string.stats_summary_balance), state.balance.toDisplayString(), MaterialTheme.colorScheme.onSurface),
+            ),
+        )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                SummaryAmount(
-                    label = stringResource(R.string.stats_summary_income),
-                    amount = state.income,
-                    modifier = Modifier.weight(1f),
-                )
-                SummaryAmount(
-                    label = stringResource(R.string.stats_summary_expense),
-                    amount = state.expense,
-                    modifier = Modifier.weight(1f),
-                )
-                SummaryAmount(
-                    label = stringResource(R.string.stats_summary_balance),
-                    amount = state.balance,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        Text(
+            text = stringResource(R.string.stats_summary_count, state.count),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
-            Text(
-                text = stringResource(R.string.stats_summary_count, state.count),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            when (state.dimension) {
-                StatsDimension.TIME -> BarChart(
+        when (state.dimension) {
+            StatsDimension.TIME -> StatCard {
+                BarChart(
                     groups = state.periods.map { period ->
                         BarGroup(
                             label = periodLabel(period, state.granularity),
@@ -483,10 +509,14 @@ private fun StatisticsCard(
                         )
                     },
                 )
+            }
 
-                else -> if (state.rows.any { it.cents < 0 }) BarChart(
+            else -> if (state.rows.any { it.cents < 0 }) StatCard {
+                BarChart(
                     groups = state.rows.map { row -> BarGroup(row.label ?: uncategorized, 0, row.cents) },
-                ) else PieChart(
+                )
+            } else StatCard {
+                PieChart(
                     slices = state.rows.mapIndexed { index, row ->
                         PieSlice(
                             label = row.label ?: uncategorized,
@@ -500,6 +530,19 @@ private fun StatisticsCard(
                 )
             }
         }
+    }
+}
+
+/** 图表容器：白面 + 发丝边框 + 16dp 圆角（原型 .card）。 */
+@Composable
+private fun StatCard(content: @Composable () -> Unit) {
+    androidx.compose.material3.Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(VipLedgerTokens.RadiusCard),
+        border = androidx.compose.foundation.BorderStroke(VipLedgerTokens.BorderThin, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Box(Modifier.padding(VipLedgerTokens.Space4)) { content() }
     }
 }
 
@@ -532,64 +575,75 @@ private fun StatsRowLine(
     kind: CategoryKind,
     percent: String,
     color: Color,
+    barFraction: Float,
     expanded: Boolean,
     onToggleExpand: (() -> Unit)?,
     onClick: () -> Unit,
     child: Boolean = false,
 ) {
     val label = row.label ?: stringResource(R.string.stats_uncategorized)
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(
                 start = if (child) 32.dp else 16.dp,
-                end = 8.dp,
-                top = 10.dp,
-                bottom = 10.dp,
+                end = 16.dp,
+                top = 11.dp,
+                bottom = 11.dp,
             ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(if (child) 6.dp else 10.dp)
-                .background(color = color, shape = CircleShape),
-        )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = stringResource(R.string.stats_rank_count, row.count),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Text(
-            text = percent,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = Money.ofCents(row.cents).toDisplayString(),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        if (onToggleExpand != null) {
-            IconButton(onClick = onToggleExpand) {
-                Icon(
-                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = stringResource(
-                        if (expanded) R.string.stats_collapse_row else R.string.stats_expand_row,
-                    ),
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(R.string.stats_rank_count, row.count),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Text(
+                text = percent,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = Money.ofCents(row.cents).toDisplayString(),
+                style = displayAmount,
+                maxLines = 1,
+            )
+            if (onToggleExpand != null) {
+                IconButton(onClick = onToggleExpand) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = stringResource(
+                            if (expanded) R.string.stats_collapse_row else R.string.stats_expand_row,
+                        ),
+                    )
+                }
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(VipLedgerTokens.RadiusFull)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(barFraction.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .background(color, RoundedCornerShape(VipLedgerTokens.RadiusFull)),
+            )
         }
     }
 }

@@ -76,5 +76,18 @@
     <string name="wealth_trend_export_csv">导出 CSV</string>
     <string name="wealth_trend_export_done">导出完成</string>
     <string name="wealth_trend_export_failed">导出失败</string>
-    <string name="wealth_trend_empty">还没有资产基线：先在账户详情「校准余额」建立基线，趋势从基线开始重放。</string>
+    <string name="wealth_trend_empty">还没有资产基线:先在账户详情「校准余额」建立基线,趋势从基线开始重放。</string>
+    <string name="wealth_assets_subtitle">净资产</string>
+    <string name="wealth_total_assets">总资产</string>
+    <string name="wealth_total_debt">总负债</string>
+    <string name="wealth_group_count">%1$d 个</string>
+    <string name="wealth_group_subtotal">%1$s小计</string>
+    <string name="wealth_archived_accounts">已归档账户</string>
+    <string name="wealth_savings_progress">已存 %1$s</string>
+    <string name="wealth_savings_target">目标 %1$s</string>
+    <string name="wealth_trend_entry">资产趋势</string>
+    <string name="wealth_trend_entry_hint">资产 / 负债 / 净资产历史曲线</string>
+    <string name="wealth_add_account">新增账户</string>
+    <string name="wealth_savings_empty">还没有储蓄目标</string>
+    <string name="wealth_plan_group">计划</string>
 </resources>

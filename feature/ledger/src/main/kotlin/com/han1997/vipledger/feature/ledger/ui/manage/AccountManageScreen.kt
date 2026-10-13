@@ -14,15 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -43,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.VipLedgerConfirmDialog
+import com.han1997.vipledger.core.designsystem.component.VipLedgerFab
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.LabeledTextField
@@ -103,10 +100,9 @@ internal fun AccountManageContent(
         },
         snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            VipLedgerFab(
                 onClick = { onAction(AccountManageAction.OpenCreate) },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(text = stringResource(R.string.account_manage_add)) },
+                contentDescription = stringResource(R.string.account_manage_add),
             )
         },
     ) { padding ->
@@ -295,6 +291,15 @@ private fun AccountEditorDialog(
                         value = editor.dueDayInput,
                         onValueChange = { onAction(AccountManageAction.UpdateDueDay(it)) },
                         keyboardType = KeyboardType.Number,
+                    )
+                }
+                if (editor.type == AccountType.BANK_DEBIT || editor.type == AccountType.CREDIT_CARD || editor.type == AccountType.PREPAID || editor.cardNoInput.isNotBlank()) {
+                    LabeledTextField(
+                        label = stringResource(R.string.account_manage_card_no),
+                        value = editor.cardNoInput,
+                        onValueChange = { onAction(AccountManageAction.UpdateCardNo(it)) },
+                        keyboardType = KeyboardType.Number,
+                        placeholder = stringResource(R.string.account_manage_card_no_hint),
                     )
                 }
                 Row(

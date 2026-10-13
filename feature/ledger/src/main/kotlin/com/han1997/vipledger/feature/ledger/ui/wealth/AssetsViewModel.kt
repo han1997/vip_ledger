@@ -8,6 +8,7 @@ import com.han1997.vipledger.core.domain.usecase.lending.ObserveLendingsUseCase
 import com.han1997.vipledger.core.domain.usecase.investment.ObserveInvestmentsUseCase
 import com.han1997.vipledger.core.domain.usecase.loan.ObserveInstallmentSummariesUseCase
 import com.han1997.vipledger.core.domain.usecase.reimburse.ObserveReimbursementsUseCase
+import com.han1997.vipledger.core.domain.usecase.wealth.ObserveSavingsUseCase
 import com.han1997.vipledger.core.domain.model.ReimbursementCalculator
 import com.han1997.vipledger.core.model.money.Money
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,7 @@ class AssetsViewModel @Inject constructor(
     lendings: ObserveLendingsUseCase,
     installments: ObserveInstallmentSummariesUseCase,
     investments: ObserveInvestmentsUseCase,
+    savings: ObserveSavingsUseCase,
 ) : ViewModel() {
     private val archived = MutableStateFlow(false)
     private val retry = MutableStateFlow(0)
@@ -49,6 +51,7 @@ class AssetsViewModel @Inject constructor(
                 investmentActive = investments.count { it.active },
             )
         }
+            .combine(savings(current.id)) { state, goals -> state.copy(savings = goals.filterNot { it.goal.archived }) }
             .onStart { emit(AssetsUiState()) }.catch { emit(AssetsUiState(loading = false, failed = true)) }
     }
     val uiState = combine(base, archived) { state, show -> state.copy(showArchived = show) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), AssetsUiState())

@@ -86,6 +86,7 @@ class HomeViewModel @Inject constructor(
                         state.copy(pendingDraftCount = drafts.size)
                     }
                     .combine(localDay().flatMapLatest { day -> observeBudget(ledger.id, day.date, day.zone) }) { state, budget -> state.copy(budget = budget) }
+                    .combine(localDay()) { state, day -> state.copy(today = day.date) }
                     .combine(pendingAuto(ledger.id)) { state, count -> state.copy(pendingAutoCount = count) }
                     .combine(cards.observe(ledger.id)) { state, settings -> state.copy(cards = settings) }
                     .combine(savings(ledger.id)) { state, goals -> state.copy(savings = goals.filterNot { it.goal.archived }) }

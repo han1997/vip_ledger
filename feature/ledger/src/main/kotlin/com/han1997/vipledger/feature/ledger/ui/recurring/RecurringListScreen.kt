@@ -1,5 +1,6 @@
 package com.han1997.vipledger.feature.ledger.ui.recurring
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,10 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.han1997.vipledger.core.designsystem.component.AmountText
 import com.han1997.vipledger.core.designsystem.component.BadgeTone
+import com.han1997.vipledger.core.designsystem.component.VipLedgerFab
 import com.han1997.vipledger.core.designsystem.component.EmptyState
 import com.han1997.vipledger.core.designsystem.component.GroupCard
 import com.han1997.vipledger.core.designsystem.component.LoadingState
@@ -111,10 +111,9 @@ internal fun RecurringListContent(
         },
         snackbarHost = { VipLedgerSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            VipLedgerFab(
                 onClick = onCreate,
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(text = stringResource(R.string.recurring_add)) },
+                contentDescription = stringResource(R.string.recurring_add),
             )
         },
     ) { padding ->
@@ -175,7 +174,7 @@ private fun RecurringRuleCard(
     onToggle: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Card(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+    GroupCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit)) {
         Column(
             modifier = Modifier.padding(horizontal = VipLedgerTokens.Space4, vertical = VipLedgerTokens.Space3),
             verticalArrangement = Arrangement.spacedBy(VipLedgerTokens.Space2),

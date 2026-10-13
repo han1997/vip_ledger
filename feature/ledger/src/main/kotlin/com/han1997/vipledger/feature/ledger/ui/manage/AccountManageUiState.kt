@@ -24,6 +24,7 @@ data class AccountEditor(
     val creditLimitInput: String = "",
     val billingDayInput: String = "",
     val dueDayInput: String = "",
+    val cardNoInput: String = "",
     val includeInNetWorth: Boolean = true,
 )
 
@@ -43,6 +44,8 @@ sealed interface AccountManageAction {
     data class UpdateBillingDay(val text: String) : AccountManageAction
 
     data class UpdateDueDay(val text: String) : AccountManageAction
+
+    data class UpdateCardNo(val text: String) : AccountManageAction
 
     data class UpdateIncludeInNetWorth(val include: Boolean) : AccountManageAction
 

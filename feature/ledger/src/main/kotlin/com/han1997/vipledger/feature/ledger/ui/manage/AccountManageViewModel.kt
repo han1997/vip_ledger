@@ -83,6 +83,8 @@ class AccountManageViewModel @Inject constructor(
 
             is AccountManageAction.UpdateDueDay -> updateEditor { it.copy(dueDayInput = action.text) }
 
+            is AccountManageAction.UpdateCardNo -> updateEditor { it.copy(cardNoInput = action.text) }
+
             is AccountManageAction.UpdateIncludeInNetWorth -> updateEditor {
                 it.copy(includeInNetWorth = action.include)
             }
@@ -123,6 +125,7 @@ class AccountManageViewModel @Inject constructor(
             billingDay = editor.billingDayInput.toIntOrNull(),
             dueDay = editor.dueDayInput.toIntOrNull(),
             includeInNetWorth = editor.includeInNetWorth,
+            cardNo = editor.cardNoInput.takeIf { it.isNotBlank() },
         )
         val block: suspend () -> AppResult<*> = { saveAccount(editor.accountId, draft) }
         viewModelScope.launch {
@@ -173,6 +176,7 @@ class AccountManageViewModel @Inject constructor(
         creditLimitInput = creditLimit?.toPlainString().orEmpty(),
         billingDayInput = billingDay?.toString().orEmpty(),
         dueDayInput = dueDay?.toString().orEmpty(),
+        cardNoInput = cardNo.orEmpty(),
         includeInNetWorth = includeInNetWorth,
     )
 

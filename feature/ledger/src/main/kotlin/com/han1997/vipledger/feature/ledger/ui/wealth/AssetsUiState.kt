@@ -17,6 +17,7 @@ data class AssetsUiState(
     val installmentActive: Int = 0,
     val investmentPrincipal: Money = Money.ZERO,
     val investmentActive: Int = 0,
+    val savings: List<SavingsProgress> = emptyList(),
 )
 sealed interface AssetsAction { data object ToggleArchived : AssetsAction; data object Retry : AssetsAction }
 data class AccountDetailUiState(

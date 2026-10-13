@@ -3,6 +3,7 @@ package com.han1997.vipledger.feature.ledger.ui.home
 import com.han1997.vipledger.core.domain.model.HomeOverview
 import com.han1997.vipledger.core.domain.model.Ledger
 import com.han1997.vipledger.core.domain.model.Reminder
+import kotlinx.datetime.LocalDate
 
 /**
  * 首页状态；[overview] 为 null 表示还没有账本或数据还没到。
@@ -25,6 +26,8 @@ data class HomeUiState(
     val accountNames: Map<String, String> = emptyMap(),
     val categoryNames: Map<String, String> = emptyMap(),
     val tagNames: Map<String, String> = emptyMap(),
+    /** 设备时区「今天」（本地日流），hero 年月导语与「今天/昨天」分组标签用。 */
+    val today: LocalDate? = null,
 )
 
 sealed interface HomeAction {

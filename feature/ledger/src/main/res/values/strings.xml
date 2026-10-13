@@ -38,7 +38,16 @@
     <!-- 日期与星期 -->
 
     <!-- 首页 -->
-    <string name="home_title">概览</string>
+    <string name="home_title">首页</string>
+    <string name="home_hero_lead">本月支出</string>
+    <string name="home_hero_lead_tail"> 年 %1$d 月 · 本月支出</string>
+    <string name="home_hero_budget_used">预算已用 %1$d%%</string>
+    <string name="home_overview_title">今日概览</string>
+    <string name="home_pending_title">待确认</string>
+    <string name="home_day_expense">支出 %1$s</string>
+    <string name="ledger_home_budget_used">已用 %1$d%%</string>
+    <string name="ledger_home_today_sub">收入 %1$s</string>
+    <string name="ledger_home_savings_sub">%1$s · %2$d%%</string>
     <string name="home_net_worth">净资产</string>
     <string name="home_total_debt">负债合计</string>
     <string name="home_month_income">本月收入</string>
@@ -109,6 +118,15 @@
     <string name="txn_edit_unsaved_title">放弃修改？</string>
     <string name="txn_edit_unsaved_message">当前修改尚未保存，返回后不会保留。</string>
     <string name="txn_edit_unsaved_discard">放弃</string>
+    <string name="txn_edit_note_hint">添加备注…</string>
+    <string name="txn_edit_transfer_from">转出</string>
+    <string name="txn_edit_transfer_to">转入</string>
+    <string name="txn_edit_pick_account_hint">选择账户</string>
+    <string name="txn_edit_pick_datetime">选择日期与时间</string>
+    <string name="txn_edit_datetime_done">完成</string>
+    <string name="txn_edit_sheet_month">%1$d 年 %2$d 月</string>
+    <string name="txn_edit_delete_confirm_title">删除账目？</string>
+    <string name="txn_edit_delete_confirm_message">删除后不可恢复。</string>
 
     <!-- 管理：账本 -->
     <string name="ledger_manage_title">账本管理</string>
@@ -130,6 +148,9 @@
     <string name="account_manage_credit_limit">信用额度</string>
     <string name="account_manage_billing_day">账单日</string>
     <string name="account_manage_due_day">还款日</string>
+    <string name="account_manage_card_no">卡号</string>
+    <string name="account_manage_card_no_hint">储蓄卡 / 信用卡 / 预付卡可填写</string>
+    <string name="account_manage_card_no_short">尾号 %1$s</string>
     <string name="account_manage_include_net_worth">计入净资产</string>
     <string name="account_manage_show_archived">显示已归档账户</string>
     <string name="account_manage_balance">余额</string>
@@ -315,6 +336,7 @@
     <string name="weekday_short_sat">六</string>
     <string name="weekday_short_sun">日</string>
     <string name="settings_title">我的</string>
+    <string name="settings_profile_mark">账</string>
     <string name="settings_group_ledger">账本</string>
     <string name="settings_group_tools">工具</string>
     <string name="settings_group_plans">计划</string>
@@ -322,5 +344,6 @@
     <string name="settings_group_data">数据</string>
     <string name="settings_ai_model">模型管理</string>
     <string name="settings_ai_rules">商户规则</string>
+    <string name="settings_current_ledger">当前账本 · %1$s</string>
 </resources>
 
