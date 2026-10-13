@@ -226,11 +226,27 @@ $releaseApk = "app/build/outputs/apk/release/fun.han1997.vipledger-v$($appVersio
 
 ## UI design prototype
 
-The upcoming Compose redesign follows an interactive HTML prototype: open
+The Compose UI follows an interactive HTML prototype: open
 [`docs/ui-prototype/index.html`](docs/ui-prototype/index.html) in a browser (no build step).
 It presents the five tabs and the entry editor as a clickable app, with the design notes kept
 outside the phone frame. The confirmed visual baseline and its Compose token mapping live in
-[`docs/ui-prototype/BASELINE.md`](docs/ui-prototype/BASELINE.md).
+[`docs/ui-prototype/BASELINE.md`](docs/ui-prototype/BASELINE.md) (current baseline: v2.1).
+
+### 已落地的设计系统（墨绿金 · 静奢记账）
+
+- **配色**：纸感底 `#F7F5F0`、墨绿主色 `#1A3C34`、黄铜金 `#B08D57`；语义色支出赭红 `#B23A2E`、
+  收入松绿 `#2E7D5B`、转账靛蓝 `#3B5B7A`。全部集中在 `core:designsystem` 的 Color/Theme，
+  feature 内不写颜色字面量（`grep -rn "Color(0x" feature/` 为零）。
+- **字体**：打包 Noto Serif SC 的 Latin 子集（OFL，`core/designsystem/src/main/res/font/`）
+  用于金额与数字展示；中文标题走系统衬线回退（见 `VipLedgerSerif` / `serifTitle`）。
+- **卡片**：`GroupCard` / `HeroCard` 统一为 1px 发丝边框 + 极浅阴影 + 16dp 圆角；
+  Hero 为墨绿对角渐变 + 金色发丝描边。分组标题 `SectionHeader`、流水行 `TxnLine`、
+  分段控件 `SegmentedControl`、三段概览 `StatOverviewRow` 等共享组件都在 `core:designsystem`。
+- **浅色锁定**：本轮不跟随系统深色（`values-night` 已移除），状态栏/导航栏图标强制深色。
+- **记一笔**：页面零滚动（分类区为唯一可内部滚动区域），常驻 3×4 数字键盘 + 右侧保存竖条，
+  备注/金额同一行，分类必选且二级面板插在选中一级所在行下方。
+- **账户卡号**：银行卡类账户可记录卡号，按 4 位分组展示、详情显示尾号（升级到 schema7，
+  `MIGRATION_6_7` 为 `account` 增加 `card_no`）。
 
 ## Modules
 
