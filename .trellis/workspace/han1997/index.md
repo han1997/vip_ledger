@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 31
+- **Total Sessions**: 32
 - **Last Active**: 2026-10-13
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1163 | Active |
+| `journal-1.md` | ~1201 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 32 | 2026-10-13 | 启动图标重设计（铜钱方案）+ APK 命名规范 + 图标↔原型同源契约 | `a734389`, `8f5d12e`, `f58d2e2`, `0c56cb1`, `e26f7bd`, `dbff6aa` | `master` |
 | 31 | 2026-10-13 | 按原型 v2.1 实现 Compose UI 整体改版（PR1–PR7） | `3275d23`, `27bd293`, `330624f`, `a9e8dda`, `9833222` | `master` |
 | 30 | 2026-10-12 | 按原型 v2.1 实现 Compose UI 整体改版(PR1–PR6) | - | `master` |
 | 29 | 2026-10-12 | 原型第5轮:记一笔定稿(永不滑动 + 备注直输 + 金额大点击区 + 二级自动定位) | `f7a2c88`, `3436ae3` | `master` |

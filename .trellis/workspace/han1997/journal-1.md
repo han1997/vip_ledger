@@ -1161,3 +1161,41 @@ prompt 全部改为手机内输入弹层(探针断言未调用);记一笔日期�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 32: 启动图标重设计（铜钱方案）+ APK 命名规范 + 图标↔原型同源契约
+
+**Date**: 2026-10-13
+**Task**: 启动图标重设计（铜钱方案）+ APK 命名规范 + 图标↔原型同源契约
+**Branch**: `master`
+
+### Summary
+
+图标两轮迭代：先按原型 brand-mark 做衬线「账」字（被否：小尺寸发糊），改为纯矢量几何铜钱（黄铜圆钱方孔+錾痕内圈+金发丝环，兼作 monochrome 层），删除字体渲染 PNG 与生成脚本。APK 名改为 vipledger-v<versionName>[-buildType]，去掉 applicationId 与 versionCode（升级判断只认 versionCode，已向用户澄清）。新增契约第 9 条「桌面图标与原型同源」：图标变更须实现侧三层资源 + 原型 brand-mark + BASELINE 版本记录三处同步；据此把原型 brand-mark 铜钱化并登记 v2.2，用户已确认，哈希核对一致。版本 0.1.14 (15)，vipledger-v0.1.14-release.apk 已装模拟器（无真机）。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a734389` | (see git log) |
+| `8f5d12e` | (see git log) |
+| `f58d2e2` | (see git log) |
+| `0c56cb1` | (see git log) |
+| `e26f7bd` | (see git log) |
+| `dbff6aa` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
