@@ -2,48 +2,88 @@ package com.han1997.vipledger.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
-/** 品牌主色与语义色。支出/收入/转账各自独立颜色，统计图表复用。 */
-internal val BrandGreen = Color(0xFF1B6B4A)
-internal val BrandGreenLight = Color(0xFFB7E4CB)
-internal val BrandGreenDark = Color(0xFF0E3D2C)
-internal val BrandGreenMuted = Color(0xFFE7F5EE)
+/**
+ * 「墨绿金 · 静奢记账」配色（原型 v2.1 已确认基准，docs/ui-prototype/style.css `:root`）。
+ *
+ * 本轮锁定浅色（任务决策 D4）：不提供深色变体；暗色模式待后续单独出原型再实现。
+ * 语义色取值以基准确认后的原型为准（支出赭红 / 收入松绿 / 转账靛蓝），不做 alpha 变体。
+ */
 
-internal val PageLight = Color(0xFFF4F7F5)
+// ── 墨绿主色 ───────────────────────────────────────────────────────────────
+
+/** 墨绿主色 `--accent #1A3C34`：primary、标题、选中态。 */
+internal val InkGreen = Color(0xFF1A3C34)
+
+/** 深墨绿 `--accent-deep #0F2A24`：hero 渐变暗端、on 色的深档。 */
+internal val InkGreenDeep = Color(0xFF0F2A24)
+
+/** 亮一档的墨绿 `--accent-2 #24504A`：hero 渐变亮端、次级容器。 */
+internal val InkGreenSoft = Color(0xFF24504A)
+
+/** 墨绿容器上的内容色 `--accent-text #F0E7D6`（象牙金白）。 */
+internal val OnInkGreen = Color(0xFFF0E7D6)
+
+/** 墨绿的极浅底 `--tint #E8EEE9`：primaryContainer、选中浅底。 */
+internal val InkGreenTint = Color(0xFFE8EEE9)
+
+// ── 黄铜金点缀 ─────────────────────────────────────────────────────────────
+
+/** 黄铜金 `--gold #B08D57`：点睛、待确认草稿的金色线索。 */
+internal val BrassGold = Color(0xFFB08D57)
+
+/** 亮黄铜金 `--gold-2 #C9A96E`：深墨绿容器上的金色细节。 */
+internal val BrassGoldLight = Color(0xFFC9A96E)
+
+/** 金色浅底 `--gold-bg #F0E7D6`：金色图标底、徽标底。 */
+internal val GoldWash = Color(0xFFF0E7D6)
+
+/** 金色上的深文字 `--gold-ink #8A6B34`。 */
+internal val GoldInk = Color(0xFF8A6B34)
+
+// ── 纸感底与文字 ───────────────────────────────────────────────────────────
+
+/** 纸感页面底 `--bg #F7F5F0`。 */
+internal val PageLight = Color(0xFFF7F5F0)
+
+/** 卡片面 `--surface #FFFFFF`。 */
 internal val SurfaceLight = Color(0xFFFFFFFF)
-internal val SurfaceDark = Color(0xFF141816)
-internal val PageDark = Color(0xFF101412)
 
-internal val InkLight = Color(0xFF1C2420)
-internal val InkMutedLight = Color(0xFF5E6B64)
-internal val InkDark = Color(0xFFE8F0EB)
-internal val InkMutedDark = Color(0xFFA8B6AE)
+/** 暖灰纸底 `--soft #F0EDE4`：分段控件底、次级容器。 */
+internal val SoftLight = Color(0xFFF0EDE4)
 
-internal val NeutralOutline = Color(0xFFC5D0C9)
+/** 主文字 `--text #16211D`。 */
+internal val InkLight = Color(0xFF16211D)
 
-/** 语义色：支出红、收入绿、转账蓝。V2 起保持原值不变（对比度已在 V1 验收过）。 */
-val ExpenseRed = Color(0xFFC24B3A)
-val IncomeGreen = Color(0xFF1F8A4C)
-val TransferBlue = Color(0xFF2F6F96)
+/** 次要文字 `--muted #7C7767`。 */
+internal val InkMutedLight = Color(0xFF7C7767)
 
-// ── 「活泼品牌化」强调色（V2 新增） ─────────────────────────────────────────
-//
-// 用途限定在 hero 渐变、快捷操作点睛、品牌装饰等**少量高强调位置**；
-// 语义色（上方的 ExpenseRed/IncomeGreen/TransferBlue）与图表色板不变。
-// 每个强调色都成对给出 light/dark 两组取值，保证两种模式下正文对比度可读：
-// 「On*」是落在对应强调色上的内容色（≥ 4.5:1）。
+/** 弱化文字 `--faint #A9A499`：eyeline、辅助说明。 */
+internal val InkFaintLight = Color(0xFFA9A499)
 
-/** 品牌亮绿：hero 渐变的亮端、快捷入口选中态。 */
-internal val AccentMintLight = Color(0xFF17A672)
-internal val AccentMintDark = Color(0xFF5ED5A5)
+/** 发丝线 `--line #E6E1D6`：卡片 1px 边框、分隔线。 */
+internal val Hairline = Color(0xFFE6E1D6)
 
-/** 珊瑚橙：待确认/提醒类「温和需要行动」的点睛。 */
-internal val AccentCoralLight = Color(0xFFE8703A)
-internal val AccentCoralDark = Color(0xFFFFAB7A)
+/** 深一档发丝线 `--line-2 #D9D2C2`：chip 描边、outline。 */
+internal val HairlineStrong = Color(0xFFD9D2C2)
 
-/** 琥珀金：徽标、积分、提醒高亮的点缀。 */
-internal val AccentAmberLight = Color(0xFFC08A1E)
-internal val AccentAmberDark = Color(0xFFF2C14E)
+// ── 语义色（原型 v2.1 基准取值） ────────────────────────────────────────────
 
-/** 覆盖在品牌亮绿/渐变容器上的前景色（浅色模式用深墨绿、深色模式用近白）。 */
-internal val OnAccentLight = Color(0xFF08301F)
-internal val OnAccentDark = Color(0xFF062B1C)
+/** 支出赭红 `--expense #B23A2E`。 */
+val ExpenseRed = Color(0xFFB23A2E)
+
+/** 收入松绿 `--income #2E7D5B`。 */
+val IncomeGreen = Color(0xFF2E7D5B)
+
+/** 转账靛蓝 `--transfer #3B5B7A`。 */
+val TransferBlue = Color(0xFF3B5B7A)
+
+/** 警示金 `--warn #B8860B`：预算超支等提醒。 */
+val WarnGold = Color(0xFFB8860B)
+
+// ── hero 深底上的分栏数值色（原型 assetsView 内联色） ─────────────────────
+
+/** 墨绿 hero 上「总资产」的浅松绿 `#8FD9B4`。 */
+val HeroAssetTint = Color(0xFF8FD9B4)
+
+/** 墨绿 hero 上「总负债」的浅赭红 `#F0A99B`。 */
+val HeroDebtTint = Color(0xFFF0A99B)

@@ -14,9 +14,11 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PieChart
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +36,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.han1997.vipledger.core.designsystem.R as DesignSystemR
+import com.han1997.vipledger.core.designsystem.theme.VipLedgerTokens
 import com.han1997.vipledger.feature.ai.navigation.AiRoutes
 import com.han1997.vipledger.feature.ai.navigation.aiGraph
 import com.han1997.vipledger.feature.ledger.navigation.LedgerRoutes
@@ -140,14 +143,22 @@ private fun VipLedgerScaffoldWithBottomBar(
     }
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(1f)) { content() }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = VipLedgerTokens.BorderThin)
         NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
             TabDestinations.forEach { tab ->
+                val selected = currentRoute == tab.route
                 NavigationBarItem(
-                    selected = currentRoute == tab.route,
+                    selected = selected,
                     onClick = { onSelectTab(tab.route) },
+                    // 原型 .bottom-nav:激活项墨绿文字 + 图标下 --tint 浅绿药丸底。
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                    ),
                     icon = {
                         Icon(
-                            imageVector = if (currentRoute == tab.route) tab.selectedIcon else tab.unselectedIcon,
+                            imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
                             contentDescription = stringResource(tab.labelRes),
                         )
                     },

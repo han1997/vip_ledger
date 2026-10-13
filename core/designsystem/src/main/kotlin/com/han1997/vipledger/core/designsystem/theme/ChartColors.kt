@@ -4,20 +4,22 @@ import androidx.compose.ui.graphics.Color
 import com.han1997.vipledger.core.model.CategoryKind
 
 /**
- * 图表配色。
+ * 图表配色（墨绿金基准）。
  *
- * 前三个是语义色（支出红 / 收入绿 / 转账蓝），后面是区分度足够的辅助色；
+ * 前三个是语义色（支出红 / 收入绿 / 转账蓝，业务约定：支出口径从红起、
+ * 收入口径从绿起，见 charts.md）；后面是原型 v2.1 色板的辅助色
+ * （墨绿 / 黄铜金系），保持与基准同家族。
  * 屏幕里禁止写死颜色，占比环图统一按下标取色（`chartColorOf(index)`）。
  */
 private val ChartPalette: List<Color> = listOf(
     ExpenseRed,
     IncomeGreen,
     TransferBlue,
-    Color(0xFFB7791F),
-    Color(0xFF805AD5),
-    Color(0xFF2C7A7B),
-    Color(0xFFB83280),
-    Color(0xFF4A5568),
+    InkGreen,
+    BrassGold,
+    GoldInk,
+    InkFaintLight,
+    BrassGoldLight,
 )
 
 fun chartColorOf(index: Int): Color {

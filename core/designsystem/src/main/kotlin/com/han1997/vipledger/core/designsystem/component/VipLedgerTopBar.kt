@@ -13,12 +13,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import com.han1997.vipledger.core.designsystem.R
+import com.han1997.vipledger.core.designsystem.theme.serifTitle
 
 /**
  * 统一顶栏：标题 + 可选返回 + 右侧动作。
  *
+ * V3（墨绿金基准）：标题用衬线（原型 header h2：Title 23 serif，墨绿色）。
  * V2 调整：返回键补上朗读语义（common_back），装饰性图标保持 null。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,15 +35,14 @@ fun VipLedgerTopBar(
         modifier = modifier,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
-            titleContentColor = MaterialTheme.colorScheme.onBackground,
+            titleContentColor = MaterialTheme.colorScheme.primary,
             navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
             actionIconContentColor = MaterialTheme.colorScheme.onBackground,
         ),
         title = {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
+                style = serifTitle,
             )
         },
         navigationIcon = {

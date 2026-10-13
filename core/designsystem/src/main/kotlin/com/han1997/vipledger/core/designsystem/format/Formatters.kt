@@ -15,10 +15,12 @@ import com.han1997.vipledger.core.model.time.toDateColumnEpochMillis
 import com.han1997.vipledger.core.model.time.toDateColumnLocalDate
 import com.han1997.vipledger.core.model.time.toLocalDate
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 
 /**
@@ -54,6 +56,17 @@ fun weekdayLabel(date: LocalDate): String = stringResource(
 /** 明细列表的按天分组标题，如「9月24日 周三」。 */
 @Composable
 fun dayHeaderLabel(date: LocalDate): String = monthDayLabel(date) + " " + weekdayLabel(date)
+
+/** 相对日标签（原型 dateLabel）：今天 / 昨天，其余为「周X」。[today] 为空时退化为周X。 */
+@Composable
+fun relativeDayLabel(date: LocalDate, today: LocalDate?): String {
+    val todayDate = today ?: return weekdayLabel(date)
+    return when (date) {
+        todayDate -> stringResource(R.string.day_label_today)
+        todayDate.minus(1, DateTimeUnit.DAY) -> stringResource(R.string.day_label_yesterday)
+        else -> weekdayLabel(date)
+    }
+}
 
 /** 闭区间范围文案，如「2026-09-01 ~ 2026-09-24」。 */
 @Composable
@@ -133,3 +146,19 @@ fun categoryKindLabel(kind: CategoryKind): String = stringResource(
         CategoryKind.TRANSFER -> R.string.category_kind_transfer
     },
 )
+
+/**
+ * 卡号按 4 位分组展示(原型 v1.4):`6225880123456021` → `6225 8801 2345 6021`。
+ * 非数字字符先剔除;不足 4 位不分组。
+ */
+fun formatCardNo(cardNo: String?): String = cardNo
+    ?.filter { it.isDigit() }
+    ?.chunked(4)
+    ?.joinToString(" ")
+    .orEmpty()
+
+/** 卡号尾号(最后 4 位);不足 4 位返回全部。 */
+fun cardNoLast4(cardNo: String?): String = cardNo
+    ?.filter { it.isDigit() }
+    ?.takeLast(4)
+    .orEmpty()

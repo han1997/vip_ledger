@@ -20,6 +20,8 @@
     <string name="weekday_fri">周五</string>
     <string name="weekday_sat">周六</string>
     <string name="weekday_sun">周日</string>
+    <string name="day_label_today">今天</string>
+    <string name="day_label_yesterday">昨天</string>
     <string name="date_range_span">%1$s ~ %2$s</string>
 
     <!-- 时间段预设 -->
@@ -73,4 +75,8 @@
     <string name="tab_stats">统计</string>
     <string name="tab_mine">我的</string>
     <string name="txn_type_refund">退款</string>
+    <string name="common_expense_label">支出</string>
+    <string name="common_income_label">收入</string>
+    <string name="common_transfer_label">转账</string>
+    <string name="common_txn_count">%1$d 笔</string>
 </resources>

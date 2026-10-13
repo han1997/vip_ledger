@@ -30,8 +30,9 @@ object VipLedgerTokens {
     // ── 圆角 ────────────────────────────────────────────────────────────────
 
     val RadiusSmall: Dp = 8.dp     // 小 chip / badge / 输入框
-    val RadiusMedium: Dp = 12.dp   // 卡片 / 按钮
-    val RadiusLarge: Dp = 20.dp    // 对话框 / 大容器
+    val RadiusMedium: Dp = 12.dp   // 按钮 / 分段控件
+    val RadiusCard: Dp = 16.dp     // 卡片 / hero / 大容器（原型 --radius 16）
+    val RadiusLarge: Dp = 20.dp    // 对话框 / 超大容器
     val RadiusFull: Dp = 999.dp    // 胶囊 / 圆形头像
 
     // ── 边框宽度 ─────────────────────────────────────────────────────────────

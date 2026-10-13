@@ -1,5 +1,6 @@
 package com.han1997.vipledger.core.designsystem.component
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,8 +20,8 @@ import com.han1997.vipledger.core.designsystem.theme.VipLedgerTheme
 /**
  * 圆角分组容器：设置页、管理页与首页的「一组行」共用。
  *
- * 统一了 surface 颜色、圆角（[VipLedgerTokens.RadiusMedium]）与 elevation；
- * 内部通过 [content] 放若干 [ActionRow] 或其他行组件。
+ * 原型 v2.1 质感：白面 + 1px 发丝边框（outlineVariant）+ 极浅阴影，圆角 16dp
+ * （`--radius`）。内部通过 [content] 放若干 [ActionRow] 或其他行组件。
  * 替代各页面重复的 `Card { ... }` 写法。
  */
 @Composable
@@ -30,10 +31,16 @@ fun GroupCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = VipLedgerTokens.BorderThin,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(VipLedgerTokens.RadiusCard),
+            ),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = VipLedgerTokens.ElevationLevel1),
-        shape = RoundedCornerShape(VipLedgerTokens.RadiusMedium),
+        shape = RoundedCornerShape(VipLedgerTokens.RadiusCard),
         content = content,
     )
 }

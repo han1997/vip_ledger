@@ -6,47 +6,51 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 /**
- * 强调色配对测试：确保 [VipLedgerAccentColors] 在浅色/深色模式下成对给出且取值不同
- * （防止「浅色有、深色忘改」的回归）；hero 容器不得与页面背景同色；深色模式 hero
- * 退化为纯色容器（两端同色）。真实对比度由模拟器深浅色走查背书。
+ * 强调色配对测试（墨绿金基准，本轮锁定浅色 —— 任务决策 D4）。
+ *
+ * hero 容器不得与页面背景同色；hero 内容色不得与容器同色；
+ * 语义色取值以已确认原型 v2.1 为准（支出赭红 / 收入松绿 / 转账靛蓝）。
  */
 class AccentColorsTest {
 
-    private val lightAccents = VipLedgerThemeDefaults.accentColors(darkTheme = false)
-    private val darkAccents = VipLedgerThemeDefaults.accentColors(darkTheme = true)
-
-    @Test
-    fun lightAndDarkAreDistinct() {
-        assertNotEquals(lightAccents.accentMint, darkAccents.accentMint)
-        assertNotEquals(lightAccents.accentCoral, darkAccents.accentCoral)
-        assertNotEquals(lightAccents.accentAmber, darkAccents.accentAmber)
-
-    }
+    private val accents = VipLedgerThemeDefaults.accentColors()
 
     @Test
     fun heroOnColorsAreNotTheSameAsHeroColors() {
-        assertNotEquals(lightAccents.heroGradientStart, lightAccents.onHero)
-        assertNotEquals(darkAccents.heroGradientStart, darkAccents.onHero)
+        assertNotEquals(accents.heroGradientStart, accents.onHero)
+        assertNotEquals(accents.heroGradientEnd, accents.onHero)
+        assertNotEquals(accents.onHero, accents.onHeroMuted)
     }
 
     @Test
     fun heroContainerIsDistinctFromPageBackground() {
-        assertNotEquals(lightAccents.heroGradientStart, PageLight)
-        assertNotEquals(darkAccents.heroGradientStart, PageDark)
+        assertNotEquals(accents.heroGradientStart, PageLight)
+        assertNotEquals(accents.heroGradientEnd, PageLight)
     }
 
     @Test
-    fun darkHeroDegradesToSolidContainer() {
-        // 深色模式不玩渐变：两端同色 → 实际为纯色容器（可读性优先）。
-        assertEquals(darkAccents.heroGradientStart, darkAccents.heroGradientEnd)
+    fun heroGradientMatchesPrototypeInkGreenEndpoints() {
+        // 原型 --accent-2 #24504A → --accent-deep #0F2A24（linear-gradient 150deg）。
+        assertEquals(0xFF24504A, accents.heroGradientStart.toArgb().toLong() and 0xFFFFFFFFL)
+        assertEquals(0xFF0F2A24, accents.heroGradientEnd.toArgb().toLong() and 0xFFFFFFFFL)
+        assertEquals(0xFFF0E7D6, accents.onHero.toArgb().toLong() and 0xFFFFFFFFL)
     }
 
     @Test
-    fun semanticTransactionColorsStayUnchanged() {
-        // V2 明确：语义色保持既有取值；改动必须同步 charts 文档与统计口径走查。
-        assertEquals(0xFFC24B3A, ExpenseRed.toArgb().toLong() and 0xFFFFFFFFL)
-        assertEquals(0xFF1F8A4C, IncomeGreen.toArgb().toLong() and 0xFFFFFFFFL)
-        assertEquals(0xFF2F6F96, TransferBlue.toArgb().toLong() and 0xFFFFFFFFL)
+    fun semanticTransactionColorsMatchConfirmedBaseline() {
+        // 原型 v2.1 已确认基准：--expense #B23A2E / --income #2E7D5B / --transfer #3B5B7A。
+        // 改动必须先改原型并重新确认，再同步这里与 charts 文档。
+        assertEquals(0xFFB23A2E, ExpenseRed.toArgb().toLong() and 0xFFFFFFFFL)
+        assertEquals(0xFF2E7D5B, IncomeGreen.toArgb().toLong() and 0xFFFFFFFFL)
+        assertEquals(0xFF3B5B7A, TransferBlue.toArgb().toLong() and 0xFFFFFFFFL)
+    }
+
+    @Test
+    fun goldAccentsStayOutOfSemanticColors() {
+        // 金色是有限装饰资源：不得混入语义色（支出/收入/转账）。
+        val semantics = setOf(ExpenseRed, IncomeGreen, TransferBlue)
+        assertNotEquals(accents.accentCoral, ExpenseRed)
+        assertNotEquals(accents.accentAmber, IncomeGreen)
+        assertEquals(3, semantics.size)
     }
 }
-
