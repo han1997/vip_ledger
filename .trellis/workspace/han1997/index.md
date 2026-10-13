@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 29
-- **Last Active**: 2026-10-12
+- **Total Sessions**: 31
+- **Last Active**: 2026-10-13
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1063 | Active |
+| `journal-1.md` | ~1163 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 31 | 2026-10-13 | 按原型 v2.1 实现 Compose UI 整体改版（PR1–PR7） | `3275d23`, `27bd293`, `330624f`, `a9e8dda`, `9833222` | `master` |
+| 30 | 2026-10-12 | 按原型 v2.1 实现 Compose UI 整体改版(PR1–PR6) | - | `master` |
 | 29 | 2026-10-12 | 原型第5轮:记一笔定稿(永不滑动 + 备注直输 + 金额大点击区 + 二级自动定位) | `f7a2c88`, `3436ae3` | `master` |
 | 28 | 2026-10-12 | 原型第4轮:免滑动记账页重设计 + 账户类型/卡号可编辑 | `860b7a6`, `127a9d1` | `master` |
 | 27 | 2026-10-12 | 原型第3轮:无浏览器弹窗/日期时间合并/自定义区间/资产可编辑 | `b5a2b02`, `924ed2e` | `master` |

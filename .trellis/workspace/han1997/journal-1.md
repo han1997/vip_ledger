@@ -1061,3 +1061,103 @@ prompt 全部改为手机内输入弹层(探针断言未调用);记一笔日期�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 30: 按原型 v2.1 实现 Compose UI 整体改版(PR1–PR6)
+
+**Date**: 2026-10-12
+**Task**: 按原型 v2.1 实现 Compose UI 整体改版(PR1–PR6)
+**Branch**: `master`
+
+### Summary
+
+墨绿金主题+衬线金额+记一笔零滚动+账户卡号(schema7);构建测试 lint 全绿,待真机验收
+
+### Main Changes
+
+## 会话 22:按原型 v2.1 实现 Compose UI 整体改版(PR1–PR6)
+
+### 目标
+按已确认的 HTML 原型基准(docs/ui-prototype v2.1,墨绿金·静奢记账)整体改版 Compose UI。
+
+### 决策(任务 10-12-compose-ui-restyle)
+- D1 基准 = 原型 v2.1(哈希核对一致,BASELINE 标已确认)
+- D2 记一笔同步原型:分类必选 + 一屏零滚动
+- D3 账户卡号进入本轮;schema 免迁移兼容(用户重新开始用)→ 实际加了显式 MIGRATION_6_7(更安全)
+- D4 本轮锁定浅色,移除暗色跟随
+- D5 衬线字体混合方案:打包 Noto Serif SC Latin 子集用于金额/数字,中文走系统衬线
+
+### 交付
+- PR1 地基:墨绿金配色/锁定浅色/删除 values-night/强制浅色系统栏;衬线字体(Latin 子集 ~96KB×2,OFL);GroupCard/HeroCard 发丝边框+16dp 圆角;顶栏衬线标题;底部导航发丝线;图表辅助色换墨绿金家族。
+- PR2 记一笔:零滚动(分类区唯一内部滚动)、常驻 3×4 键盘+右侧保存竖条、备注/金额同行、分类必选(默认选第一项)、二级面板行下插入并自动滚入视野、日期时间合并底部弹层、编辑态顶栏删除。
+- PR3 首页+日历:墨绿 hero(本月支出+收入/结余)、小卡片网格(衬线数值+金绿进度条+七日柱)、金色提醒卡、按日流水、FAB;月历卡(金点/墨绿选中)+选中日收支摘要。
+- PR4 资产+统计:净资产 hero+分组小计+储蓄目标卡+入口行;统计分段区间+三段概览卡+排行进度条。
+- PR5 我的+账户详情:profile hero+分组入口行;账户详情 hero(类型·尾号)+卡号信息行;新增账户卡号字段(4 位分组展示)。
+- PR6 状态补齐+验收:全量 test+assembleRelease 绿;lint 0 issue;新增单测(CardNoFormatTest/TxnEditKeypadTest/StatsRangeSegmentTest/AccentColorsTest 重写/withDefaultCategory)。
+
+### 数据/schema
+- schema 6→7:account.card_no(可空)+ MIGRATION_6_7 + 迁移测试;7.json 已导出。
+- 备份为整表拷贝,自动携带新列。
+
+### 版本
+- 0.1.11 (12);Release APK: app/build/outputs/apk/release/fun.han1997.vipledger-v0.1.11-12-release.apk
+
+### 待用户执行
+- 无 ADB 设备连接,未做真机安装/截图/交互走查(契约第 6/7/8 条);接入真机后需:安装、浅色多屏宽逐屏截图、按 smoke-test 动作清单走查、与原型并排像素比对。
+
+### 契约自查
+- feature 内 Color(0x 零命中;分组容器统一 GroupCard;文案全部入 strings.xml。
+
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 31: 按原型 v2.1 实现 Compose UI 整体改版（PR1–PR7）
+
+**Date**: 2026-10-13
+**Task**: 按原型 v2.1 实现 Compose UI 整体改版（PR1–PR7）
+**Branch**: `master`
+
+### Summary
+
+墨绿金静奢主题整体落地：designsystem 地基（衬线金额/发丝卡片/锁定浅色）、schema7 账户卡号、记一笔零滚动重排、五 Tab 与全部子页视觉对齐；第二轮差异修复（VipLedgerFab、导航墨绿药丸、hero 年月导语与预算胶囊、衬线日/月标题、资产分栏色、流水收入洗色）。0.1.12(13) Release APK 已产出，test/assembleDebug/lint 全绿；真机验收（安装、走查、像素比对）待设备接入。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3275d23` | (see git log) |
+| `27bd293` | (see git log) |
+| `330624f` | (see git log) |
+| `a9e8dda` | (see git log) |
+| `9833222` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
