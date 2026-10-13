@@ -111,7 +111,7 @@ abstract class LedgerDatabase : RoomDatabase() {
     abstract fun mlTrainingSampleDao(): MlTrainingSampleDao
 
     companion object {
-        const val SCHEMA_VERSION: Int = 6
+        const val SCHEMA_VERSION: Int = 7
         const val NAME: String = "vipledger.db"
     }
 }

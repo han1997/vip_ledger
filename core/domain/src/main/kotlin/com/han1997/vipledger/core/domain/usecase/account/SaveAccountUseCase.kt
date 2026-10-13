@@ -67,6 +67,7 @@ class SaveAccountUseCase(
                 includeInNetWorth = draft.includeInNetWorth,
                 sortOrder = siblings.size,
                 remark = draft.remark,
+                cardNo = draft.cardNo?.trim()?.takeIf { it.isNotBlank() },
                 createdAt = now,
                 updatedAt = now,
             )
@@ -81,6 +82,7 @@ class SaveAccountUseCase(
                 dueDay = draft.dueDay,
                 includeInNetWorth = draft.includeInNetWorth,
                 remark = draft.remark,
+                cardNo = draft.cardNo?.trim()?.takeIf { it.isNotBlank() },
                 updatedAt = now,
             )
         }

@@ -117,6 +117,17 @@ class MigrationTest {
     fun versionFiveUpgradesWithoutLosingExistingRows() = upgradeFrom(5)
 
     @Test
+    fun versionSixUpgradesAndAddsCardNoColumn() = upgradeFrom(
+        version = 6,
+        extraAssert = { sql ->
+            sql.query("SELECT card_no FROM account WHERE id='cash'").use {
+                assertTrue(it.moveToFirst())
+                assertTrue(it.isNull(0))
+            }
+        },
+    )
+
+    @Test
     fun migrationFiveToSixBackfillsLegacyPaidPeriods() = upgradeFrom(
         version = 5,
         extraSetup = { sql ->

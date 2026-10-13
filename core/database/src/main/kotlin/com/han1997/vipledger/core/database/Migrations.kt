@@ -68,4 +68,9 @@ val MIGRATION_5_6: Migration = object : Migration(5, 6) {
         db.execSQL("UPDATE installment_period SET paid_principal_cents = principal_cents, paid_interest_cents = interest_cents, paid_fee_cents = fee_cents WHERE status = 'PAID'")
     }
 }
-val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+val MIGRATION_6_7: Migration = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE account ADD COLUMN card_no TEXT")
+    }
+}
+val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)

@@ -25,6 +25,8 @@ data class Account(
     val isArchived: Boolean = false,
     val sortOrder: Int = 0,
     val remark: String? = null,
+    /** 卡号(银行卡类账户;界面按 4 位分组展示,详情显示尾号)。 */
+    val cardNo: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,

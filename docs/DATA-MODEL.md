@@ -85,6 +85,7 @@
 | `is_archived` | INTEGER | |
 | `sort_order` | INTEGER | |
 | `remark` | TEXT NULL | |
+| `card_no` | TEXT NULL | 卡号(银行卡类账户);展示按 4 位分组,详情显示尾号。schema7 新增 |
 | `created_at` / `updated_at` / `deleted_at` | INTEGER | |
 
 借贷判定：`type in (CREDIT_CARD, PAYABLE, LOAN)` 为负债类账户，余额展示为欠款。
@@ -219,7 +220,8 @@
 
 ## 4. 迁移策略
 
-- 起始 `version = 1`；`exportSchema = true`，schema JSON 落在 `core/database/schemas/`。
+- 起始 `version = 1`;`exportSchema = true`,schema JSON 落在 `core/database/schemas/`。
+- 当前 **schemaVersion = 7**:`MIGRATION_6_7` 给 `account` 增加可空列 `card_no`(账户卡号)。
 - 每次改表必须：升版本号 + 写 `Migration(n, n+1)` + 加迁移测试（用 Room 的 `MigrationTestHelper`
   跑 `createDatabase(1)` 再 `runMigrationsAndValidate`）。
 - 禁止 `fallbackToDestructiveMigration`（发布版会丢用户数据）；

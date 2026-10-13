@@ -15,4 +15,6 @@ data class AccountDraft(
     val dueDay: Int? = null,
     val includeInNetWorth: Boolean = true,
     val remark: String? = null,
+    /** 卡号(银行卡类账户)。 */
+    val cardNo: String? = null,
 )
