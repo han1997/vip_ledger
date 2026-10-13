@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 启动图标前景：黄铜「圆钱方孔」+ 金色发丝环（墨绿金 · 静奢记账）。
+     纯几何矢量，无文字；全部落在 66dp 安全区内。同图兼作 Android 13+ monochrome 层。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 金色发丝环（hero / FAB 的金描边语言），直径 52dp -->
+    <path
+        android:pathData="M28,54a26,26 0 1,0 52,0a26,26 0 1,0 -52,0z"
+        android:strokeColor="#8CC9A96E"
+        android:strokeWidth="0.9"
+        android:fillColor="#00000000" />
+
+    <!-- 铜钱主体：亮金 → 黄铜对角渐变，直径 40dp -->
+    <path android:pathData="M34,54a20,20 0 1,0 40,0a20,20 0 1,0 -40,0z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="38"
+                android:startY="38"
+                android:endX="70"
+                android:endY="70">
+                <item
+                    android:offset="0"
+                    android:color="#FFD3B57C" />
+                <item
+                    android:offset="1"
+                    android:color="#FFB08D57" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 铜钱内圈錾痕（深金发丝，铸币立体感），直径 31dp -->
+    <path
+        android:pathData="M38.5,54a15.5,15.5 0 1,0 31,0a15.5,15.5 0 1,0 -31,0z"
+        android:strokeColor="#598A6B34"
+        android:strokeWidth="0.8"
+        android:fillColor="#00000000" />
+
+    <!-- 方孔（圆钱方孔，深墨绿近似透底），13dp 圆角方 -->
+    <path
+        android:pathData="M47.5,47.5h13a1.5,1.5 0 0 1 1.5,1.5v10a1.5,1.5 0 0 1 -1.5,1.5h-13a1.5,1.5 0 0 1 -1.5,-1.5v-10a1.5,1.5 0 0 1 1.5,-1.5z"
+        android:fillColor="#FF142E28" />
+</vector>
