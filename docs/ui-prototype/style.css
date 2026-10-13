@@ -68,7 +68,7 @@ small{font-size:11px;line-height:1.8}
 /* ── 左:工作台 ─────────────────────────────────────────── */
 .studio{padding:44px clamp(24px,4vw,64px);display:flex;flex-direction:column;align-items:flex-start}
 .brand{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:700;letter-spacing:-.4px;white-space:nowrap}
-.brand-mark{display:grid;place-items:center;width:38px;height:38px;background:linear-gradient(150deg,var(--accent-2),var(--accent-deep));color:var(--gold-2);font-family:var(--serif);font-size:23px;border-radius:12px;line-height:1;padding-bottom:3px;box-shadow:inset 0 0 0 1px rgba(201,169,110,.35)}
+.brand-mark{display:grid;place-items:center;width:38px;height:38px;background:linear-gradient(150deg,var(--accent-2),var(--accent-deep));color:var(--gold-2);font-family:var(--serif);font-size:23px;border-radius:12px;line-height:1;box-shadow:inset 0 0 0 1px rgba(201,169,110,.35)}
 .edition{font-size:10px;font-weight:400;color:var(--muted);border-left:1px solid var(--line-2);padding-left:10px;letter-spacing:0}
 .studio-copy{margin:60px 0 30px}
 .proposal{color:var(--gold);font-size:12px;font-weight:600;letter-spacing:.18em}
