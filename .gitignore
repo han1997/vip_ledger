@@ -48,3 +48,7 @@ tools/trainer/__pycache__/
 .tmp_*.xml
 hs_err_pid*.log
 replay_pid*.log
+
+# 本地导入样本 / 手机截图(仅仓库根,不入库)
+/账单_*.zip
+/*.jpg
