@@ -87,14 +87,35 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // ML Kit OCR 原生库单架构就有 7~11MB，四架构齐打会让 APK 膨到 45MB。
+    // 按 ABI 拆包：真机 arm64-v8a / armeabi-v7a，模拟器 x86_64；不含无用的 x86。
+    // 每个产物只带自己的原生库，安装时按设备 ABI 选对应包即可。
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = false
+        }
+    }
 }
 
 // AGP 8.13's public APK output API also keeps output-metadata.json in sync.
+// ABI 拆包后同一 variant 有多个输出，文件名在 outputs.all 里逐个拼（带 ABI 段）。
 android.applicationVariants.all {
-    val apkName = "vipledger-v$versionName-$name" +
-        if (isSigningReady) ".apk" else "-unsigned.apk"
+    val variantName = name
+    val signed = isSigningReady
     outputs.all {
-        (this as ApkVariantOutput).outputFileName = apkName
+        val output = this as ApkVariantOutput
+        val abi = output.filters.firstOrNull { it.filterType == "ABI" }?.identifier
+        output.outputFileName = buildString {
+            append("vipledger-v$versionName")
+            if (abi != null) append("-$abi")
+            append("-$variantName")
+            if (!signed) append("-unsigned")
+            append(".apk")
+        }
     }
 }
 
