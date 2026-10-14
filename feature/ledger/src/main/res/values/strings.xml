@@ -345,5 +345,54 @@
     <string name="settings_ai_model">模型管理</string>
     <string name="settings_ai_rules">商户规则</string>
     <string name="settings_current_ledger">当前账本 · %1$s</string>
+
+    <!-- 一木记账账单导入(前缀 billimport_,见 import-export.md 坑 4:不要用裸 import_) -->
+    <string name="billimport_title">导入账单</string>
+    <string name="billimport_entry">导入账单</string>
+    <string name="billimport_entry_subtitle">一木记账 .xls / .zip</string>
+    <string name="billimport_pick_hint">还没有选择账单文件</string>
+    <string name="billimport_pick_support">支持一木记账导出的 .xls 与 .zip;\n解析只在本机进行,不上传。</string>
+    <string name="billimport_pick_file">选择文件</string>
+    <string name="billimport_privacy_note">文件只在本机解析;导入在单个事务内完成,失败则整体回滚,不留半份数据。</string>
+    <string name="billimport_dedup_note">重复行按「日期 + 收支类型 + 金额 + 分类 + 账户 + 备注」识别;再次导入同一文件会全部计为重复,不会写双份。</string>
+    <string name="billimport_recognized">已识别</string>
+    <string name="billimport_recognized_source">一木记账账单</string>
+    <string name="billimport_data_rows">数据行数</string>
+    <string name="billimport_rows_count">%1$d 行</string>
+    <string name="billimport_lines_summary">%1$s ~ %2$s</string>
+    <string name="billimport_dismiss">取消</string>
+    <string name="billimport_expense_total">支出合计</string>
+    <string name="billimport_income_total">收入合计</string>
+    <string name="billimport_net_total">净额</string>
+    <string name="billimport_skipped">跳过 %1$d 行</string>
+    <string name="billimport_failed">失败 %1$d 行</string>
+    <string name="billimport_failed_rows">失败行号:%1$s</string>
+    <string name="billimport_target_title">导入到</string>
+    <string name="billimport_target_new">新建账本「%1$s」</string>
+    <string name="billimport_target_new_default">新建账本「一木记账」</string>
+    <string name="billimport_target_current">导入当前账本:%1$s</string>
+    <string name="billimport_new_categories">将新建的分类</string>
+    <string name="billimport_new_accounts">将新建的账户</string>
+    <string name="billimport_list_count">%1$d 个</string>
+    <string name="billimport_confirm_current_title">导入当前账本</string>
+    <string name="billimport_confirm_current_message">当前账本已有流水;导入后新增与重复都会按实际结果统计,确认继续?</string>
+    <string name="billimport_confirm_continue">继续</string>
+    <string name="billimport_start">开始导入</string>
+    <string name="billimport_processing">正在导入,请不要离开本页…</string>
+    <string name="billimport_progress">已处理 %1$d / %2$d 行</string>
+    <string name="billimport_reparse">重新选择文件</string>
+    <string name="billimport_report_title">导入完成:新增 %1$d · 重复 %2$d</string>
+    <string name="billimport_report_inserted">新增</string>
+    <string name="billimport_report_duplicates">重复</string>
+    <string name="billimport_report_failed">失败</string>
+    <string name="billimport_report_skipped">跳过</string>
+    <string name="billimport_report_new_categories">新建分类</string>
+    <string name="billimport_report_new_accounts">新建账户</string>
+    <string name="billimport_report_hint">再次导入同一文件则全部计为重复,不会写双份。</string>
+    <string name="billimport_error_format">文件无法识别,请确认是一木记账导出的 .xls 或 .zip 账单</string>
+    <string name="billimport_error_read">读取文件失败,请重新选择</string>
+    <string name="billimport_error_import">导入失败,已整体回滚,未写入任何数据</string>
+    <string name="billimport_notice_done">导入完成</string>
+    <string name="billimport_notice_existing_ledger">当前账本还没有流水</string>
 </resources>
 

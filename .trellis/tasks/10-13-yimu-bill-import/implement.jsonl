@@ -1,0 +1,11 @@
+{"file": ".trellis/tasks/10-13-yimu-bill-import/prd.md", "reason": "本任务的唯一需求来源:R1-R11、三个陷阱、23 列事实、D1-D11 决策、承载位置与实现步骤。开始写代码前完整读一遍。"}
+{"file": ".trellis/spec/android/import-export.md", "reason": "导入导出的权威规范:importHash 去重键(分钟粒度)、事务原子性、ImportReport 形态、『其他记账 App 格式以 Importer 插件形式扩展』的插件契约,以及四个已知陷阱。"}
+{"file": ".trellis/spec/android/architecture.md", "reason": "分层与依赖方向:解析器归 core:data、UI 归 feature:ledger,避免在 feature 层写解析逻辑。"}
+{"file": ".trellis/spec/android/directory-structure.md", "reason": "新增文件的落位约定(core/data/.../importexport 与 feature/ledger/.../ui/import)。"}
+{"file": ".trellis/spec/android/database.md", "reason": "Room 实体/DAO 约定、import_hash 唯一索引、软删 deleted_at、事务与 invalidationTracker 刷新要求。"}
+{"file": ".trellis/spec/android/ui-contract.md", "reason": "9 条 UI 契约:契约 3 要求四态完整(加载/空态/错误/重试/执行中/禁用/危险操作确认);契约 1/5 规定原型必须先确认再写 Compose;契约 4 禁止 feature 内颜色字面量。"}
+{"file": ".trellis/spec/android/ui.md", "reason": "组件与设计令牌的既有用法(VipLedgerScaffold / EmptyState / GroupCard / ActionRow 等),避免重造。"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "AppResult / AppError → strings.xml 的映射规则,明确禁止直接展示 AppError.message。"}
+{"file": ".trellis/spec/android/testing.md", "reason": "单元测试与 Robolectric + 内存 Room 集成测试的既有范式,新增测试照此组织。"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "构建、版本 bump(version.py + CHANGELOG)与真机 ADB 交付流程,交付轮必须遵守。"}
+{"file": "docs/ui-prototype/BASELINE.md", "reason": "原型版本登记表:当前确认基准 v2.2 与三文件 SHA-256;v2.3 需按契约 5 在此新增登记段。"}

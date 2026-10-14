@@ -74,11 +74,17 @@ LaunchedEffect(state.pendingExport) {
 - 导入报告必须展示「新增 / 重复 / 失败」计数与失败样例行号。
 - 导入全程包在一个事务或可回滚的分批写入中，失败不得留下半份数据。
 
-> **`Importer` 接口尚未落地（M5 现状）**：只有 `core:data` 的 `CsvLedgerImporter`（`object`，含
-> `preview` / `parse` / `presetMapping` / `fingerprint`）。支付宝/微信预设与通用映射都由它承担；
-> `preset` 参数目前**不参与解析**，表头探测与列匹配共用同一份 `HEADER_CANDIDATES`（见下）。
-> 等到真要接第二种账单格式时再抽接口，
-> 避免按猜测设计签名（与上一条「禁止凭猜测写解析」同源）。
+> **格式无关接口已落地(一木 xls 起)**:接口是 `:core:domain` 的 `BillImporter`
+> (`inspect(source: ByteArray, target): AppResult<BillImportPreview>` 只解析不落库;
+> `commit(preview, target, onProgress): AppResult<BillImportReport>` 落库)。共享 DTO
+> (`ImportTarget` / `BillImportRow` / `BillImportPreview` / `BillImportReport` / `PendingBillCategory`
+> / `PendingBillAccount`)也都在 `:core:domain.usecase.importbill`,用**领域模型**而非 xls 列表达。
+> 实现放 `:core:data`(`YimuLedgerImporter`),Hilt 绑定(`@Binds`)也在 `:core:data` 的 DI 模块 ——
+> `feature:*`(含导入页)只 `@Inject` 接口,**不依赖 `:core:data`**(architecture.md「接口向内、实现向外」)。
+> CSV 路径**保持现状不动**:`:core:data` 的 `CsvLedgerImporter`(`object`,含 `preview` / `parse` /
+> `presetMapping` / `fingerprint`)不实现该接口;支付宝/微信预设与通用映射仍由它承担,
+> `preset` 参数目前**不参与解析**,表头探测与列匹配共用同一份 `HEADER_CANDIDATES`(见下);
+> 待重构时再把它迁进 `BillImporter`。
 
 M5 落地的具体契约：
 
@@ -97,6 +103,88 @@ M5 落地的具体契约：
   `database.withTransaction {}` 里，异常时回滚并返回一条以失败行号为主的报告。
 - 金额解析：先剥掉千分位 `,` 与 `￥`/`¥`，再 `BigDecimal(...).movePointRight(2).longValueExact()`，
   避免浮点误差；无法精确转成整数分即判该行失败。
+
+
+## 一木记账账单导入(.xls / .zip,`BillImporter` 首个真实实现)
+
+来源:`core:data/importexport/yimu/`。解析层是自写最小 BIFF8 解析器(`Ole2Reader` / `Biff8Reader` /
+`YimuBillParser`),映射层是纯函数(`YimuCategoryMapper` / `YimuAccountMapper`),落库层是
+`YimuLedgerImporter`(实现 `:core:domain` 的 `BillImporter`)。
+
+**入口与容器**
+
+- 接受 OLE2/CFB 容器内的 BIFF8 `Workbook` 流(魔数 `d0cf11e0a1b11ae1`),以及 `.zip` 包裹的同名 `.xls`
+  (魔数 `504b0304`,取第一个 `.xls` 成员)。两条入口结果必须一致。
+- zip 条目名含 `..` 或以 `/` 开头直接拒绝(zip-slip,与 `SnapshotArchive` 同口径)。
+- 坏魔数 / 截断 / 越界 sector 链抛 `YimuFormatException`(`IllegalArgumentException` 子类),**不得 OOM**。
+- `.xls` 全靠**表头列名**动态定位列(`headerIndex`),不写死列序,源文件列序漂移不会读错列。
+
+**23 列契约**(表头即列名):`日期`(字符串 `yyyy-MM-dd HH:mm`,当**本地时间**解析)、`收支类型`(`支出`/`收入`)、
+`金额`、`类别`、`二级分类`、`账户`、`账本`(恒「日常账本」)、`退款`、`优惠`、`备注`(→ `title`)、`标签`(恒 `app`)、
+`报销账户/报销金额/报销明细/多币种`、`地址`、`创建用户`、`其他`、`附件1..5`。后几组全空,忽略(仅 `其他` 含
+「不计入收支」时置 `excludeFromStats`)。缺 `日期`/`收支类型`/`金额`/`类别` 任一列 → 抛异常。
+
+**三个陷阱(实测踩过)**
+
+1. **同一一级类别混两种方向**。方向**只由「收支类型」列决定**,绝不从一级名推:一木「其他」一级 = 理财盈利(收入)
+   + 理财支出(支出)+ 空(支出);「奖金 / 工资 / 礼金人情」也都是收入型一级。`YimuCategoryMapper.map` 的
+   `kind` 参数就是这一列。
+2. **退款列是「原单金额」,不是要找的差**。源数据金额**已经是净额**,退款 / 优惠**只写进 `remark`**(如
+   `退款 29.17 · 优惠 0.02 · 地址:...`),**绝不加减回金额**。金额符号由「收支类型」决定,取绝对值。
+3. **优惠是信息性的**,同上,已含在净额里。
+
+**解析层契约(BIFF8 最小解析器 —— 全任务最易错处,改这里前先读)**
+
+公开入口:`YimuBillParser.parse(bytes): BiffSheet`(唯一对外入口)。
+
+- `Ole2Reader.readStream(bytes, "Workbook"): ByteArray` 解 OLE2/CFB 容器;BIFF8 的流名是
+  **`Workbook`(不是 `Book`)**,小流(≥ `miniCutoff` 4096 走 FAT,否则走 miniFAT)。
+- `Biff8Reader.readSheet(stream): BiffSheet` 线性扫 `[u16 id][u16 len][payload]`,**在拼接后的
+  记录流上解析,不按 8224 字节切**;只认 BOF/EOF/BOUNDSHEET/SST+CONTINUE/LABELSST/NUMBER/RK/MULRK/
+  ROW/BLANK/MULBLANK,其余按 payload 长度跳过。
+- 🔴 **SST 跨 CONTINUE 续接**:记录 payload 上限 8224,切开处会**重写一个 options 字节**;
+  必须维护 `(chunkIndex, offset)` 游标 —— 越界时跳到下一块**偏移 0 先读一个字节**当新 options
+  (只有 bit0 生效),**绝不能把 payload 简单 concat**(会把标志字节当内容)。rich-text 段数组
+  (`4*nrun`)与 Far-East `cbext` 块**各自独立对齐到下一块偏移 0、不重读 options**;
+  跳过顺序固定为 字符 → rich-text → Far-East。宽字符且旧块末尾只剩 1 字节时,该字节**静默丢弃**。
+- 字符串头 = `cch`(u16 字符数)+ 1 字节标志:bit0 = `fHighByte`(1 ⇒ UTF-16LE 每字符 2 字节;
+  0 ⇒ CP1252 每字符 1 字节);bit3 = rich-text;bit2 = Far-East。
+- 🔴 **单元格行号取自记录自身**:LABELSST/NUMBER/RK/MULRK/BLANK/MULBLANK 自带 `row`/`col`,
+  **以它为准**;`ROW` 记录**只用于元数据**(本文件是每非空行一条,但**不得**用「最近一条 ROW」推导行号 ——
+  早期研究据此得出的「row 字段不可靠」结论已作废)。`DIMENSIONS` 仅用于上界。
+- RK 解码(与 `xlrd.unpack_RK` 逐位一致):bit0 ⇒ 有符号 30 位整数(`>> 2` 后符号扩展);
+  否则 `Double.fromBits((rk & 0xFFFFFFFC) << 32)`;bit1 ⇒ 再 ÷100。**不要**用 `toInt()/100.0` 之类的近似写法。
+- 错误一律抛 `YimuFormatException`(`IllegalArgumentException` 子类):坏魔数 / 截断 / 越界 sector
+  链 / SST 索引越界 / 行列乘积超 `MAX_CELLS` —— **不得 OOM**,也不得抛不可捕获的 `OutOfMemoryError`。
+
+**落库口径**
+
+- `amountCents = abs(金额).movePointRight(2).longValueExact()`;**0 元行照常写 0**,直接构造 `TxnEntity` +
+  `txnDao.upsert`,**不走** `TxnValidator`(它要求金额 > 0)。
+- 固定字段:`source = TxnSource.IMPORT`、`draftStatus = DraftStatus.CONFIRMED`、`deletedAt = null`、`toAccountId = null`。
+- 分类:目标 `kind` = 该行方向;二级先在目标父级下按 `(parentId, kind, name)` 查重,命中复用,缺失新建
+  (`iconKey = null`、`isSystem = false`);二级为空时给一级 id。内置分类每账本随机 UUID,只能按名称查。
+  **D9 同义复用**:语义相同就落内置二级(手机数码→数码、个护美妆→美妆、话费宽带→话费、医院→门诊、电影唱歌→电影…),
+  一木特有的一律在映射父级下新建(全量样本约 30 个二级)。
+  ⚠️ **「话费」不要跨父级复用**:内置「话费」挂在「通讯」下,而一木 `居家生活/话费宽带` 的映射父级是「居住」——
+  同名但父级不同**不算复用**,会在「居住」下新建一个「话费」二级(符合 `CategoryTree` 的「同级同名唯一」)。
+- 账户:按 `YimuAccountMapper.normalize`(去首尾空白、全角转半角、**各类括号一律压成 `(`**、间隔符转空格)
+  在目标账本已有账户里判重,**命中不改名**;类型按名推断(信用卡→`CREDIT_CARD`;花呗/白条/月付→`PAYABLE`;
+  微信/支付宝/零钱通/钱包→`VIRTUAL`;现金→`CASH`;公积金→`INVESTMENT`;其余→`BANK_DEBIT`);
+  **`initialBalance` 一律 0**(`balanceOf = initialBalance + Σdelta`,给非 0 初值会让迁移余额凭空翻倍)。
+  「账户」列为空的行落到「现金」账户。
+- 幂等:`import_hash = sha1("${occurredAt / 60_000}|$amountCents|$accountId|$title")`,**分钟粒度**;文件内第 2 次
+  出现的同键加 `|#n` 后缀(全量保留文件内重复行 + 二次导入不产生双份)。`existsImportHash` 是**全库**判定、
+  不过滤 `deleted_at`。
+- 事务:分类 / 账户 / 标签 / 流水写在**同一个** `database.withTransaction {}` 内,任意一行失败整体回滚,
+  不留半份数据;末尾 `balanceSyncer.syncBalances(changedAccounts, now)`,`changedAccounts` 收全所有被写入行的 accountId。
+- 报告:`inserted` / `duplicates` / `failedRows` / `skippedRows` + `newCategoryCount` / `newAccountCount`。
+
+**测试**
+
+- 脱敏 40 行最小夹具入库 `core/data/src/test/resources/yimu_fixture_40.xls`(覆盖全部 23 列 + 至少一条跨 CONTINUE
+  的长备注);原始文件**不入库**。
+- 全量样本(6008 行)回归用环境变量门控,只在本地跑、不提交。
 
 ## WebDAV 备份
 
@@ -184,4 +272,21 @@ SQLite 会把文本原样存进 BLOB 列，`attachment` 等二进制字段**静�
 ### 坑 4：`feature:*` 的资源名要加模块前缀
 
 library 资源会被 `:app` 合并，重名即 `mergeDebugResources` 失败。
-`:feature:sync` 用 `backup_` 前缀并在 `strings.xml` 顶部注释写明规则（见 architecture.md「资源名全局唯一」）。
+`:feature:sync` 用 `backup_` 前缀并在 `strings.xml` 顶部注释写明规则（见 architecture.md「资源名全局唯一」）。 本任务另加一例:一木导入页在 `:feature:ledger`,
+资源名统一用 `billimport_` 前缀(不要用裸 `import_`)。
+
+### 坑 5:BIFF8 单元格行号别用「最近一条 ROW 记录」推导
+
+**症状**:某份 BIFF8 样本的文本单元格「行号全错」,按行聚合后与 `xlrd` 对不上。
+
+**真因**:这是**探针写法**造成的假象 —— 探针把「单元格自带 `row`」的字典与「按 ROW 记录跟踪的
+当前行」的字典做键集比较,两者键本就不同源,差集被误读成「row 字段不可靠」。
+实测:LABELSST/NUMBER 自带的 `row`/`col` 与本文件**逐格双射**
+(132,199 个文本格恰铺满 132,199 个互不重叠的格子,对 `xlrd` 报出的文本格**零缺失**),
+`ROW` 记录在本文件是**每个非空行一条**(6009 条 ↔ 6009 行),并非「每 32 行一个块」。
+
+**修法**:解析器按**单元格自带的 `row`/`col`** 建矩阵;`ROW`/`DIMENSIONS` 仅作元数据。
+(`.trellis/tasks/10-13-yimu-bill-import/research/fixture-generation.md` 有更正的前后对照。)
+
+**预防**:拿「不同来源的键」做差集前,先确认两者**语义同源**;比较两个字典的 `keys()` 差异,
+不等于比较同一组坐标上的值。

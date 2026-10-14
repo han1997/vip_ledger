@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -63,6 +64,7 @@ fun SettingsScreen(
     onOpenDrafts: () -> Unit,
     onOpenLoans: () -> Unit,
     onOpenAutoBook: () -> Unit = {},
+    onOpenImportBill: () -> Unit = {},
     ledgerName: String = "",
     modifier: Modifier = Modifier,
 ) {
@@ -128,7 +130,10 @@ fun SettingsScreen(
             item {
                 SettingsGroup(
                     title = stringResource(R.string.settings_group_data),
-                    rows = listOf(SettingsRow(stringResource(R.string.home_backup), Icons.Filled.Backup, onOpenBackup)),
+                    rows = listOf(
+                        SettingsRow(stringResource(R.string.billimport_entry), Icons.Filled.Upload, onOpenImportBill),
+                        SettingsRow(stringResource(R.string.home_backup), Icons.Filled.Backup, onOpenBackup),
+                    ),
                 )
             }
             item(key = "app-version") {

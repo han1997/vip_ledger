@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.han1997.vipledger.feature.ledger.ui.billimport.ImportBillScreen
 import com.han1997.vipledger.feature.ledger.ui.drafts.DraftListScreen
 import com.han1997.vipledger.feature.ledger.ui.home.HomeScreen
 import com.han1997.vipledger.feature.ledger.ui.loan.LoanDetailScreen
@@ -51,6 +52,7 @@ object LedgerRoutes {
     const val ARG_DATE: String = "date"
     fun budget(ledgerId: String) = "ledger/budget/$ledgerId"
     const val AUTO_BOOK = "ledger/auto-book"
+    const val IMPORT_BILL = "ledger/import-bill"
 
     const val ARG_LEDGER_ID: String = "ledgerId"
     const val ARG_TXN_ID: String = "txnId"
@@ -181,6 +183,9 @@ fun NavGraphBuilder.ledgerGraph(
             onEditTxn = { ledger, txn -> navController.navigate(LedgerRoutes.txnEdit(ledger, txn)) },
         )
     }
+    composable(LedgerRoutes.IMPORT_BILL) {
+        ImportBillScreen(onBack = { navController.popBackStack() })
+    }
     // 「我的」Tab 根：SettingsScreen 无返回箭头，badge 由 navController 上层传入。
     composable(LedgerRoutes.SETTINGS_TAB) {
         val viewModel: SettingsTabViewModel = hiltViewModel()
@@ -200,6 +205,7 @@ fun NavGraphBuilder.ledgerGraph(
             onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
             onOpenBackup = onOpenBackup,
             onOpenAutoBook = { navController.navigate(LedgerRoutes.AUTO_BOOK) },
+            onOpenImportBill = { navController.navigate(LedgerRoutes.IMPORT_BILL) },
             onOpenAiModel = onOpenAiModel,
             onOpenAiRules = onOpenAiRules,
             onOpenRecurring = { if (ready) navController.navigate(LedgerRoutes.recurringList(ledgerId)) },
@@ -223,6 +229,7 @@ fun NavGraphBuilder.ledgerGraph(
             onOpenTags = { if (ready) navController.navigate(LedgerRoutes.tagManage(ledgerId)) },
             onOpenBackup = onOpenBackup,
             onOpenAutoBook = { navController.navigate(LedgerRoutes.AUTO_BOOK) },
+            onOpenImportBill = { navController.navigate(LedgerRoutes.IMPORT_BILL) },
             onOpenAiModel = onOpenAiModel,
             onOpenAiRules = onOpenAiRules,
             onOpenRecurring = { if (ready) navController.navigate(LedgerRoutes.recurringList(ledgerId)) },

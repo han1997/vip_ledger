@@ -230,7 +230,7 @@ const assert = require('node:assert/strict');
 
   // 11. 我的 · 所有子页面可达且可交互
   await go('me');
-  const subs = ['ledgers', 'categories', 'tags', 'reimburse', 'lending', 'installments', 'wealth', 'models', 'merchants', 'backup', 'export', 'privacy'];
+  const subs = ['ledgers', 'categories', 'tags', 'reimburse', 'lending', 'installments', 'wealth', 'models', 'merchants', 'backup', 'export', 'importBill', 'privacy'];
   // 新增项走手机内输入弹层(不是浏览器 prompt)
   await page.locator('[data-action="open-sub"][data-sub="tags"]').click();
   await page.locator("#overlay [data-action=\"add-tag\"]").last().click();
@@ -262,6 +262,46 @@ const assert = require('node:assert/strict');
   await page.locator('[data-action="open-sub"][data-sub="export"]').click();
   await page.locator('[data-action="do-export"]').click();
   assert.equal(await inPhone('.csv-preview').count(), 1, 'export produces preview');
+  await page.locator('#overlay [data-action="close-sub"]').click();
+
+  // 11b. 导入账单:四态齐备(选文件 / 预览 / 导入中 / 报告)
+  await go('me');
+  await page.locator('[data-action="open-sub"][data-sub="importBill"]').click();
+  assert.equal(await inPhone('.phone-page').count(), 1, 'importBill opens in phone');
+  // 态 1:选文件(空态)
+  assert.equal(await inPhone('.empty').count(), 1, 'empty state before picking a file');
+  assert.equal(await inPhone('[data-action="pick-import-file"]').count(), 1, 'pick-file button present');
+  await page.locator('#overlay [data-action="pick-import-file"]').click();
+  // 态 2:预览 + 选项
+  const summary = await inPhone('.import-preview .setlist').innerText();
+  assert.match(summary, /一木记账账单/, 'recognized as yimu bill');
+  assert.match(summary, /6008 行/, 'row count');
+  assert.match(summary, /2018-10-11 ~ 2026-10-08/, 'date range');
+  assert.match(summary, /545,573\.64/, 'expense total');
+  assert.match(summary, /541,450\.22/, 'income total');
+  assert.match(summary, /4,123\.42/, 'net total');
+  assert.equal(await inPhone('.seg [data-action="toggle-import-target"]').count(), 2, 'two import targets');
+  assert.equal(await inPhone('.tagchip').count(), 0, 'new lists collapsed by default');
+  await page.locator('#overlay [data-action="toggle-import-list"][data-v="cats"]').click();
+  assert.equal(await inPhone('.tagchip').count(), 34, '34 new categories listed');
+  await page.locator('#overlay [data-action="toggle-import-list"][data-v="accs"]').click();
+  assert.equal(await inPhone('.tagchip').count(), 52, '34 categories + 18 accounts listed');
+  // 选「导入当前账本」且已有流水 → 二次确认
+  await page.locator('#overlay [data-action="toggle-import-target"][data-v="current"]').click();
+  assert.equal(await inPhone('.phone-sheet').count(), 1, 'current-ledger import asks for confirmation');
+  await page.locator('#overlay [data-action="confirm-import-current"]').click();
+  assert.equal(await page.locator('#overlay [data-action="toggle-import-target"][data-v="current"].on').count(), 1, 'current target selected');
+  // 态 3:导入中(进度条 + 已处理 x / 6008 行)
+  await page.locator('#overlay [data-action="do-import"]').click();
+  assert.equal(await inPhone('.import-progress .bar').count(), 1, 'progress bar while importing');
+  assert.match(await inPhone('.import-progress .gl').innerText(), /已处理 \d+ \/ 6008 行/, 'row progress text');
+  // 态 4:报告
+  await page.locator('.import-report').waitFor({ state: 'visible', timeout: 8000 });
+  const report = await inPhone('.import-report').innerText();
+  for (const frag of ['新增', '6008', '重复', '失败', '跳过', '新建分类', '34', '新建账户', '18']) assert.ok(report.includes(frag), `report shows ${frag}`);
+  assert.match(report, /再次导入同一文件则全部计为重复/, 'idempotency note');
+  await page.locator('#overlay [data-action="import-again"]').click();
+  assert.equal(await inPhone('.empty').count(), 1, 'back to file picker');
   await page.locator('#overlay [data-action="close-sub"]').click();
 
   // 12. 预算 / 卡片设置
@@ -302,6 +342,7 @@ const assert = require('node:assert/strict');
     await collect();
     await page.locator('#overlay [data-action="close-sub"]').click();
   }
+  await go('me'); await page.locator('[data-action="open-sub"][data-sub="importBill"]').click(); await collect(); await page.locator('#overlay [data-action="close-sub"]').click();
   await go('home'); await act('new-entry'); await collect();
   for (const pick of ['pick-account', 'pick-datetime', 'pick-tag']) { await page.locator(`[data-action="${pick}"]`).first().click(); await collect(); await page.locator('#overlay .phone-sheet-head [data-close]').click(); }
   for (const sub of ['account', 'archived']) { await go('assets'); if (sub === 'account') await page.locator('[data-action="open-account"]').first().click(); else { const b = page.locator('[data-action="show-archived"]'); if (await b.count()) await b.click(); else continue; } await collect(); await page.locator('#overlay [data-action="close-sub"]').click(); }

@@ -1,0 +1,8 @@
+{"file": ".trellis/tasks/10-13-yimu-bill-import/prd.md", "reason": "验收基准:Acceptance Criteria 与 Definition of Done 逐条对照;R1-R11 的实现完整性;三个陷阱(方向由收支类型定、退款/优惠不入金额)是否被遵守。"}
+{"file": ".trellis/spec/android/import-export.md", "reason": "核对去重键是否与 CSV 路径同构(分钟粒度)、是否在单事务内完成、异常是否整体回滚、报告字段是否齐全、是否未改动 CsvLedgerImporter 行为。"}
+{"file": ".trellis/spec/android/ui-contract.md", "reason": "逐项过『交付前快速清单』:四态完整、危险操作二次确认、feature 内零颜色字面量、原型已确认且哈希登记一致。"}
+{"file": ".trellis/spec/android/database.md", "reason": "检查 DAO 用法、软删语义、import_hash 唯一索引冲突处理、写后是否触发 invalidationTracker 刷新。"}
+{"file": ".trellis/spec/android/error-handling.md", "reason": "检查失败路径是否映射到 strings.xml、有无直接展示 AppError.message、异常是否被吞。"}
+{"file": ".trellis/spec/android/testing.md", "reason": "检查测试是否覆盖 PRD『测试』一节列出的用例,尤其是幂等(连导两次)与事务回滚两条。"}
+{"file": ".trellis/spec/android/build-and-env.md", "reason": "核对版本 bump 只做一次、APK 命名规则、ADB 覆盖安装(保留数据、禁止卸载重装)。"}
+{"file": "docs/ui-prototype/BASELINE.md", "reason": "校验 v2.3 段的三文件 SHA-256 与实际文件哈希一致(契约 5 的验证方式)。"}

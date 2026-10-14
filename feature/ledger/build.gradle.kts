@@ -31,6 +31,8 @@ kotlin {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    // 一木账单导入页只注入 :core:domain 的 BillImporter 接口(BillImportPreview / BillImportReport),
+    // 不依赖 :core:data(architecture.md「接口向内、实现向外」)。
     implementation(project(":core:designsystem"))
     implementation(project(":core:domain"))
     implementation(project(":core:model"))

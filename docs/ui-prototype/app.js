@@ -42,12 +42,15 @@ const CHART_COLORS = ['#1a3c34', '#b08d57', '#b23a2e', '#3b5b7a', '#2e7d5b', '#a
 const TODAY = { y: 2025, m: 10, d: 11 };
 const iso = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
+const freshImportState = () => ({ phase: 'pick', file: null, target: 'new', catsOpen: false, accsOpen: false, processed: 0, timer: null, report: null });
+
 // ── 初始数据 ─────────────────────────────────────────────
 function initial() {
   let id = 0;
   const t = (date, time, title, cat, sub, acc, kind, amount, tag) => ({ id: ++id, date, time, title, catId: cat, sub, accountId: acc, kind, amount: Math.round(amount * 100), tag: tag || '', note: '' });
   return {
     page: 'home', sub: null, sheet: null,
+    importBill: freshImportState(),
     selectedDate: iso(2025, 10, 11), calYear: 2025, calMonth: 10, statsRange: 'month',
     query: '', searchOpen: false, aiText: '', inputDraft: '',
     ledgers: [{ id: 'l1', name: '日常账本', current: true }, { id: 'l2', name: '家庭账本', current: false }, { id: 'l3', name: '旅行记账', current: false }],
@@ -209,7 +212,7 @@ function render() {
   ov.classList.toggle('open', !!(state.sub || state.sheet));
 }
 
-function go(page) { state.page = page; state.sub = null; state.sheet = null; closeAllSheets(); render(); $('#content').scrollTop = 0; }
+function go(page) { if (state.importBill.timer) { clearInterval(state.importBill.timer); state.importBill.timer = null; if (state.importBill.phase === 'progress') state.importBill = freshImportState(); } state.page = page; state.sub = null; state.sheet = null; closeAllSheets(); render(); $('#content').scrollTop = 0; }
 function openSub(sub) { state.sub = sub; state.sheet = null; render(); const c = $('#overlay .sub-body'); if (c) c.scrollTop = 0; }
 function closeSub() { state.sub = null; state.sheet = null; render(); }
 function openSheet(sheet) { state.sheet = sheet; render(); }
@@ -475,6 +478,7 @@ function meView() {
     </div></div>
     <div class="setgroup"><div class="lab">数据</div><div class="setlist">
       ${item('database', '', '备份与恢复', state.webdav.enabled ? `WebDAV · 格式 6 · ${state.backups.length} 份` : `仅本地 · ${state.backups.length} 份`, `<span class="badge ${state.backups.length ? 'g' : ''}">${state.backups.length ? '已备份' : '未备份'}</span>`, 'backup')}
+      ${item('upload', '', '导入账单', '一木记账 .xls / .zip', '', 'importBill')}
       ${item('download', '', '导出 CSV', '', '', 'export')}
       ${item('shield', '', '隐私与权限', '通知 / 截图采集', '', 'privacy')}
     </div></div>`;
@@ -596,6 +600,73 @@ function timeSeg(part, val, label) {
   return `<div class="time-seg"><button class="icon-button" data-action="time-step" data-part="${part}" data-dir="1">${icon('chevron-up')}</button><div class="val amt">${val}</div><button class="icon-button" data-action="time-step" data-part="${part}" data-dir="-1">${icon('chevron-down')}</button><div class="lab">${label}</div></div>`;
 }
 
+// ── 导入账单(一木记账 .xls / .zip)─────────────────────
+// 演示数据:行数/区间/合计与真实样本一致;清单为代表性示例(数量按设计稿 34 / 18)。
+const YIMU_PREVIEW = {
+  name: '账单_1009122349.zip',
+  rows: 6008,
+  range: '2018-10-11 ~ 2026-10-08',
+  expense: -54557364,
+  income: 54145022,
+  net: -412342,
+  newCats: 34,
+  newAccs: 18
+};
+const YIMU_NEW_CATS = ['饮料酒水', '休闲零食', '生鲜食品', '买菜', '奶茶', '粮油调味', '请客吃饭', '虚拟充值', '宠物用品', '装修装饰', '配饰腕表', '生活电器', '母婴玩具', '办公用品', '高速费', '汽车充电', '保养修车', '理发', '家政清洁', '车位费', '滋补保健', '棋牌桌游', '孝敬长辈', '借出', '理财支出', '补贴', '礼金人情', '奖金', '中奖', '兼职外快', '公积金', '收红包', '借入', '理财盈利'];
+const YIMU_NEW_ACCS = ['现金', '支付宝', '微信零钱', '安徽农金信用卡', '花呗', '京东白条', '美团月付', '抖音月付', '公积金', '招商银行储蓄卡', '工商银行储蓄卡', '建设银行储蓄卡', '余额宝', '零钱通', '云闪付', '校园卡', '交通卡', '投资理财'];
+
+function importBillBody() {
+  const st = state.importBill;
+  if (st.phase === 'pick') {
+    return `<div class="import-empty"><div class="empty">${icon('upload')}<h3>还没有选择账单文件</h3><p>支持一木记账导出的 .xls 与 .zip;<br>解析只在本机进行,不上传。</p></div></div>
+      <div class="sub-actions"><button class="action-button full" data-action="pick-import-file">${icon('upload')} 选择文件</button></div>
+      <div class="inline-note">${icon('shield')} 原型不读写设备;点「选择文件」用演示数据模拟一次导入。</div>`;
+  }
+  if (st.phase === 'preview') {
+    const current = state.ledgers.find(l => l.current);
+    const fold = (label, list, key, open) => `
+      <div class="section-head" style="margin-top:16px"><h3>${label}</h3><button data-action="toggle-import-list" data-v="${key}">${list.length} 个 ${icon(open ? 'chevron-down' : 'chevron-right')}</button></div>
+      ${open ? `<div class="tag-list">${list.map(n => `<span class="tagchip">${esc(n)}</span>`).join('')}</div>` : ''}`;
+    return `<div class="import-preview">
+      <div class="setlist">
+        <div class="pick static"><span class="mark">账</span><span class="grow"><b>一木记账账单</b><span class="small muted" style="display:block">${YIMU_PREVIEW.name}</span></span><span class="badge g">已识别</span></div>
+        <div class="pick static"><span class="grow">数据行数<span class="small muted" style="display:block">${YIMU_PREVIEW.range}</span></span><span class="amt">${YIMU_PREVIEW.rows} 行</span></div>
+        <div class="pick static"><span class="grow">支出合计</span><span class="amt exp">${money(YIMU_PREVIEW.expense)}</span></div>
+        <div class="pick static"><span class="grow">收入合计</span><span class="amt inc">${money(YIMU_PREVIEW.income)}</span></div>
+        <div class="pick static"><span class="grow">净额</span><span class="amt exp">${money(YIMU_PREVIEW.net)}</span></div>
+      </div>
+      <div class="section-head" style="margin-top:16px"><h3>导入到</h3></div>
+      <div class="seg">
+        <button class="${st.target === 'new' ? 'on' : ''}" data-action="toggle-import-target" data-v="new">新建账本「一木记账」</button>
+        <button class="${st.target === 'current' ? 'on' : ''}" data-action="toggle-import-target" data-v="current">导入当前账本:${esc(current ? current.name : '—')}</button>
+      </div>
+      ${fold('将新建的分类', YIMU_NEW_CATS, 'cats', st.catsOpen)}
+      ${fold('将新建的账户', YIMU_NEW_ACCS, 'accs', st.accsOpen)}
+      <div class="sub-actions"><button class="action-button full" data-action="do-import">${icon('download')} 开始导入</button></div>
+    </div>`;
+  }
+  if (st.phase === 'progress') {
+    const pct = Math.round(st.processed / YIMU_PREVIEW.rows * 1000) / 10;
+    return `<div class="import-progress"><p class="form-intro">正在导入,请不要离开本页…</p>
+      <div class="goal"><div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="gl"><span>已处理 ${st.processed} / ${YIMU_PREVIEW.rows} 行</span><span>${pct}%</span></div></div></div>`;
+  }
+  const r = st.report || { inserted: 0, duplicates: 0, failed: 0, skipped: 0, categories: 0, accounts: 0 };
+  return `<div class="import-report">
+      <div class="inline-note ok">${icon('check-circle')} 导入完成:新增 ${r.inserted} · 重复 ${r.duplicates}</div>
+      <div class="setlist" style="margin-top:14px">
+        <div class="pick static"><span class="grow">新增</span><span class="amt inc">${r.inserted}</span></div>
+        <div class="pick static"><span class="grow">重复</span><span class="amt">${r.duplicates}</span></div>
+        <div class="pick static"><span class="grow">失败</span><span class="amt">${r.failed}</span></div>
+        <div class="pick static"><span class="grow">跳过</span><span class="amt">${r.skipped}</span></div>
+        <div class="pick static"><span class="grow">新建分类</span><span class="amt">${r.categories}</span></div>
+        <div class="pick static"><span class="grow">新建账户</span><span class="amt">${r.accounts}</span></div>
+      </div>
+      <div class="inline-note">${icon('refresh')} 再次导入同一文件则全部计为重复,不会写双份。</div>
+      <div class="sub-actions"><button class="action-button secondary full" data-action="import-again">重新选择文件</button></div>
+    </div>`;
+}
+
 // ── 子页面 ───────────────────────────────────────────────
 const SUBPAGES = {
   ledgers: () => ({
@@ -665,6 +736,10 @@ const SUBPAGES = {
       </div>
       <div class="sub-actions"><button class="action-button full" data-action="do-export">${icon('download')} 生成 CSV</button></div>
       ${state.exported ? `<div class="csv-preview">${state.exported.preview.map(l => `<div class="csv-line">${esc(l)}</div>`).join('')}</div>` : ''}`
+  }),
+  importBill: () => ({
+    title: '导入账单', actions: ib('import-help', '说明', 'cloud'),
+    body: importBillBody()
   }),
   privacy: () => ({
     title: '隐私与权限', actions: '',
@@ -988,6 +1063,35 @@ const actions = {
   'create-backup': () => { const now = new Date(); state.backups.unshift({ id: 'b' + nextId(), at: `今天 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`, size: '2.4 MB' }); render(); toast('备份已创建(演示)'); },
   'restore-backup': el => { const b = state.backups.find(x => x.id === el.dataset.id); toast(`已恢复 ${b.at} 的备份(演示)`); },
   'do-export': () => { state.exported = { rows: state.txns.length, size: (state.txns.length * 0.06).toFixed(1) + ' KB', preview: ['日期,类型,分类,账户,金额,备注', ...state.txns.slice(0, 5).map(t => `${t.date},${t.kind},${CAT_BY_ID(t.catId)?.name || '转账'},${ACC(t.accountId)?.name || ''},${(t.amount / 100).toFixed(2)},${t.note || ''}`)] }; render(); toast('CSV 已生成(演示)'); },
+  // 导入账单(四态:选文件 / 预览 / 导入中 / 报告)
+  'import-help': () => openSheet({ title: '关于导入账单', body: `<p class="form-intro">支持一木记账导出的账单文件(.xls,以及 .zip 包裹的同名 .xls)。</p>
+    <div class="inline-note">${icon('shield')} 文件只在本机解析;导入在单个事务内完成,失败则整体回滚,不留半份数据。</div>
+    <p class="form-intro" style="margin-top:14px">重复行按「日期 + 收支类型 + 金额 + 分类 + 账户 + 备注」识别;再次导入同一文件会全部计为重复,不会写双份。</p>` }),
+  'pick-import-file': () => { state.importBill.phase = 'preview'; render(); toast('已选择账单文件(演示)'); },
+  'toggle-import-target': el => {
+    const v = el.dataset.v;
+    if (v === 'current' && !state.txns.length) { toast('当前账本还没有流水'); return; }
+    if (v === 'current') { confirmPhone('导入当前账本', '当前账本已有流水;导入后新增与重复都会按实际结果统计。确认继续?', 'confirm-import-current', '继续'); return; }
+    state.importBill.target = 'new'; render();
+  },
+  'confirm-import-current': () => { state.importBill.target = 'current'; closeSheet(); render(); toast('已选择导入当前账本'); },
+  'toggle-import-list': el => { const st = state.importBill; if (el.dataset.v === 'cats') st.catsOpen = !st.catsOpen; else st.accsOpen = !st.accsOpen; render(); },
+  'do-import': () => {
+    const st = state.importBill;
+    st.phase = 'progress'; st.processed = 0; render();
+    clearInterval(st.timer);
+    st.timer = setInterval(() => {
+      st.processed = Math.min(YIMU_PREVIEW.rows, st.processed + Math.ceil(YIMU_PREVIEW.rows / 24));
+      if (st.processed >= YIMU_PREVIEW.rows) {
+        clearInterval(st.timer); st.timer = null;
+        st.phase = 'report';
+        st.report = { inserted: YIMU_PREVIEW.rows, duplicates: 0, failed: 0, skipped: 0, categories: YIMU_PREVIEW.newCats, accounts: YIMU_PREVIEW.newAccs };
+        render(); toast('导入完成(演示)'); return;
+      }
+      render();
+    }, 90);
+  },
+  'import-again': () => { clearInterval(state.importBill.timer); state.importBill = freshImportState(); render(); },
   'toggle-permission': el => { const k = el.dataset.key; state.permissions[k] = !state.permissions[k]; render(); },
   'set-budget': el => { state.budgetTotal = +el.dataset.v; render(); toast('预算已更新'); },
   'toggle-card': el => { const c = state.cards.find(x => x.id === el.dataset.id); c.on = !c.on; render(); },

@@ -98,6 +98,10 @@ Payment captures that need review now also produce a notification (when Android 
 - Image entry via the system photo picker and image sharing: multi-image on-device Chinese OCR feeds the same draft review; originals are never saved
 - Asset/liability/net-worth history trends computed from verified baselines with backfill correction, a multi-series line chart, and CSV export named with ledger, range and scope
 - CSV and JSON import/export, with encrypted WebDAV snapshots
+- One-click import of 一木记账 (Yimu) bill exports, as a bare `.xls` or a `.zip` wrapping one:
+  a self-contained BIFF8 parser (no Excel library, no new dependency), category/account mapping
+  onto the built-in tree, a choice of a new dedicated ledger or the current one, a preview before
+  writing, and duplicate-safe re-import
 - Offline payment capture with a separate review queue and account bindings
 
 The recording screen keeps a single save action at the bottom and confirms before leaving with

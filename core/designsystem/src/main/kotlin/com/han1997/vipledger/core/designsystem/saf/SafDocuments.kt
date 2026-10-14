@@ -29,6 +29,16 @@ fun readTextFromUri(context: Context, uri: Uri): String? = runCatching {
 }.getOrNull()
 
 /**
+ * 读取用户通过 `OpenDocument` 选中的任意二进制文件(如 `.xls` / `.zip` 账单);失败返回 null。
+ *
+ * 与 [readTextFromUri] 同契约:任何异常收敛成 null,由界面提示失败。账单真实类型由调用方按
+ * 魔数判定,不信任 Provider 报出的 MIME。
+ */
+fun readBytesFromUri(context: Context, uri: Uri): ByteArray? = runCatching {
+    context.contentResolver.openInputStream(uri)?.use { stream -> stream.readBytes() }
+}.getOrNull()
+
+/**
  * SAF 建议文件名：ASCII 前缀 + 日期（`vipledger-{prefix}-yyyyMMdd.{ext}`）。
  * 中文文件名在部分文件管理器/Provider 上会乱码或保存失败，因此固定 ASCII。
  */

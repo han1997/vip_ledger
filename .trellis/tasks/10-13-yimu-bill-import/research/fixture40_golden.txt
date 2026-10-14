@@ -1,0 +1,41 @@
+headers: ['日期', '收支类型', '金额', '类别', '二级分类', '账户', '账本', '退款', '优惠', '备注', '标签', '报销账户', '报销金额', '报销明细', '多币种', '地址', '创建用户', '其他', '附件1', '附件2', '附件3', '附件4', '附件5']
+ 0 | d=2026-10-08 20:48 t=支出 amt=-0.07 p=食品餐饮 s=饮料酒水 acc=支付宝 ref= disc= rem=慧生活798 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 1 | d=2026-10-07 21:21 t=支出 amt=-26.23 p=购物消费 s=个护美妆 acc=农业银行 ref= disc= rem=牙膏 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 2 | d=2026-10-07 19:47 t=支出 amt=-15.78 p=食品餐饮 s=饮料酒水 acc=美团月付 ref= disc=0.02 rem=黑糖珍珠撞奶 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 3 | d=2026-10-07 16:02 t=支出 amt=-0.01 p=食品餐饮 s=饮料酒水 acc=支付宝 ref= disc= rem=慧生活798 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 4 | d=2026-10-07 16:02 t=支出 amt=-0.01 p=食品餐饮 s=饮料酒水 acc=支付宝 ref= disc= rem=慧生活798 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 5 | d=2026-10-07 16:00 t=支出 amt=-0.01 p=食品餐饮 s=饮料酒水 acc=支付宝 ref= disc= rem=慧生活798 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 6 | d=2026-10-07 16:00 t=支出 amt=-0.01 p=食品餐饮 s=饮料酒水 acc=支付宝 ref= disc= rem=慧生活798 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 7 | d=2026-10-07 15:33 t=支出 amt=-0.08 p=食品餐饮 s=饮料酒水 acc=支付宝 ref= disc= rem=慧生活798 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 8 | d=2026-10-07 15:28 t=支出 amt=-3.5 p=居家生活 s=家政清洁 acc=安徽农金信用卡 ref= disc= rem=杭州企鹅科技有限公司 tag= addr=黄麓镇安徽公安学院学校食堂 other=
+ 9 | d=2026-10-07 13:32 t=支出 amt=-31.6 p=出行交通 s=打车 acc=农业银行 ref= disc= rem=滴滴出行 tag= addr= other=
+10 | d=2026-10-07 12:03 t=支出 amt=-26.41 p=出行交通 s=打车 acc=安徽农金信用卡 ref= disc= rem=高德顺风车 tag= addr= other=
+11 | d=2026-10-06 22:09 t=支出 amt=-20.9 p=食品餐饮 s=生鲜食品 acc=美团月付 ref= disc= rem=黑糖珍珠鲜牛乳 tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+12 | d=2026-10-06 22:05 t=支出 amt=-26.2 p=食品餐饮 s=饮料酒水 acc=美团月付 ref= disc= rem=优惠后 tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+13 | d=2026-10-06 22:03 t=支出 amt=-24.2 p=食品餐饮 s=休闲零食 acc=美团月付 ref= disc= rem=优惠后 tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+14 | d=2026-10-06 21:47 t=支出 amt=-30.16 p=食品餐饮 s=生鲜食品 acc=美团月付 ref= disc=0.04 rem=空枪 tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+15 | d=2026-10-06 17:21 t=收入 amt=2.0 p=收入 s=补贴 acc=微信钱包 ref= disc= rem= tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+16 | d=2026-10-06 16:06 t=支出 amt=-27.68 p=食品餐饮 s=生鲜食品 acc=美团月付 ref= disc=0.02 rem=空枪 tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+17 | d=2026-10-06 16:01 t=支出 amt=-25.78 p=食品餐饮 s=午餐 acc=美团月付 ref= disc=0.02 rem=超值换购，最高可省 tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+18 | d=2026-10-06 15:54 t=支出 amt=-3.5 p=出行交通 s=公共交通 acc=安徽农金信用卡 ref= disc= rem=苏智骑行 tag= addr=中街路49号汉庭酒店(苏州观前景德路店) other=
+19 | d=2026-10-06 12:12 t=支出 amt=-3.5 p=出行交通 s=公共交通 acc=微信零钱通 ref= disc= rem= tag= addr=白塔东路 other=
+20 | d=2026-10-05 23:53 t=支出 amt=-1.5 p=出行交通 s=公共交通 acc=微信零钱通 ref= disc= rem= tag= addr=中街路 other=
+21 | d=2026-10-05 22:07 t=支出 amt=-3.6 p=出行交通 s=公共交通 acc=安徽农金信用卡 ref= disc= rem=先骑后付 tag= addr=中街路 other=
+22 | d=2026-10-05 20:26 t=支出 amt=-75.0 p=食品餐饮 s=晚餐 acc=安徽农金信用卡 ref= disc= rem=左庭右院 tag= addr=星融街 other=
+23 | d=2026-10-05 19:13 t=支出 amt=-45.9 p=食品餐饮 s=饮料酒水 acc=安徽农金信用卡 ref= disc= rem=KOI tag= addr=星融街 other=
+24 | d=2026-10-05 16:39 t=支出 amt=-15.0 p=食品餐饮 s=休闲零食 acc=安徽农金信用卡 ref= disc= rem=盘门鳌游跨年元梦活动 tag= addr=校场桥路 other=
+25 | d=2026-10-05 12:29 t=支出 amt=-20.0 p=出行交通 s=公共交通 acc=安徽农金信用卡 ref= disc= rem=上海地铁-市域线国际旅游度假区-2026-10-05 09:51:06-市域线虹桥T2航站楼-2026-10-05 10:29:40 tag= addr=中街路 other=
+26 | d=2026-10-05 12:11 t=支出 amt=-20.0 p=出行交通 s=公共交通 acc=安徽农金信用卡 ref= disc= rem=微付充eSE公交 tag= addr=南北联系通道 other=
+27 | d=2026-10-04 11:12 t=支出 amt=-10.0 p=居家生活 s=话费宽带 acc=安徽农金信用卡 ref= disc= rem=中国电信安徽网厅 tag= addr=川沙新镇晶彩奇航上海迪士尼乐园 other=
+28 | d=2026-10-03 23:50 t=支出 amt=-5.0 p=出行交通 s=公共交通 acc=安徽农金信用卡 ref= disc= rem=上海地铁-人民广场-2026-10-03 21:00:10-川沙-2026-10-03 21:50:42 tag= addr=中街路 other=
+29 | d=2026-10-03 22:50 t=支出 amt=-3.0 p=出行交通 s=公共交通 acc=安徽农金信用卡 ref= disc= rem=更多 tag= addr=中街路 other=
+30 | d=2026-10-03 22:29 t=支出 amt=-53.5 p=购物消费 s=日常家居 acc=安徽农金信用卡 ref= disc= rem=优购生活超市 tag= addr=鹿达路 other=
+31 | d=2026-10-03 22:28 t=支出 amt=-33.8 p=出行交通 s=打车 acc=安徽农金信用卡 ref= disc= rem=滴滴出行 tag= addr=鹿达路 other=
+32 | d=2026-10-03 21:54 t=支出 amt=-29.0 p=食品餐饮 s=休闲零食 acc=安徽农金信用卡 ref= disc= rem=凯司令西饼屋 tag= addr=川环南路 other=
+33 | d=2026-10-03 19:23 t=支出 amt=-25.0 p=食品餐饮 s=晚餐 acc=安徽农金信用卡 ref= disc= rem=复兴面王(福州路店) tag= addr=西藏中路 other=
+34 | d=2026-10-03 19:20 t=支出 amt=-35.0 p=食品餐饮 s=晚餐 acc=安徽农金信用卡 ref=48 disc= rem=复兴面王(福州路店) tag= addr=西藏中路 other=
+35 | d=2026-10-03 17:57 t=支出 amt=-129.0 p=购物消费 s=母婴玩具 acc=安徽农金 ref= disc= rem=POP MART tag= addr=西藏中路 other=
+36 | d=2026-10-03 16:18 t=支出 amt=-20.0 p=出行交通 s=公共交通 acc=安徽农金信用卡 ref= disc= rem=上海地铁-市域线虹桥T2航站楼-2026-10-03 13:42:09-市域线国际旅游度假区-2026-10-03 14:18:05 tag= addr=祖冲之路 other=
+37 | d=2026-10-03 14:41 t=支出 amt=-50.0 p=休闲娱乐 s=旅游度假 acc=安徽农金 ref= disc= rem=华住会 tag= addr=鹿达路 other=
+38 | d=2026-10-03 11:42 t=支出 amt=-2425.0 p=休闲娱乐 s=旅游度假 acc=美团月付 ref= disc= rem=速通票 tag= addr=青坞线 other=
+39 | d=2026-10-03 09:19 t=支出 amt=-0.01 p=购物消费 s=手机数码 acc=安徽农金 ref= disc= rem=【透黑】磁吸-柔砂PC肤感壳 tag= addr=新潭镇宏村大道1号 other=

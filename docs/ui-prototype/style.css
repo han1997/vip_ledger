@@ -598,3 +598,6 @@ dialog::backdrop{background:#17221bb3;backdrop-filter:blur(3px)}
 .chip.sub{background:var(--soft);border-color:transparent;font-size:12.5px;min-height:34px;padding:7px 13px}
 .chip.sub.on{background:var(--tint);color:var(--accent);border-color:#cfe0d6}
 .chip-row.subs{margin-top:8px}
+
+/* 导入账单(v2.3 追加,不改动既有规则)—— 进度条宽度平滑过渡 */
+.import-progress .goal .bar i{transition:width .12s linear}
