@@ -1242,3 +1242,37 @@ SHA-256 为 `3a5f69c0…`,而 `BASELINE.md` v2.1/v2.2 登记的是 `fb8ddd32…`
 ### Next Steps
 
 - 如需再动页面切换动效,重新建任务(原型确认环节要更早给出「不做」的选项)
+
+
+## Session 33: 一木账单导入收尾:确认裸 .xls 已支持
+
+**Date**: 2026-10-15
+**Task**: 一木账单导入收尾:确认裸 .xls 已支持
+**Branch**: `master`
+
+### Summary
+
+核实导入功能已支持直接导入裸 .xls(OLE2/CFB):YimuBillParser 按魔数分派,裸 .xls 与 zip 包裹结果一致,已有 parsesBareXls 单测与 yimu_fixture_40.xls 端到端用例;UI MIME 白名单含 application/vnd.ms-excel 与 octet-stream 兜底,文案已写「.xls 与 .zip」。用户确认无需改动,任务归档。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5bb7ecc` | (see git log) |
+| `189c8f3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
