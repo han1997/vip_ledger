@@ -540,7 +540,7 @@ function editView() {
       ${e.kind === 'transfer' ? '' : chip('pick-account', 'card', accLabel)}
       ${chip('pick-datetime', 'calendar', `${relDate(e.date)} ${hhmm(e.time)}`)}
       ${chip('pick-tag', 'tag', e.tag || '标签')}
-      <button class="chip-btn ai" data-action="open-sub" data-sub="ai">${icon('ai')}<span>AI 记账</span></button>
+      <button class="chip-btn ai icon-only" data-action="open-sub" data-sub="ai" aria-label="AI 记账">${icon('ai')}</button>
     </div>`;
 
   return `${typebar}${catArea}${meta}${chips}`;

@@ -1,5 +1,76 @@
 # UI 设计基准登记
 
+## v2.4:记一笔打磨 + 分类标识三处统一(待用户确认)
+
+日期 2026-10-17。任务 `.trellis/tasks/10-17-beauty-add-entry/`。纯原型任务,**不动应用版本**
+(无 `version.py bump`、无 CHANGELOG 变更)。结构不变,只修视觉:页面总高不增,
+冒烟测试 86 条动作断言全绿。
+
+变更内容:
+
+1. **R1 转账态死白**:去掉 `.cat-grid` 的 `::before/::after{margin:auto}` **安全居中** ——
+   内容不足时顶部对齐,溢出的自由高度不再被切成上下两段空白。`.cat-grid` 由
+   `flex:1 1 auto` 收敛为 `flex:0 1 auto`(按内容高度收缩,自由空间落到胶囊条之后、
+   键盘停靠之前的中性留白);`min-height:0 + overflow-y:auto` **保留**,分类区仍是
+   唯一可内部滚动区,页面永不上下滑动(`ui.md` v2.0 行为不变;矮屏下二级面板仍由
+   `revealSubPanel` 自动滚入视野)。全部状态
+   `页面与分类区 scrollHeight == clientHeight`(实测 0)。
+2. **R2 分类标识三处统一**:记一笔圆块从**纯灰**(`--soft`/`--muted`)提升为全站一致语言 ——
+   底 `--tint` + 字 `--accent` + 发丝内环,字号 19→20(衬线 600 保持);
+   选中态继承 `.brand-mark`:`linear-gradient(150deg,--accent-2,--accent-deep)` 底 +
+   `--accent-text` 字 + 黄铜金 inset 环 `inset 0 0 0 1px rgba(201,169,110,.35)`;
+   二级胶囊同步精修:**选中态**取消 1px 实边框(`border-color:transparent`),改由
+   `inset 0 0 0 1px var(--accent)` 环表达,与新一级选中态拉开层级;未选中胶囊仍保留发丝边。
+   流水行 `.txn .ico` 与分类管理 `.pick .mark` **语义色体系不变**(`.g` 金 / `.r` 赭红 / `.b` 靛蓝
+   变体保留),仅统一字号/字重/行高口径(两处补 `line-height:1`,分类管理 mark 补 13px 字号;
+   衬线 600 保持),三处读作一套。
+3. **R3 胶囊条裁切**:四个胶囊在 390px 壳(内宽 370px)下**完整可见**。胶囊间距 6→4px、
+   `.chip-btn` 内边距 12→11px、上限 150→124px,账户胶囊超长时省略号收敛;AI 退化为**图标按钮**
+   (`.chip-btn.ai.icon-only` + `aria-label="AI 记账"`,`data-action` 与处理器未变)。
+   实测 `clippedChips: []`(修前为 `["AI 记账"]`)。
+4. **R4 数字键盘合盘**:12 个独立白方块 → **整体一块圆角面盘**(`gap:1px` + 面板底线色
+   透出发丝分隔 + 统一圆角/阴影),单键按下反馈保留。**单键仍 46px 高**(实测约 87×46,
+   未缩,兼顾原型 ≥44px 与 `ui-contract.md` #6 的 Android ≥48dp)。
+5. **R5 保存键重做**:空金额 `disabled` 从「浅灰字 + `opacity:.45`」改为
+   `opacity:1` + `--muted` 字 + 发丝边框(可读且明确不可用);宽度 76→64px、
+   圆角 13→14px、外投影换为与键盘同款的黄铜金发丝 inset 环 —— 与键盘面盘成为一体,
+   不再孤立喧宾夺主。与键盘**并排**(`ui.md` v1.5)。
+6. **R6 间距节奏**:分段器外距 `margin:2px 0 2px` → `0`,改由 `.content.edit-mode` 的
+   `gap:10→12px` 统一提供分段器 / 分类区 / 备注金额行 / 胶囊条之间的节奏;
+   键盘上沿从硬 1px 边线改为 **发丝线 + 极浅上投影**(柔和分隔),`.editor-dock` 内边距
+   10→5px(左右 20→16px)。
+7. **R7 纵向空间回收**:键盘 `gap` 6→1(键高不变)、二级胶囊内边距 8→7px
+   (sub-panel 内边距 9→8px)—— `.pad-row` 由实测的 **204px 压到 189px**,
+   `ui.md` v1.7「停靠区不得推回 200px 以上」这条**既存漂移**已修正。页面总高未增(仍零滚动)。
+
+实测数值(Playwright headless,viewport 1520×1000,手机壳渲染 390×860;下述六态一致):
+支出默认 / 支出+二级面板 / 已输金额 / 转账 / 收入 / 编辑已有账目。
+
+| 指标 | 修前 | 修后 |
+|---|---|---|
+| `.pad-row` 高度 | 204px | **189px** |
+| `.keypad .key` 高度 | 46px | 46px(未缩) |
+| 页面 overflow | 0 | 0 |
+| 分类区 overflow | 0 | 0 |
+| 390px 下被裁切的胶囊 | `["AI 记账"]` | **无** |
+
+文件 SHA-256(LF 归一化,`tr -d '\r' | sha256sum`):
+
+| 文件 | SHA-256 |
+|---|---|
+| index.html | `b3a4e11df1a1d393c5c2c41733cbcac916ebe7aaf2a37eca4021cb0309a01d0f` |
+| style.css | `ea9be046881f545e75c46eaf0fd88b61062160ade3fd1fc40164d997ab6ed94a` |
+| app.js | `fee9f9586088d95f59f1b962e83c9d54a74a669e5526126b93abde920d405eda` |
+| smoke-test.cjs | `1fb233426798babce10511efed3b2f9b4a97a6b651737d8fe2e968443a992b38` |
+
+- `index.html` **未改动**,哈希同 v2.3。
+- `smoke-test.cjs` **未改动**,哈希同 v2.3(既有断言全部继续成立,无需放宽)。
+- `app.js` 仅改一处:AI 胶囊由「图标 + 文案」改为**纯图标按钮**(R3)。
+- `README.md` 的「记一笔」小节同步更新(说明文字,不入应用基准)。
+
+**状态:待用户确认。** 按 `ui-contract.md` #5 与 `ui.md`:19 记为「待用户确认」,
+用户确认后再转「已确认」;此前不得作为 Compose 实现依据。v2.3 段保留为历史。
+
 ## v2.3:新增「导入账单」子页(已确认)
 
 日期 2026-10-13。本任务是 `.trellis/tasks/10-13-yimu-bill-import/`(一木记账账单导入)的
