@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/android/ui.md", "reason": "原型优先硬性规则,本任务不可破:编辑页永不上下滑动且分类区必须保持 flex:1+overflow-y:auto(v2.0)、停靠区不得推回 200px 以上(v1.7)、保存与键盘并排不单独占行(v1.5)、一级 5 列圆形方块+二级浅底胶囊(v1.9)、金额点击区 ≥44px 与二级面板自动滚入视野(v2.1)、无假按钮与禁浏览器弹窗(v1.2/v1.3)、原型变更后 BASELINE 摘要回到待确认"}
+{"file": ".trellis/spec/android/ui-contract.md", "reason": "原型优先 UI 开发契约:变更需版本记录含版本/变更内容/SHA-256/确认状态(#5)、无障碍触控 ≥48dp 故键高 46px 不可下砍(#6)、状态完整覆盖含禁用与危险操作确认(#3)、单一设计规则来源禁字面量颜色(#4)、像素级核对 4dp 网格圆角字号(#8)"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "R2 要把三处分类标识(记一笔方块/流水行方块/分类管理 mark)统一到一套质感口径,先查复用再动手,避免又写出第三套平行样式"}

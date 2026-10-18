@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/android/ui.md", "reason": "逐条验收原型硬性规则未被破坏:零滚动与分类区 scrollHeight==clientHeight、分类区 flex 骨架未改、停靠区 ≤200px、键高未缩、金额点击区 ≥80x44、保存仍与键盘并排、无假按钮与无原生弹窗断言不变"}
+{"file": ".trellis/spec/android/ui-contract.md", "reason": "逐条验收契约:token 全部取自既有定义无字面量颜色(#4)、编辑页状态覆盖含禁用态与危险操作确认(#3)、BASELINE 已登记版本与哈希且状态为待用户确认(#5)、无障碍触控未恶化(#6)、间距符合 4 网格且与原型截图并排比对(#8)"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "检查三处分类标识是否真正收敛到共用规则(同一组 token 与同一套质感),而非复制出三份平行样式"}
