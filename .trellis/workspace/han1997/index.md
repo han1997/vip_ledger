@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 33
-- **Last Active**: 2026-10-15
+- **Total Sessions**: 34
+- **Last Active**: 2026-10-18
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1278 | Active |
+| `journal-1.md` | ~1311 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 34 | 2026-10-18 | 美化原型记一笔页面:登记修正与交付收尾 | `eab7290` | `master` |
 | 33 | 2026-10-15 | 一木账单导入收尾:确认裸 .xls 已支持 | `5bb7ecc`, `189c8f3` | `master` |
 | 32 | 2026-10-13 | 启动图标重设计（铜钱方案）+ APK 命名规范 + 图标↔原型同源契约 | `a734389`, `8f5d12e`, `f58d2e2`, `0c56cb1`, `e26f7bd`, `dbff6aa` | `master` |
 | 31 | 2026-10-13 | 按原型 v2.1 实现 Compose UI 整体改版（PR1–PR7） | `3275d23`, `27bd293`, `330624f`, `a9e8dda`, `9833222` | `master` |

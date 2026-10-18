@@ -1276,3 +1276,36 @@ SHA-256 为 `3a5f69c0…`,而 `BASELINE.md` v2.1/v2.2 登记的是 `fb8ddd32…`
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: 美化原型记一笔页面:登记修正与交付收尾
+
+**Date**: 2026-10-18
+**Task**: 美化原型记一笔页面:登记修正与交付收尾
+**Branch**: `master`
+
+### Summary
+
+完成 10-17-beauty-add-entry:记一笔页 R1-R7 全部落地(转账死白消除、三处分类标识统一墨绿语言、胶囊条 390px 无裁切、键盘合盘、保存键 76→64px、停靠区 204→189px 修正 ui.md v1.7 既存漂移);trellis-check 修正 BASELINE/README 六处登记漂移(style.css 哈希、dock 内边距 5px、单键约 87px、壳渲染 390x860 口径、R1 flex 收敛补记);六态零滚动、冒烟 86 动作 PASS;BASELINE v2.4 登记为待用户确认,不动应用版本。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `eab7290` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
